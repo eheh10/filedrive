@@ -2,7 +2,7 @@ package com.main;
 
 import com.api.TestApi;
 import com.request.InputStreamListener;
-import com.response.HttpResponseSender;
+import com.response.OutputStreamSender;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -56,9 +56,9 @@ public class Main {
                 }
             }
 
-            HttpResponseSender httpResponseSender = HttpResponseSender.of(socket.getOutputStream());
-            httpResponseSender.send(responseMessage.toString());
-            httpResponseSender.close();
+            OutputStreamSender outputStreamSender = OutputStreamSender.of(socket.getOutputStream());
+            outputStreamSender.send(responseMessage.toString());
+            outputStreamSender.close();
         }
     }
 
