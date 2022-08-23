@@ -8,6 +8,10 @@ public class InputStreamListener {
     private final BufferedReader br;
 
     public InputStreamListener(BufferedReader br) {
+        if (br == null){
+            throw new RuntimeException("BufferedReader가 null");
+        }
+
         this.br = br;
     }
 
