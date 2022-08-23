@@ -4,19 +4,19 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public class HttpRequestListener {
+public class InputStreamListener {
     private final BufferedReader br;
 
-    public HttpRequestListener(BufferedReader br) {
+    public InputStreamListener(BufferedReader br) {
         this.br = br;
     }
 
-    public static HttpRequestListener of(InputStream is) {
+    public static InputStreamListener of(InputStream is) {
         BufferedInputStream bis = new BufferedInputStream(is,8192);
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(isr,8192);
 
-        return new HttpRequestListener(br);
+        return new InputStreamListener(br);
     }
 
     public String listen() throws IOException {

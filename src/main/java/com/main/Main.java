@@ -1,7 +1,7 @@
 package com.main;
 
 import com.api.TestApi;
-import com.request.HttpRequestListener;
+import com.request.InputStreamListener;
 import com.response.HttpResponseSender;
 
 import java.io.*;
@@ -20,8 +20,8 @@ public class Main {
         while(true) {
             Socket socket = serverSocket.accept();
 
-            HttpRequestListener httpRequestListener = HttpRequestListener.of(socket.getInputStream());
-            String requestInput = httpRequestListener.listen();
+            InputStreamListener inputstreamListener = InputStreamListener.of(socket.getInputStream());
+            String requestInput = inputstreamListener.listen();
             System.out.println(requestInput);
 
             StringTokenizer stringTokenizer = new StringTokenizer(requestInput,"\n");
