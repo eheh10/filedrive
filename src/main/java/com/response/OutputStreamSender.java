@@ -10,6 +10,10 @@ public class OutputStreamSender {
     private final OutputStreamWriter osw;
 
     public OutputStreamSender(OutputStreamWriter osw) {
+        if (osw == null){
+            throw new RuntimeException("OutputStreamWriter null");
+        }
+
         this.osw = osw;
     }
 
