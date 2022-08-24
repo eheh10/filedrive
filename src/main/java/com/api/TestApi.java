@@ -2,21 +2,25 @@ package com.api;
 
 import com.parser.KeyParser;
 
-public class TestApi {
+public class TestApi implements TargetApi{
+    private final KeyParser keyParser;
 
-    public String getResponseMessage(KeyParser nameKeyParser){
-        if (nameKeyParser==null) {
+    public TestApi(KeyParser keyParser) {
+        if (keyParser==null) {
             throw new RuntimeException("KeyParser가 null");
         }
-
-        StringBuilder response = new StringBuilder();
-        String name = nameKeyParser.getValue("name");
-
-        response.append("안녕하세요 ")
-                        .append(name)
-                        .append("님");
-
-        return  response.toString();
+        this.keyParser = keyParser;
     }
 
+    public static TestApi of(String values) {
+        KeyParser keyParser = KeyParser.of(values);
+        return new TestApi(keyParser);
+    }
+
+    @Override
+    public String getBody() {
+        String name = keyParser.getValue("name");
+
+        return "안녕하세요 "+name+"님";
+    }
 }
