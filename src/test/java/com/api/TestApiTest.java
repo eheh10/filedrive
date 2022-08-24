@@ -12,12 +12,11 @@ class TestApiTest {
     void testWithNormalValues() {
         //given
         String expected = "안녕하세요 kim님";
-        TestApi testApi = new TestApi();
         String values = "name=kim";
-        KeyParser nameKeyParser = KeyParser.of(values);
+        TestApi testApi = TestApi.of(values);
 
         //when
-        String actual = testApi.getResponseMessage(nameKeyParser);
+        String actual = testApi.getBody();
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -27,13 +26,12 @@ class TestApiTest {
     @DisplayName("KeyParser가 null일때 런타임에러 발생테스트")
     void testWithNull() {
         //given
-        TestApi testApi = new TestApi();
         String expected = "KeyParser가 null";
-        KeyParser nameKeyParser = null;
+        KeyParser keyParser = null;
 
         try{
             //when
-            String result = testApi.getResponseMessage(nameKeyParser);
+            TestApi testApi = new TestApi(keyParser);
         }catch (RuntimeException e){
 
             //then
