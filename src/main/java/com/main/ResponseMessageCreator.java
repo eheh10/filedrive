@@ -13,9 +13,9 @@ import java.util.StringTokenizer;
 
 public class ResponseMessageCreator {
 
-    public String create(InputStreamListener inputstreamListener) throws IOException {
-        if (inputstreamListener==null) {
-            throw new RuntimeException("InputstreamListener이 null");
+    public String createResponseTo(String requestInput) throws IOException {
+        if (requestInput==null) {
+            throw new RuntimeException("requestInput이 null");
         }
 
         String requestInput = inputstreamListener.listen();

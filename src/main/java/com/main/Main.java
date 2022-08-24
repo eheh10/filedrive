@@ -15,8 +15,11 @@ public class Main {
             Socket socket = serverSocket.accept();
 
             InputStreamListener inputstreamListener = InputStreamListener.of(socket.getInputStream());
+            String requestInput = inputstreamListener.listen();
+            System.out.println(requestInput);
+
             ResponseMessageCreator creator = new ResponseMessageCreator();
-            String responseMessage = creator.create(inputstreamListener);
+            String responseMessage = creator.createResponseTo(requestInput);
 
             if (responseMessage.isBlank()) {
                 continue;
