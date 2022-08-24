@@ -1,6 +1,7 @@
 package com.main;
 
 import com.api.TestApi;
+import com.parser.KeyParser;
 import com.request.InputStreamListener;
 import com.response.OutputStreamSender;
 
@@ -48,7 +49,8 @@ public class Main {
                 if (Objects.equals(path,"test")){
                     TestApi testApi = new TestApi();
                     String values = apiTokenizer.nextToken();
-                    String testResponse = testApi.getResponseMessage(values);
+                    KeyParser nameKeyParser = KeyParser.of(values);
+                    String testResponse = testApi.getResponseMessage(nameKeyParser);
 
                     responseMessage.append(testResponse).append("\n");
                 }else {
