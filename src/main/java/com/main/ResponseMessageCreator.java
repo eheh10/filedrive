@@ -65,7 +65,7 @@ public class ResponseMessageCreator {
 
     private String readFile(Path path) throws IOException {
         if (path==null) {
-            return "";
+            throw new RuntimeException("존재하지 않는 경로");
         }
 
         InputStream is = new FileInputStream(path.toString());
