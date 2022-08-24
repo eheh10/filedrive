@@ -1,5 +1,6 @@
 package com.main;
 
+import com.request.InputStreamListener;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,10 +23,11 @@ class ResponseMessageCreatorTest {
         String expected = responseStartLine + "안녕하세요 "+name+"님\n";
         String request = "GET /test?name="+name+" HTTP/1.1\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
+        InputStreamListener inputStreamListener = InputStreamListener.of(is);
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(is);
+        String actual = creator.create(inputStreamListener);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -39,10 +41,11 @@ class ResponseMessageCreatorTest {
         String expected = responseStartLine + "안녕하세요 "+name+"님\n";
         String request = "GET /test?name="+ URLEncoder.encode(name,StandardCharsets.UTF_8)+" HTTP/1.1\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
+        InputStreamListener inputStreamListener = InputStreamListener.of(is);
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(is);
+        String actual = creator.create(inputStreamListener);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -57,24 +60,22 @@ class ResponseMessageCreatorTest {
         String request = "POST /test HTTP/1.1\n"+
                 "Content-Type:text/plain\n\n"+
                 "name="+ URLEncoder.encode(name,StandardCharsets.UTF_8)+"\n";
-
-        System.out.println(request);
-
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
+        InputStreamListener inputStreamListener = InputStreamListener.of(is);
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(is);
+        String actual = creator.create(inputStreamListener);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    @DisplayName("InputStream이 null일 때 런타임에러 발생 테스트")
+    @DisplayName("InputstreamListener이 null일 때 런타임에러 발생 테스트")
     void testConstructWithNull() throws IOException {
         //given
-        String expected = "InputStream이 null";
+        String expected = "InputstreamListener이 null";
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         try{
@@ -95,10 +96,11 @@ class ResponseMessageCreatorTest {
                 "\n";
         String request = "GET / HTTP/1.1\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
+        InputStreamListener inputStreamListener = InputStreamListener.of(is);
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(is);
+        String actual = creator.create(inputStreamListener);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -113,10 +115,11 @@ class ResponseMessageCreatorTest {
                 "\n";
         String request = "GET /wrongApi HTTP/1.1\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
+        InputStreamListener inputStreamListener = InputStreamListener.of(is);
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(is);
+        String actual = creator.create(inputStreamListener);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
