@@ -2,7 +2,6 @@ package com.request;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 public class InputStreamListener {
     private final BufferedReader br;
@@ -27,7 +26,7 @@ public class InputStreamListener {
         StringBuilder input = new StringBuilder();
         String line = "";
 
-        while((line= br.readLine()) != null && !Objects.equals(line,"")) {
+        while((line= br.readLine()) != null) {
             input.append(line).append("\n");
         }
 
