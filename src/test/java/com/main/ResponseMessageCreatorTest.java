@@ -23,11 +23,11 @@ class ResponseMessageCreatorTest {
         String expected = responseStartLine + "안녕하세요 "+name+"님\n";
         String request = "GET /test?name="+name+" HTTP/1.1\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
-        InputStreamListener inputStreamListener = InputStreamListener.of(is);
+        String requestInput = InputStreamListener.of(is).listen();
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(inputStreamListener);
+        String actual = creator.createResponseTo(requestInput);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -41,11 +41,11 @@ class ResponseMessageCreatorTest {
         String expected = responseStartLine + "안녕하세요 "+name+"님\n";
         String request = "GET /test?name="+ URLEncoder.encode(name,StandardCharsets.UTF_8)+" HTTP/1.1\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
-        InputStreamListener inputStreamListener = InputStreamListener.of(is);
+        String requestInput = InputStreamListener.of(is).listen();
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(inputStreamListener);
+        String actual = creator.createResponseTo(requestInput);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -61,26 +61,26 @@ class ResponseMessageCreatorTest {
                 "Content-Type:text/plain\n\n"+
                 "name="+ URLEncoder.encode(name,StandardCharsets.UTF_8)+"\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
-        InputStreamListener inputStreamListener = InputStreamListener.of(is);
+        String requestInput = InputStreamListener.of(is).listen();
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(inputStreamListener);
+        String actual = creator.createResponseTo(requestInput);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
     }
 
     @Test
-    @DisplayName("InputstreamListener이 null일 때 런타임에러 발생 테스트")
+    @DisplayName("requestInput이 null일 때 런타임에러 발생 테스트")
     void testConstructWithNull() throws IOException {
         //given
-        String expected = "InputstreamListener이 null";
+        String expected = "requestInput이 null";
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         try{
             //when
-            String result = creator.create(null);
+            String result = creator.createResponseTo(null);
         }catch (RuntimeException e){
             //then
             Assertions.assertThat(e.getMessage()).isEqualTo(expected);
@@ -96,11 +96,11 @@ class ResponseMessageCreatorTest {
                 "\n";
         String request = "GET / HTTP/1.1\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
-        InputStreamListener inputStreamListener = InputStreamListener.of(is);
+        String requestInput = InputStreamListener.of(is).listen();
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(inputStreamListener);
+        String actual = creator.createResponseTo(requestInput);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -115,11 +115,11 @@ class ResponseMessageCreatorTest {
                 "\n";
         String request = "GET /wrongApi HTTP/1.1\n";
         InputStream is = new ByteArrayInputStream(request.getBytes(StandardCharsets.UTF_8));
-        InputStreamListener inputStreamListener = InputStreamListener.of(is);
+        String requestInput = InputStreamListener.of(is).listen();
         ResponseMessageCreator creator = new ResponseMessageCreator();
 
         //when
-        String actual = creator.create(inputStreamListener);
+        String actual = creator.createResponseTo(requestInput);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
