@@ -1,5 +1,6 @@
 package com.main;
 
+import com.request.InputStreamListener;
 import com.response.OutputStreamSender;
 
 import java.io.IOException;
@@ -13,8 +14,9 @@ public class Main {
         while(true) {
             Socket socket = serverSocket.accept();
 
+            InputStreamListener inputstreamListener = InputStreamListener.of(socket.getInputStream());
             ResponseMessageCreator creator = new ResponseMessageCreator();
-            String responseMessage = creator.create(socket.getInputStream());
+            String responseMessage = creator.create(inputstreamListener);
 
             if (responseMessage.isBlank()) {
                 continue;

@@ -13,12 +13,11 @@ import java.util.StringTokenizer;
 
 public class ResponseMessageCreator {
 
-    public String create(InputStream is) throws IOException {
-        if (is==null) {
-            throw new RuntimeException("InputStream이 null");
+    public String create(InputStreamListener inputstreamListener) throws IOException {
+        if (inputstreamListener==null) {
+            throw new RuntimeException("InputstreamListener이 null");
         }
 
-        InputStreamListener inputstreamListener = InputStreamListener.of(is);
         String requestInput = inputstreamListener.listen();
         System.out.println(requestInput);
 
