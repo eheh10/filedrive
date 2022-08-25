@@ -1,6 +1,5 @@
 package com.api;
 
-import com.parser.KeyParser;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,12 +7,12 @@ import org.junit.jupiter.api.Test;
 class TestApiTest {
 
     @Test
-    @DisplayName("name key 파싱 테스트")
+    @DisplayName("name이 주어졌을때 getBody() 리턴값 정상 출력 테스트")
     void testWithNormalValues() {
         //given
         String expected = "안녕하세요 kim님";
-        String values = "name=kim";
-        TestApi testApi = TestApi.of(values);
+        String name = "kim";
+        TestApi testApi = new TestApi(name);
 
         //when
         String actual = testApi.getBody();
@@ -23,15 +22,14 @@ class TestApiTest {
     }
 
     @Test
-    @DisplayName("KeyParser가 null일때 런타임에러 발생테스트")
+    @DisplayName("name이 null일때 런타임에러 발생테스트")
     void testWithNull() {
         //given
-        String expected = "KeyParser가 null";
-        KeyParser keyParser = null;
+        String expected = "name이 null";
 
         try{
             //when
-            TestApi testApi = new TestApi(keyParser);
+            TestApi testApi = new TestApi(null);
         }catch (RuntimeException e){
 
             //then
