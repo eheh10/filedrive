@@ -1,9 +1,14 @@
 package com.main;
 
-import com.api.ApiFactory;
+import com.api.ApiGenerator;
+import com.api.FileApi;
 import com.api.TargetApi;
+import com.api.TestApi;
+import com.parser.KeyParser;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
@@ -26,7 +31,10 @@ public class ResponseMessageCreator {
 
         String values = parseValues(method,target,requestInput);
 
-        TargetApi targetApi = ApiFactory.of(path,values);
+//        TargetApi targetApi = ApiFactory.of(path,values);
+
+        ApiGenerator apiGenerator = getDefaultApiGenerator(values);
+        TargetApi targetApi = apiGenerator.to(path);
         String body = targetApi.getBody();
 
         StringBuilder responseMessage = new StringBuilder();
@@ -38,6 +46,20 @@ public class ResponseMessageCreator {
                 .append("\n");
 
         return responseMessage.toString();
+    }
+
+    private ApiGenerator getDefaultApiGenerator(String values) {
+        Map<String,TargetApi> apis = new HashMap<>();
+        KeyParser keyParser = KeyParser.of(values);
+
+        apis.put("/",new FileApi("test.html"));
+
+        if (keyParser.existKey("name")) {
+            String nameValue = KeyParser.of(values).getValue("name");
+            apis.put("/test",new TestApi(nameValue));
+        }
+
+        return new ApiGenerator(apis);
     }
 
     private String parseValues(String method, String target, String requestInput) {
