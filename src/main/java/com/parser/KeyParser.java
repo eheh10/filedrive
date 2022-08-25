@@ -51,4 +51,8 @@ public class KeyParser {
 
         return values.get(key);
     }
+
+    public boolean existKey(String key) {
+        return values.containsKey(key);
+    }
 }
