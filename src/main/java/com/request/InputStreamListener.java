@@ -4,34 +4,33 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public class InputStreamListener {
-    private final BufferedReader br;
+    private final InputStreamReader isr;
+    private final char[] buffer = new char[1024];
 
-    public InputStreamListener(BufferedReader br) {
-        if (br == null){
-            throw new RuntimeException("BufferedReader가 null");
+    public InputStreamListener(InputStreamReader isr) {
+        if (isr == null){
+            throw new RuntimeException("InputStreamReader가 null");
         }
 
-        this.br = br;
+        this.isr = isr;
     }
 
     public static InputStreamListener of(InputStream is) {
         BufferedInputStream bis = new BufferedInputStream(is,8192);
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
-        BufferedReader br = new BufferedReader(isr,8192);
 
-        return new InputStreamListener(br);
+        return new InputStreamListener(isr);
     }
 
     public String listen() throws IOException {
         StringBuilder input = new StringBuilder();
-        String line = "";
+        int len = 0;
 
-        while((line= br.readLine()) != null) {
-            input.append(line).append("\n");
+        while((len=isr.read(buffer)) != -1) {
+            input.append(buffer,0,len);
         }
 
         return input.toString();
     }
-
 
 }
