@@ -42,10 +42,10 @@ class InputStreamListenerTest {
     }
 
     @Test
-    @DisplayName("null일때 인스턴스 생성시 런타임에러 발생 테스트")
+    @DisplayName("null로 인스턴스 생성시 런타임에러 발생 테스트")
     void testConstructWithNull() {
         //given
-        String expected = "BufferedReader가 null";
+        String expected = "InputStreamReader가 null";
 
         try{
             //when
