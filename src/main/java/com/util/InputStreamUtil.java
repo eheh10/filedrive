@@ -5,6 +5,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 public class InputStreamUtil {
+
+    private InputStreamUtil() {}
+
     public static String readFile(Path path) throws IOException {
         if (path==null) {
             throw new RuntimeException("존재하지 않는 경로");
@@ -15,7 +18,7 @@ public class InputStreamUtil {
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
 
         int len = 0;
-        char[] buffer = new char[100];
+        char[] buffer = new char[1024];
         StringBuilder output = new StringBuilder();
         while((len=isr.read(buffer))!=-1){
             output.append(buffer,0,len);
