@@ -4,10 +4,40 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class Main2 {
+
+    enum StatusFile {
+        CODE200("200",Paths.get("src","main","resources","response","hello.html").toString()),
+        CODE400("400",Paths.get("src","main","resources","response","400_error.html").toString())
+        ;
+
+        private final String statusCode;
+        private final String filePath;
+
+        StatusFile(String statusCode, String filePath) {
+            this.statusCode = statusCode;
+            this.filePath = filePath;
+        }
+
+        private static final Map<String,StatusFile> finder = createStatusFileFinder();
+        private static Map<String, StatusFile> createStatusFileFinder() {
+            Map<String,StatusFile> finder = new HashMap<>();
+
+            for(StatusFile s:values()){
+                finder.put(s.statusCode,s);
+            }
+
+            return finder;
+        }
+
+        public static StatusFile of(String statusCode) {
+            return finder.get(statusCode);
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(7777);
 
@@ -28,6 +58,9 @@ public class Main2 {
                 - GET 인 경우 values 가공 필요 (Values 클래스화 필요)
              */
             String startLine = br.readLine();
+            if (startLine==null) {
+                continue;
+            }
             System.out.println("start line: "+startLine);
 
             /*
@@ -67,6 +100,24 @@ public class Main2 {
 
             // 2. response 보내기: 로직 모듈화 필요
             OutputStream os = socket.getOutputStream();
+            BufferedOutputStream bos = new BufferedOutputStream(os,8192);
+            OutputStreamWriter bsw = new OutputStreamWriter(bos,StandardCharsets.UTF_8);
+
+            StringBuilder responseMsg = new StringBuilder();
+
+            String statusCode = "200";
+            StatusFile statusFile = StatusFile.of(statusCode);
+
+            responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ");
+
+            if (Objects.equals(statusCode,"200")) {
+                // 상태 파일-상태 메시지를 하나의 자료구조로 만들어서 사용?
+                responseMsg.append("OK");
+            }
+
+            responseMsg.append("\nContent-Type: text/html;charset=UTF-8\n\n");
+
+            bsw.write(responseMsg.toString());
 
             /*
             2-1. request 처리를 통해 response 메시지 각 구성요소(StartLine,Header,Body) 얻기
@@ -75,17 +126,21 @@ public class Main2 {
                 - body 내용이 길어지는 경우 메모리 초과될 수 있으므로 스트림 처리 필요
                 - body 길이는 2,097,152(2MB)로 길이 제한
              */
-            StringBuilder responseMessage = new StringBuilder();
-            responseMessage.append("HTTP/1.1 200 OK\n"+
-                            "Content-Type: text/html;charset=UTF-8\n"+
-                            "\n")
-                    .append("hello world")
-                    .append("\n");
+
+            InputStream is2 = new FileInputStream(statusFile.filePath);
+            BufferedInputStream bis2 = new BufferedInputStream(is2,8192);
+            InputStreamReader isr2 = new InputStreamReader(bis2,StandardCharsets.UTF_8);
+
+            char[] buffer2 = new char[1024];
+            len = -1;
+
+            while((len=isr2.read(buffer2)) != -1) {
+                bsw.write(buffer2,0,len);
+            }
 
             // 2-2. OutputStream 으로 전송
-            os.write(responseMessage.toString().getBytes(StandardCharsets.UTF_8));
-            os.flush();
-            os.close();
+            bsw.flush();
+            bsw.close();
         }
     }
 }
