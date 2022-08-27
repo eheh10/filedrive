@@ -9,35 +9,6 @@ import java.util.*;
 
 public class Main2 {
 
-    enum StatusFile {
-        CODE200("200",Paths.get("src","main","resources","response","hello.html").toString()),
-        CODE400("400",Paths.get("src","main","resources","response","400_error.html").toString())
-        ;
-
-        private final String statusCode;
-        private final String filePath;
-
-        StatusFile(String statusCode, String filePath) {
-            this.statusCode = statusCode;
-            this.filePath = filePath;
-        }
-
-        private static final Map<String,StatusFile> finder = createStatusFileFinder();
-        private static Map<String, StatusFile> createStatusFileFinder() {
-            Map<String,StatusFile> finder = new HashMap<>();
-
-            for(StatusFile s:values()){
-                finder.put(s.statusCode,s);
-            }
-
-            return finder;
-        }
-
-        public static StatusFile of(String statusCode) {
-            return finder.get(statusCode);
-        }
-    }
-
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(7777);
 
@@ -106,16 +77,10 @@ public class Main2 {
             StringBuilder responseMsg = new StringBuilder();
 
             String statusCode = "200";
-            StatusFile statusFile = StatusFile.of(statusCode);
+            String statusMsg = "OK";
 
-            responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ");
-
-            if (Objects.equals(statusCode,"200")) {
-                // 상태 파일-상태 메시지를 하나의 자료구조로 만들어서 사용?
-                responseMsg.append("OK");
-            }
-
-            responseMsg.append("\nContent-Type: text/html;charset=UTF-8\n\n");
+            responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
+                    .append("Content-Type: text/html;charset=UTF-8\n\n");
 
             bsw.write(responseMsg.toString());
 
@@ -127,7 +92,13 @@ public class Main2 {
                 - body 길이는 2,097,152(2MB)로 길이 제한
              */
 
-            InputStream is2 = new FileInputStream(statusFile.filePath);
+            String filePath = Paths.get("src","main","resources","response","error.html").toString();;
+
+            if (Objects.equals(statusCode,"200")) {
+                Paths.get("src","main","resources","response","hello.html").toString();
+            }
+
+            InputStream is2 = new FileInputStream(filePath);
             BufferedInputStream bis2 = new BufferedInputStream(is2,8192);
             InputStreamReader isr2 = new InputStreamReader(bis2,StandardCharsets.UTF_8);
 
