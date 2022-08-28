@@ -76,8 +76,14 @@ public class Main2 {
 
             StringBuilder responseMsg = new StringBuilder();
 
-            String statusCode = "200";
-            String statusMsg = "OK";
+//            String statusCode = "200";
+//            String statusMsg = "OK";
+            String statusCode = "400";
+            String statusMsg = "Bad Request";
+
+            Map<String,String> replaceStatus = new HashMap<>();
+            replaceStatus.put("statusCode",statusCode);
+            replaceStatus.put("statusMsg",statusMsg);
 
             responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
                     .append("Content-Type: text/html;charset=UTF-8\n\n");
@@ -92,24 +98,52 @@ public class Main2 {
                 - body 길이는 2,097,152(2MB)로 길이 제한
              */
 
-            String filePath = Paths.get("src","main","resources","response","error.html").toString();;
-
             if (Objects.equals(statusCode,"200")) {
-                Paths.get("src","main","resources","response","hello.html").toString();
+                InputStream is2 = new FileInputStream(Paths.get("src","main","resources","response","hello.html").toString());
+                BufferedInputStream bis2 = new BufferedInputStream(is2,8192);
+                InputStreamReader isr2 = new InputStreamReader(bis2,StandardCharsets.UTF_8);
+
+                char[] buffer2 = new char[1024];
+                len = -1;
+
+                while((len=isr2.read(buffer2)) != -1) {
+                    bsw.write(buffer2,0,len);
+                }
+
+                bsw.flush();
+                bsw.close();
+
+                continue;
             }
 
-            InputStream is2 = new FileInputStream(filePath);
+            InputStream is2 = new FileInputStream(Paths.get("src","main","resources","response","error.html").toString());
             BufferedInputStream bis2 = new BufferedInputStream(is2,8192);
             InputStreamReader isr2 = new InputStreamReader(bis2,StandardCharsets.UTF_8);
 
             char[] buffer2 = new char[1024];
             len = -1;
 
+            StringBuilder word = new StringBuilder();
+
             while((len=isr2.read(buffer2)) != -1) {
-                bsw.write(buffer2,0,len);
+                word.append(buffer2,0,len);
+
+                for(int startIdx=word.indexOf("{{"); startIdx > -1 ; startIdx=word.indexOf("{{")) {
+                    int endIdx = word.indexOf("}}");
+
+                    if (endIdx == -1) {
+                        break;
+                    }
+
+                    String replace = word.substring(startIdx+2,endIdx);
+                    word.replace(startIdx,endIdx+2,replaceStatus.get(replace));
+                }
+
+                bsw.write(word.toString());
+                word.setLength(0);
             }
 
-            // 2-2. OutputStream 으로 전송
+
             bsw.flush();
             bsw.close();
         }
