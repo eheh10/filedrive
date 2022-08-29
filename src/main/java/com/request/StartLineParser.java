@@ -102,4 +102,16 @@ public class StartLineParser {
 
         return true;
     }
+
+    public HttpMethod getHttpMethod() {
+        return httpMethod;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public String getVersion() {
+        return version;
+    }
 }
