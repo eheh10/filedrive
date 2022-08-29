@@ -1,5 +1,8 @@
 package com.main;
 
+import com.method.*;
+import com.request.StartLineParser;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,11 +12,33 @@ import java.util.*;
 
 public class Main2 {
 
+    private enum Method {
+        GET(new GetMethod()),
+        POST(new PostMethod()),
+        PUT(new PutMethod()),
+        DELETE(new DeleteMethod());
+
+        private final HttpMethod httpMethod;
+
+        Method(HttpMethod httpMethod) {
+            this.httpMethod = httpMethod;
+        }
+
+        public HttpMethod getHttpMethod() {
+            return httpMethod;
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(7777);
 
         while(true) {
             Socket socket = serverSocket.accept();
+
+            String statusCode = "200";
+            String statusMsg = "OK";
+//            String statusCode = "400";
+//            String statusMsg = "Bad Request";
 
             // 1. request 받기: 로직 모듈화 필요
             // request 의 구성요소를 하나로 묶기 위해 Request 클래스화 필요 - method, path, header, body, values 를 멤버변수로
@@ -33,6 +58,15 @@ public class Main2 {
                 continue;
             }
             System.out.println("start line: "+startLine);
+
+            // StartLine 구조 파싱
+            if (!StartLineParser.isValidDataStructure(startLine)) {
+                //400 에러
+                statusCode = "400";
+                statusMsg = "Bad Request";
+            }
+
+            StartLineParser startLineParser = StartLineParser.of(startLine);
 
             /*
             1-2. Header 가공
@@ -75,11 +109,6 @@ public class Main2 {
             OutputStreamWriter bsw = new OutputStreamWriter(bos,StandardCharsets.UTF_8);
 
             StringBuilder responseMsg = new StringBuilder();
-
-//            String statusCode = "200";
-//            String statusMsg = "OK";
-            String statusCode = "400";
-            String statusMsg = "Bad Request";
 
             Map<String,String> replaceStatus = new HashMap<>();
             replaceStatus.put("statusCode",statusCode);
@@ -142,7 +171,6 @@ public class Main2 {
                 bsw.write(word.toString());
                 word.setLength(0);
             }
-
 
             bsw.flush();
             bsw.close();
