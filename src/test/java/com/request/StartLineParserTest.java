@@ -161,6 +161,21 @@ class StartLineParserTest {
     }
 
     @Test
+    @DisplayName("Method 파싱 테스트")
+    void testParsingMethod() {
+        //given
+        String expected = "com.method.GetMethod";
+        String startLine = "GET /test/path HTTP/1.1";
+        StartLineParser startLineParser = StartLineParser.of(startLine);
+
+        //when
+        String actual = startLineParser.getHttpMethod().getClass().getName();
+
+        //then
+        Assertions.assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
     @DisplayName("Path 파싱 테스트")
     void testParsingPath() {
         //given
