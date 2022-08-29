@@ -1,6 +1,5 @@
 package com.main;
 
-import com.method.*;
 import com.request.StartLineParser;
 
 import java.io.*;
@@ -11,23 +10,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class Main2 {
-
-    private enum Method {
-        GET(new GetMethod()),
-        POST(new PostMethod()),
-        PUT(new PutMethod()),
-        DELETE(new DeleteMethod());
-
-        private final HttpMethod httpMethod;
-
-        Method(HttpMethod httpMethod) {
-            this.httpMethod = httpMethod;
-        }
-
-        public HttpMethod getHttpMethod() {
-            return httpMethod;
-        }
-    }
 
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(7777);
