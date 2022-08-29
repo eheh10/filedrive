@@ -96,7 +96,7 @@ public class StartLineParser {
         }
 
         String version = tokenizer.nextToken();
-        if(!Objects.equals(version.substring(0,5),"HTTP/")) {
+        if(version.length() < 6 || !Objects.equals(version.substring(0,5),"HTTP/")) {
             return false;
         }
 
