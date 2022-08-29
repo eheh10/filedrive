@@ -79,6 +79,10 @@ public class StartLineParser {
     }
 
     public static boolean isValidDataStructure(String startLine) {
+        if (startLine == null || startLine.isBlank()) {
+            return false;
+        }
+
         StringTokenizer tokenizer = new StringTokenizer(startLine," ");
 
         if (tokenizer.countTokens() != 3) {
