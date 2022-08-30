@@ -111,6 +111,23 @@ class HeaderParserTest {
     }
 
     @Test
+    @DisplayName("limitLength 를 초과했을때 런타임에러 발생 테스트")
+    void testParsingWithExceedingLimitLength() throws IOException {
+        //given
+        String expected = "431 Request header too large";
+        BufferedReader br = getBufferedReader(fields);
+        int limitLength = 10;
+
+        try{
+            //when
+            Map<String,List<String>> actual = HeaderParser.parse(br,limitLength);
+        }catch (RuntimeException e){
+            //then
+            Assertions.assertThat(e.getMessage()).isEqualTo(expected);
+        }
+    }
+
+    @Test
     @DisplayName("default limitLength 정상 파싱 테스트")
     void testParsingWithDefaultLimitLength() throws IOException {
         //given
