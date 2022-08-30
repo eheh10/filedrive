@@ -1,5 +1,6 @@
 package com.main;
 
+import com.request.HeaderParser;
 import com.request.StartLineParser;
 
 import java.io.*;
@@ -57,13 +58,13 @@ public class Main2 {
                 - HTTP Header 에 길이 제한 스펙은 없지만 자체적으로 8192로 길이 제한
                 - 8192보다 긴 경우 431 Request header too large 응답
              */
-            List<String> headers = new ArrayList<>();
-            String line = "";
+            Map<String,List<String>> headers = HeaderParser.parse(br,8192);
 
-            while(!(line=br.readLine()).isEmpty()) {
-                headers.add(line);
+            System.out.println("headers: ");
+            for(Map.Entry<String,List<String>> field:headers.entrySet()) {
+                System.out.print(field.getKey() + "=");
+                System.out.println(field.getValue());
             }
-            System.out.println("headers: "+headers);
 
             /*
             1-3. Body 가공
