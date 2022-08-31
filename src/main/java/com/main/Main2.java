@@ -1,5 +1,7 @@
 package com.main;
 
+import com.request.BodyParser;
+import com.request.RequestReader;
 import com.request.HeaderParser;
 import com.request.StartLineParser;
 
@@ -74,16 +76,10 @@ public class Main2 {
                 - 2MB 이상이면 413 Request Entity Too Large 응답
                 - values 이면 Values 클래스 가공 필요
              */
-            StringBuilder body = new StringBuilder();
-            char[] buffer = new char[1024];
-            int len = -1;
 
-            // null 보다는 ready() 리턴값으로 데이터 끝 판단
-            // body 의 끝에 개행문자가 없기 때문
-            while(br.ready()) {
-                len=br.read(buffer);
-                body.append(buffer,0,len);
-            }
+            RequestReader requestReader = new RequestReader(br);
+            BodyParser bodyParser = new BodyParser();
+            String body = bodyParser.parse(requestReader);
             System.out.println("body: "+body);
 
             // 2. response 보내기: 로직 모듈화 필요
@@ -116,7 +112,7 @@ public class Main2 {
                 InputStreamReader isr2 = new InputStreamReader(bis2,StandardCharsets.UTF_8);
 
                 char[] buffer2 = new char[1024];
-                len = -1;
+                int len = -1;
 
                 while((len=isr2.read(buffer2)) != -1) {
                     bsw.write(buffer2,0,len);
@@ -133,7 +129,7 @@ public class Main2 {
             InputStreamReader isr2 = new InputStreamReader(bis2,StandardCharsets.UTF_8);
 
             char[] buffer2 = new char[1024];
-            len = -1;
+            int len = -1;
 
             StringBuilder word = new StringBuilder();
 
