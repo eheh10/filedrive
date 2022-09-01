@@ -6,7 +6,7 @@ import java.util.*;
 
 public class HeaderParser {
 
-    public static Map<String,List<String>> parse(BufferedReader br, int limitLength) throws IOException {
+    public Map<String,List<String>> parse(BufferedReader br, int limitLength) throws IOException {
         if (br == null) {
             throw new RuntimeException("HeaderParser.parse().BufferedReader is null");
         }
@@ -43,7 +43,7 @@ public class HeaderParser {
         return Collections.unmodifiableMap(fields);
     }
 
-    public static Map<String,List<String>> parse(BufferedReader br) throws IOException {
+    public Map<String,List<String>> parse(BufferedReader br) throws IOException {
         return parse(br, 8192);
     }
 }
