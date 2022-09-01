@@ -11,7 +11,7 @@ public class BodyParser {
 
         while(requestReader.hasMoreContent()) {
             if (body.length() > LIMIT_LENGTH) {
-                //  413 Request Entity Too Large 보내기
+                throw new RuntimeException();
             }
 
             body.append(requestReader.read());
