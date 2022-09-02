@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-class HeaderParserTest {
+class HeaderTest {
     private String fields = "Host: localhost\n" +
             "Connection: keep-alive\n" +
             "Content-Length: 116\n\n";
@@ -35,7 +35,7 @@ class HeaderParserTest {
         int limitLength = 8192;
 
         //when
-        Map<String,List<String>> actual = HeaderParser.parse(br,limitLength);
+        Header actual = Header.parse(br,limitLength);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -53,7 +53,7 @@ class HeaderParserTest {
         int limitLength = 8192;
 
         //when
-        Map<String,List<String>> actual = HeaderParser.parse(br,limitLength);
+        Header actual = Header.parse(br,limitLength);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -63,68 +63,52 @@ class HeaderParserTest {
     @DisplayName("BufferedReader 가 null 일때 런타임에러 발생 테스트")
     void testParsingWithNull() throws IOException {
         //given
-        String expected = "HeaderParser.parse().BufferedReader is null";
+        String msg = "HeaderParser.parse().BufferedReader is null";
         BufferedReader br = null;
         int limitLength = 8192;
 
-        try{
-            //when
-            Map<String,List<String>> actual = HeaderParser.parse(br,limitLength);
-        }catch (RuntimeException e){
-            //then
-            Assertions.assertThat(e.getMessage()).isEqualTo(expected);
-        }
+        Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining(msg);
     }
 
     @Test
     @DisplayName("limitLength 가 0일때 런타임에러 발생 테스트")
     void testParsingWithZeroLimitLength() throws IOException {
         //given
-        String expected = "HeaderParser.parse().limitLength must be greater than 0";
+        String msg = "HeaderParser.parse().limitLength must be greater than 0";
         BufferedReader br = getBufferedReader(fields);
         int limitLength = 0;
 
-        try{
-            //when
-            Map<String,List<String>> actual = HeaderParser.parse(br,limitLength);
-        }catch (RuntimeException e){
-            //then
-            Assertions.assertThat(e.getMessage()).isEqualTo(expected);
-        }
+        Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining(msg);
     }
 
     @Test
     @DisplayName("limitLength 가 0이하일때 런타임에러 발생 테스트")
     void testParsingWithWrongLimitLength() throws IOException {
         //given
-        String expected = "HeaderParser.parse().limitLength must be greater than 0";
+        String msg = "HeaderParser.parse().limitLength must be greater than 0";
         BufferedReader br = getBufferedReader(fields);
         int limitLength = -1;
 
-        try{
-            //when
-            Map<String,List<String>> actual = HeaderParser.parse(br,limitLength);
-        }catch (RuntimeException e){
-            //then
-            Assertions.assertThat(e.getMessage()).isEqualTo(expected);
-        }
+        Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining(msg);
     }
 
     @Test
     @DisplayName("limitLength 를 초과했을때 런타임에러 발생 테스트")
     void testParsingWithExceedingLimitLength() throws IOException {
         //given
-        String expected = "431 Request header too large";
+        String msg = "431 Request header too large";
         BufferedReader br = getBufferedReader(fields);
         int limitLength = 10;
 
-        try{
-            //when
-            Map<String,List<String>> actual = HeaderParser.parse(br,limitLength);
-        }catch (RuntimeException e){
-            //then
-            Assertions.assertThat(e.getMessage()).isEqualTo(expected);
-        }
+        Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining(msg);
     }
 
     @Test
@@ -139,7 +123,7 @@ class HeaderParserTest {
         BufferedReader br = getBufferedReader(fields);
 
         //when
-        Map<String,List<String>> actual = HeaderParser.parse(br);
+        Header actual = Header.parse(br);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
