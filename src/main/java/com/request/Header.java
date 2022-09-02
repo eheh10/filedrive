@@ -4,9 +4,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
 
-public class HeaderParser {
+public class Header {
 
-    public Map<String,List<String>> parse(BufferedReader br, int limitLength) throws IOException {
+    private final Map<String,List<String>> values;
+
+    private Header(Map<String, List<String>> values) {
+        this.values = values;
+    }
+
+    public static Header parse(BufferedReader br, int limitLength) throws IOException {
         if (br == null) {
             throw new RuntimeException("HeaderParser.parse().BufferedReader is null");
         }
@@ -40,10 +46,18 @@ public class HeaderParser {
             fields.put(filedName,values);
         }
 
-        return Collections.unmodifiableMap(fields);
+//        return new Header(Collections.unmodifiableMap(fields));
+        return new Header(fields);
     }
 
-    public Map<String,List<String>> parse(BufferedReader br) throws IOException {
+    public static Header parse(BufferedReader br) throws IOException {
         return parse(br, 8192);
+    }
+
+    public void display() {
+        for(Map.Entry<String, List<String>> entry:values.entrySet()) {
+            System.out.print(entry.getKey()+": ");
+            System.out.println(entry.getValue());
+        }
     }
 }
