@@ -1,5 +1,9 @@
 package com.request;
 
+import com.exception.InvalidValueException;
+import com.exception.NullException;
+import com.exception.StatusCode431Exception;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
@@ -14,10 +18,10 @@ public class Header {
 
     public static Header parse(BufferedReader br, int limitLength) throws IOException {
         if (br == null) {
-            throw new RuntimeException("HeaderParser.parse().BufferedReader is null");
+            throw new NullException("HeaderParser.parse().BufferedReader is null");
         }
         if (limitLength < 1) {
-            throw new RuntimeException("HeaderParser.parse().limitLength must be greater than 0");
+            throw new InvalidValueException("HeaderParser.parse().limitLength must be greater than 0");
         }
 
         Map<String,List<String>> fields = new HashMap<>();
@@ -29,7 +33,7 @@ public class Header {
             headerLength += line.length();
 
             if (headerLength > limitLength) {
-                throw new RuntimeException("431 Request header too large");
+                throw new StatusCode431Exception();
             }
 
             StringTokenizer filedTokenizer = new StringTokenizer(line,":");
