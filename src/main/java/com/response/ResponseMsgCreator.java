@@ -137,24 +137,43 @@ public class ResponseMsgCreator {
         char[] buffer2 = new char[1024];
         int len = -1;
 
-        StringBuilder word = new StringBuilder();
+        StringBuilder tmp = new StringBuilder();
+        boolean replaceMode = false;
 
         while((len=isr2.read(buffer2)) != -1) {
-            word.append(buffer2,0,len);
+            tmp.append(buffer2,0,len);
 
-            for(int startIdx=word.indexOf("{{"); startIdx > -1 ; startIdx=word.indexOf("{{")) {
-                int endIdx = word.indexOf("}}");
-
-                if (endIdx == -1) {
+            int startIdx=tmp.indexOf("{");
+            while(startIdx > -1) {
+                if (startIdx == tmp.length()-1) {
+                    replaceMode = true;
                     break;
                 }
 
-                String replace = word.substring(startIdx+2,endIdx);
-                word.replace(startIdx,endIdx+2,replaceStatus.get(replace));
+                if (tmp.charAt(startIdx+1) != '{') {
+                    replaceMode = false;
+                    break;
+                }
+
+                int endIdx = tmp.indexOf("}}", startIdx+1);
+                if (endIdx == -1) {
+                    replaceMode = true;
+                    break;
+                }
+
+                String replace = tmp.substring(startIdx+2,endIdx);
+                tmp.replace(startIdx,endIdx+2,replaceStatus.get(replace));
+
+                startIdx=tmp.indexOf("{",endIdx);
+                replaceMode = false;
             }
 
-            responseMsg.append(word);
-            word.setLength(0);
+            if (replaceMode) {
+                continue;
+            }
+
+            responseMsg.append(tmp);
+            tmp.setLength(0);
         }
 
         return responseMsg.toString();

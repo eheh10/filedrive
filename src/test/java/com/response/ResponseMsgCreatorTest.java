@@ -41,24 +41,41 @@ class ResponseMsgCreatorTest {
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
 
         int len = -1;
-        char[] buffer = new char[1024];
+        char[] buffer = new char[10];
         StringBuilder output = new StringBuilder();
         StringBuilder tmp = new StringBuilder();
+        boolean replaceMode = false;
 
         while((len=isr.read(buffer)) != -1) {
             tmp.append(buffer,0,len);
 
-            int startIdx=tmp.indexOf("{{");
+            int startIdx=tmp.indexOf("{");
             while(startIdx > -1) {
-                int endIdx = tmp.indexOf("}}");
+                if (startIdx == tmp.length()-1) {
+                    replaceMode = true;
+                    break;
+                }
+
+                if (tmp.charAt(startIdx+1) != '{') {
+                    replaceMode = false;
+                    break;
+                }
+
+                int endIdx = tmp.indexOf("}}",startIdx+1);
                 if (endIdx == -1) {
+                    replaceMode = true;
                     break;
                 }
 
                 String replace = tmp.substring(startIdx+2,endIdx);
                 tmp.replace(startIdx,endIdx+2,replaceStatus.get(replace));
 
-                startIdx=tmp.indexOf("{{",endIdx);
+                startIdx=tmp.indexOf("{",endIdx);
+                replaceMode = false;
+            }
+
+            if (replaceMode) {
+                continue;
             }
 
             output.append(tmp);
