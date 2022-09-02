@@ -1,5 +1,8 @@
 package com.request;
 
+import com.exception.InvalidValueException;
+import com.exception.NullException;
+import com.exception.StatusCode431Exception;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -68,7 +71,7 @@ class HeaderTest {
         int limitLength = 8192;
 
         Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(NullException.class)
                 .hasMessageContaining(msg);
     }
 
@@ -81,7 +84,7 @@ class HeaderTest {
         int limitLength = 0;
 
         Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(InvalidValueException.class)
                 .hasMessageContaining(msg);
     }
 
@@ -94,7 +97,7 @@ class HeaderTest {
         int limitLength = -1;
 
         Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(InvalidValueException.class)
                 .hasMessageContaining(msg);
     }
 
@@ -107,7 +110,7 @@ class HeaderTest {
         int limitLength = 10;
 
         Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(StatusCode431Exception.class)
                 .hasMessageContaining(msg);
     }
 
