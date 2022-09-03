@@ -1,9 +1,9 @@
 package com.response;
 
-import com.request.BodyParser;
-import com.request.HeaderParser;
-import com.request.RequestReader;
-import com.request.StartLineParser;
+import com.request.Body;
+import com.request.Header;
+import com.request.BodyGenerator;
+import com.request.StartLine;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -53,7 +53,7 @@ public class ResponseMsgCreator {
         String startLine = br.readLine();
         System.out.println(startLine);
         try {
-            StartLineParser startLineParser = StartLineParser.of(startLine);
+            StartLine startLineParser = StartLine.parse(startLine);
         }catch (RuntimeException e) {
             statusCode = "400";
             statusMsg = "Bad Request";
@@ -68,12 +68,8 @@ public class ResponseMsgCreator {
                 - 8192보다 긴 경우 431 Request header too large 응답
         */
         try {
-            HeaderParser headerParser = new HeaderParser();
-            Map<String, List<String>> headers = headerParser.parse(br,8192);
-            for(Map.Entry<String, List<String>> entry:headers.entrySet()) {
-                System.out.print(entry.getKey()+": ");
-                System.out.println(entry.getValue());
-            }
+            Header header = Header.parse(br,8192);
+            header.display();
         }catch (RuntimeException e) {
             statusCode = "431";
             statusMsg = "Request header too large";
@@ -88,9 +84,8 @@ public class ResponseMsgCreator {
                 - values 이면 Values 클래스 가공 필요
        */
         try {
-            RequestReader requestReader = new RequestReader(br);
-            BodyParser bodyParser = new BodyParser();
-            String body = bodyParser.parse(requestReader);
+            BodyGenerator bodyGenerator = new BodyGenerator(br);
+            Body body = Body.parse(bodyGenerator);
 //            System.out.println(body);
         }catch (RuntimeException e) {
             statusCode = "413";
