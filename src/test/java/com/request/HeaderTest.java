@@ -7,6 +7,8 @@ import com.field.Field;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -119,23 +121,12 @@ class HeaderTest {
                 .isInstanceOf(NullException.class);
     }
 
-    @Test
-    @DisplayName("limitLength 가 0일때 런타임에러 발생 테스트")
-    void testParsingWithZeroLimitLength() throws IOException {
-        //given
-        BufferedReader br = getBufferedReader(fields);
-        limitLength = 0;
-
-        Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
-                .isInstanceOf(NotPositiveNumberException.class);
-    }
-
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = {0,-1})
     @DisplayName("limitLength 가 0이하일때 런타임에러 발생 테스트")
-    void testParsingWithWrongLimitLength() throws IOException {
+    void testParsingWithWrongLimitLength(int limitLength) throws IOException {
         //given
         BufferedReader br = getBufferedReader(fields);
-        limitLength = -1;
 
         Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
                 .isInstanceOf(NotPositiveNumberException.class);
