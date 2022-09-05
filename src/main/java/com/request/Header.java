@@ -13,7 +13,7 @@ public class Header {
 
     private final Map<String, Field> values;
 
-    private Header(Map<String, Field> values) {
+    public Header(Map<String, Field> values) {
         this.values = values;
     }
 
@@ -66,5 +66,20 @@ public class Header {
             System.out.print(entry.getKey()+": ");
             System.out.println(entry.getValue().toString());
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Header header = (Header) o;
+
+        return Objects.equals(values, header.values);
+    }
+
+    @Override
+    public int hashCode() {
+        return values != null ? values.hashCode() : 0;
     }
 }
