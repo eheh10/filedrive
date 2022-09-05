@@ -26,6 +26,10 @@ public class BodyLineGenerator {
         this.limitLength = limitLength;
     }
 
+    public BodyLineGenerator(BufferedReader br) {
+        this(br,2_097_152);
+    }
+
     public boolean hasMoreLine() throws IOException {
         return br.ready();
     }
