@@ -1,6 +1,6 @@
 package com.request;
 
-import com.exception.InvalidValueException;
+import com.exception.NotPositiveNumberException;
 import com.exception.NullException;
 import com.exception.StatusCode431Exception;
 import com.field.Field;
@@ -22,7 +22,7 @@ public class Header {
             throw new NullException("HeaderParser.parse().BufferedReader is null");
         }
         if (limitLength < 1) {
-            throw new InvalidValueException("HeaderParser.parse().limitLength must be greater than 0");
+            throw new NotPositiveNumberException("HeaderParser.parse().limitLength must be positive number");
         }
 
         Map<String,Field> fields = new HashMap<>();
