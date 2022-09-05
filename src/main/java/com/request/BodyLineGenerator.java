@@ -15,11 +15,11 @@ public class BodyLineGenerator {
 
     public BodyLineGenerator(BufferedReader br, int limitLength) {
         if (br==null) {
-            throw new NullException("RequestReader.BufferedReader is null");
+            throw new NullException("BodyLineGenerator.BufferedReader is null");
         }
 
         if (limitLength <= 0) {
-            throw new NotPositiveNumberException("RequestReader.limitLength must be positive number");
+            throw new NotPositiveNumberException("BodyLineGenerator.limitLength must be positive number");
         }
 
         this.br = br;
