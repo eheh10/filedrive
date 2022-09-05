@@ -1,8 +1,7 @@
 package com.response;
 
-import com.request.Body;
+import com.request.BodyLineGenerator;
 import com.request.Header;
-import com.request.BodyGenerator;
 import com.request.StartLine;
 
 import java.io.*;
@@ -84,9 +83,14 @@ public class ResponseMsgCreator {
                 - values 이면 Values 클래스 가공 필요
        */
         try {
-            BodyGenerator bodyGenerator = new BodyGenerator(br);
-            Body body = Body.parse(bodyGenerator);
-//            System.out.println(body);
+            BodyLineGenerator bodyLineGenerator = new BodyLineGenerator(br,2_097_152);
+            StringBuilder body = new StringBuilder();
+
+            while(bodyLineGenerator.hasMoreLine()) {
+                body.append(bodyLineGenerator.generate());
+            }
+
+            System.out.println(body);
         }catch (RuntimeException e) {
             statusCode = "413";
             statusMsg = "Request Entity Too Large";
@@ -95,9 +99,9 @@ public class ResponseMsgCreator {
         // 2. response 보내기: 로직 모듈화 필요
         StringBuilder responseMsg = new StringBuilder();
 
-        Map<String,String> replaceStatus = new HashMap<>();
-        replaceStatus.put("statusCode",statusCode);
-        replaceStatus.put("statusMsg",statusMsg);
+        Map<String,String> replaceTxt = new HashMap<>();
+        replaceTxt.put("statusCode",statusCode);
+        replaceTxt.put("statusMsg",statusMsg);
 
         responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
                 .append("Content-Type: text/html;charset=UTF-8\n\n");
