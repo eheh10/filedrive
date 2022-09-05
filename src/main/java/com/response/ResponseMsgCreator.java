@@ -84,13 +84,10 @@ public class ResponseMsgCreator {
        */
         try {
             BodyLineGenerator bodyLineGenerator = new BodyLineGenerator(br,2_097_152);
-            StringBuilder body = new StringBuilder();
 
             while(bodyLineGenerator.hasMoreLine()) {
-                body.append(bodyLineGenerator.generate());
+                System.out.print(bodyLineGenerator.generate());
             }
-
-            System.out.println(body);
         }catch (RuntimeException e) {
             statusCode = "413";
             statusMsg = "Request Entity Too Large";
