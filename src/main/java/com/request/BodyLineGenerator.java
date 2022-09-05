@@ -1,6 +1,7 @@
 package com.request;
 
 import com.exception.ExceedingLengthLimitException;
+import com.exception.NotPositiveNumberException;
 import com.exception.NullException;
 
 import java.io.BufferedReader;
@@ -9,15 +10,20 @@ import java.io.IOException;
 public class BodyLineGenerator {
     private final BufferedReader br;
     private final char[] buffer = new char[1024];
-    private int length = 0;
-    private static final int LIMIT_LENGTH = 2_097_152;
+    private int cumulativeLength = 0;
+    private final int limitLength;
 
-    public BodyLineGenerator(BufferedReader br) {
+    public BodyLineGenerator(BufferedReader br, int limitLength) {
         if (br==null) {
             throw new NullException("RequestReader.BufferedReader is null");
         }
 
+        if (limitLength <= 0) {
+            throw new NotPositiveNumberException("RequestReader.limitLength must be positive number");
+        }
+
         this.br = br;
+        this.limitLength = limitLength;
     }
 
     public boolean hasMoreLine() throws IOException {
@@ -30,9 +36,9 @@ public class BodyLineGenerator {
         }
 
         int len = br.read(buffer);
-        length += len;
+        cumulativeLength += len;
 
-        if (len > LIMIT_LENGTH) {
+        if (cumulativeLength > limitLength) {
             throw new ExceedingLengthLimitException("body exceeds length limit");
         }
 
