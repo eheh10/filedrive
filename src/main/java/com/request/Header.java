@@ -3,6 +3,7 @@ package com.request;
 import com.exception.InvalidValueException;
 import com.exception.NullException;
 import com.exception.StatusCode431Exception;
+import com.field.Field;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,9 +11,9 @@ import java.util.*;
 
 public class Header {
 
-    private final Map<String,List<String>> values;
+    private final Map<String, Field> values;
 
-    private Header(Map<String, List<String>> values) {
+    private Header(Map<String, Field> values) {
         this.values = values;
     }
 
@@ -24,7 +25,7 @@ public class Header {
             throw new InvalidValueException("HeaderParser.parse().limitLength must be greater than 0");
         }
 
-        Map<String,List<String>> fields = new HashMap<>();
+        Map<String,Field> fields = new HashMap<>();
 
         String line = "";
         int headerLength = 0;
@@ -47,11 +48,13 @@ public class Header {
                 values.add(valueTokenizer.nextToken().strip());
             }
 
-            fields.put(filedName,values);
+            Field field = new Field(filedName,values);
+
+            fields.put(filedName,field);
         }
 
-//        return new Header(Collections.unmodifiableMap(fields));
-        return new Header(fields);
+        return new Header(Collections.unmodifiableMap(fields));
+//        return new Header(fields);
     }
 
     public static Header parse(BufferedReader br) throws IOException {
@@ -59,9 +62,9 @@ public class Header {
     }
 
     public void display() {
-        for(Map.Entry<String, List<String>> entry:values.entrySet()) {
+        for(Map.Entry<String, Field> entry:values.entrySet()) {
             System.out.print(entry.getKey()+": ");
-            System.out.println(entry.getValue());
+            System.out.println(entry.getValue().toString());
         }
     }
 }
