@@ -3,7 +3,7 @@ package com.request;
 import com.exception.NotPositiveNumberException;
 import com.exception.NullException;
 import com.exception.StatusCode431Exception;
-import com.field.Field;
+import com.field.HttpHeaderField;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,38 +11,50 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-class HeaderTest {
+class HttpHeadersTest {
+    private final Class<HttpHeaders> httpHeadersClass = HttpHeaders.class;
+    private final Constructor<HttpHeaders> constructor = httpHeadersClass.getDeclaredConstructor(Map.class);
     private int limitLength = 8192;
-    private String fields = "Host: localhost\n" +
+    private static final String fields = "Host: localhost\n" +
             "Connection: keep-alive\n" +
             "Content-Length: 116\n\n";
 
-    private Header revertHeader(String fields) {
-        Map<String,Field> values = new HashMap<>();
+    HttpHeadersTest() throws NoSuchMethodException {
+        constructor.setAccessible(true);
+    }
 
-        StringTokenizer tokenizer = new StringTokenizer(fields,"\n");
-        while(tokenizer.hasMoreTokens()) {
+    private HttpHeaders revertHeader(String fields) {
+        Map<String, HttpHeaderField> values = new HashMap<>();
 
-            StringTokenizer filedTokenizer = new StringTokenizer(tokenizer.nextToken(),":");
-            String filedName = filedTokenizer.nextToken().strip().toUpperCase();
-            String filedValues = filedTokenizer.nextToken().strip();
+        try {
+            StringTokenizer tokenizer = new StringTokenizer(fields, "\n");
+            while (tokenizer.hasMoreTokens()) {
 
-            StringTokenizer valueTokenizer = new StringTokenizer(filedValues, ",");
-            List<String> fieldValues = new ArrayList<>(Math.max(10, valueTokenizer.countTokens()));
+                StringTokenizer filedTokenizer = new StringTokenizer(tokenizer.nextToken(), ":");
+                String filedName = filedTokenizer.nextToken().strip().toUpperCase();
+                String filedValues = filedTokenizer.nextToken().strip();
 
-            while (valueTokenizer.hasMoreTokens()) {
-                fieldValues.add(valueTokenizer.nextToken().strip());
+                StringTokenizer valueTokenizer = new StringTokenizer(filedValues, ",");
+                List<String> fieldValues = new ArrayList<>(Math.max(10, valueTokenizer.countTokens()));
+
+                while (valueTokenizer.hasMoreTokens()) {
+                    fieldValues.add(valueTokenizer.nextToken().strip());
+                }
+
+                HttpHeaderField httpHeaderField = new HttpHeaderField(filedName, fieldValues);
+
+                values.put(filedName, httpHeaderField);
             }
 
-            Field field = new Field(filedName, fieldValues);
-
-            values.put(filedName, field);
+            return constructor.newInstance(Collections.unmodifiableMap(values));
+        }catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-
-        return new Header(Collections.unmodifiableMap(values));
     }
 
     private BufferedReader getBufferedReader(String str) {
@@ -53,30 +65,16 @@ class HeaderTest {
         return br;
     }
 
-    @Test
-    @DisplayName("value가 한개인 필드 정상 파싱 테스트")
-    void testParsingHeaderWithNormalCase1() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = {"Host: localhost\n\n",fields})
+    @DisplayName("필드 정상 파싱 테스트")
+    void testParsingHeaderWithNormalCase1(String field) throws IOException, NoSuchMethodException {
         //given
-        String field = "Host: localhost\n\n";
-        Header expected = revertHeader(field);
+        HttpHeaders expected = revertHeader(field);
         BufferedReader br = getBufferedReader(field);
 
         //when
-        Header actual = Header.parse(br,limitLength);
-
-        //then
-        Assertions.assertThat(actual).isEqualTo(expected);
-    }
-
-    @Test
-    @DisplayName("value가 여러개인 필드 정상 파싱 테스트")
-    void testParsingHeaderWithNormalCase2() throws IOException {
-        //given
-        Header expected = revertHeader(fields);
-        BufferedReader br = getBufferedReader(fields);
-
-        //when
-        Header actual = Header.parse(br,limitLength);
+        HttpHeaders actual = HttpHeaders.parse(br,limitLength);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -84,14 +82,14 @@ class HeaderTest {
 
     @Test
     @DisplayName("field value 가 여러개일때 정상 파싱 테스트")
-    void testParsingHeaderWithValues() throws IOException {
+    void testParsingHeaderWithValues() throws IOException, NoSuchMethodException {
         //given
         String field = "Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7\n\n";
-        Header expected = revertHeader(field);
+        HttpHeaders expected = revertHeader(field);
         BufferedReader br = getBufferedReader(field);
 
         //when
-        Header actual = Header.parse(br,limitLength);
+        HttpHeaders actual = HttpHeaders.parse(br,limitLength);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -99,13 +97,13 @@ class HeaderTest {
 
     @Test
     @DisplayName("default limitLength 정상 파싱 테스트")
-    void testParsingWithDefaultLimitLength() throws IOException {
+    void testParsingWithDefaultLimitLength() throws IOException, NoSuchMethodException {
         //given
-        Header expected = revertHeader(fields);
+        HttpHeaders expected = revertHeader(fields);
         BufferedReader br = getBufferedReader(fields);
 
         //when
-        Header actual = Header.parse(br);
+        HttpHeaders actual = HttpHeaders.parse(br);
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
@@ -117,7 +115,7 @@ class HeaderTest {
         //given
         BufferedReader br = null;
 
-        Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
+        Assertions.assertThatThrownBy(()-> HttpHeaders.parse(br,limitLength))
                 .isInstanceOf(NullException.class);
     }
 
@@ -128,7 +126,7 @@ class HeaderTest {
         //given
         BufferedReader br = getBufferedReader(fields);
 
-        Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
+        Assertions.assertThatThrownBy(()-> HttpHeaders.parse(br,limitLength))
                 .isInstanceOf(NotPositiveNumberException.class);
     }
 
@@ -139,7 +137,7 @@ class HeaderTest {
         BufferedReader br = getBufferedReader(fields);
         limitLength = 10;
 
-        Assertions.assertThatThrownBy(()->Header.parse(br,limitLength))
+        Assertions.assertThatThrownBy(()-> HttpHeaders.parse(br,limitLength))
                 .isInstanceOf(StatusCode431Exception.class);
     }
 
