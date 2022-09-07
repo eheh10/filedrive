@@ -1,7 +1,5 @@
 package com.request;
 
-import com.exception.ExceedingLengthLimitException;
-import com.exception.NotPositiveNumberException;
 import com.exception.NullException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -114,30 +112,6 @@ class BodyLineGeneratorTest {
 
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {0,-1})
-    @DisplayName("limitLength 가 0이하일때 인스턴스 생성한 경우 예외처리 테스트")
-    void testConstructorNotPositiveNumberException(int limitLength) {
-        //given
-        String expected = "Hello world";
-        BufferedReader br = getBufferedReader(expected);
 
-        Assertions.assertThatThrownBy(()->new BodyLineGenerator(br,limitLength))
-                .isInstanceOf(NotPositiveNumberException.class);
-
-    }
-
-    @Test
-    @DisplayName("바디 길이 초과 예외처리 테스트")
-    void testExceedingLengthLimitException() {
-        //given
-        String expected = "1234512345";
-        BufferedReader br = getBufferedReader(expected);
-        BodyLineGenerator bodyLineGenerator = new BodyLineGenerator(br,5);
-
-        Assertions.assertThatThrownBy(()->bodyLineGenerator.generate())
-                .isInstanceOf(ExceedingLengthLimitException.class);
-
-    }
 
 }
