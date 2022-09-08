@@ -1,8 +1,8 @@
 package com.request;
 
+import com.exception.ExceedingLengthLimitException;
 import com.exception.NotPositiveNumberException;
 import com.exception.NullException;
-import com.exception.StatusCode431Exception;
 import com.field.HttpHeaderField;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -138,7 +138,7 @@ class HttpHeadersTest {
         limitLength = 10;
 
         Assertions.assertThatThrownBy(()-> HttpHeaders.parse(br,limitLength))
-                .isInstanceOf(StatusCode431Exception.class);
+                .isInstanceOf(ExceedingLengthLimitException.class);
     }
 
 }

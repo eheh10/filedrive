@@ -1,13 +1,16 @@
 package com.request;
 
+import com.exception.ExceedingLengthLimitException;
 import com.exception.NotPositiveNumberException;
 import com.exception.NullException;
-import com.exception.StatusCode431Exception;
 import com.field.HttpHeaderField;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class HttpHeaders {
 
@@ -34,7 +37,7 @@ public class HttpHeaders {
             headerLength += line.length();
 
             if (headerLength > limitLength) {
-                throw new StatusCode431Exception();
+                throw new ExceedingLengthLimitException("Headers 가 제한길이를 초과");
             }
 
             HttpHeaderField httpHeaderField = HttpHeaderField.of(line);
