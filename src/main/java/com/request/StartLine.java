@@ -1,54 +1,17 @@
 package com.request;
 
-import com.method.*;
-
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 public class StartLine {
 
-    public enum Method {
-        GET(new GetMethod()),
-        POST(new PostMethod()),
-        PUT(new PutMethod()),
-        DELETE(new DeleteMethod());
-
-        private final HttpMethod httpMethod;
-        private static final Set<String> methods = createValues();
-
-        private static Set<String> createValues() {
-            Set<String> methods = new HashSet<>();
-
-            for(Method h:values()) {
-                methods.add(h.name());
-            }
-
-            return methods;
-        }
-
-        Method(HttpMethod httpMethod) {
-            this.httpMethod = httpMethod;
-        }
-
-        public HttpMethod getHttpMethod() {
-            return httpMethod;
-        }
-
-        public static boolean contains(String method) {
-            return methods.contains(method);
-        }
-
-    }
-
-    private final Method httpMethod;
+    private final String method;
     private final String path;
     private final String version;
 
 
-    private StartLine(Method httpMethod, String path, String version) {
-        if (httpMethod==null) {
+    private StartLine(String method, String path, String version) {
+        if (method==null) {
             throw new RuntimeException("StarLineParser.httpMethod is null");
         }
         if (path==null) {
@@ -58,7 +21,7 @@ public class StartLine {
             throw new RuntimeException("StarLineParser.version is null");
         }
 
-        this.httpMethod = httpMethod;
+        this.method = method;
         this.path = path;
         this.version = version;
     }
@@ -74,17 +37,16 @@ public class StartLine {
         }
 
         String method = tokenizer.nextToken();
-        Method httpMethod = Method.valueOf(method);
-
-        if (!Method.contains(method)) {
-            throw new RuntimeException();
-        }
 
         String path = tokenizer.nextToken();
 
         if(!Objects.equals(path.charAt(0),'/')) {
             throw new RuntimeException();
         }
+        if (Objects.equals(path,"/")) {
+            path = "/default";
+        }
+        path = path.substring(1);
 
         if (Objects.equals(method,"GET")) {
             path = path.split("\\?")[0];
@@ -96,11 +58,11 @@ public class StartLine {
             throw new RuntimeException();
         }
 
-        return new StartLine(httpMethod,path,version);
+        return new StartLine(method,path,version);
     }
 
-    public Method getMethod() {
-        return httpMethod;
+    public String getMethod() {
+        return method;
     }
 
     public String getPath() {
