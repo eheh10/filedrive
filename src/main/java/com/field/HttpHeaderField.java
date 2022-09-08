@@ -26,8 +26,8 @@ public class HttpHeaderField {
             throw new RuntimeException();
         }
 
-        StringTokenizer filedTokenizer = new StringTokenizer(fieldLine,":");
-        if (filedTokenizer.countTokens() != 2) {
+        StringTokenizer filedTokenizer = new StringTokenizer(fieldLine,":"+" ");
+        if (filedTokenizer.countTokens() < 2) {
             throw new RuntimeException();
         }
 
