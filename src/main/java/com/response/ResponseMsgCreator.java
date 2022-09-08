@@ -96,15 +96,6 @@ public class ResponseMsgCreator {
         }
 
         // 2. response 보내기: 로직 모듈화 필요
-        StringBuilder responseMsg = new StringBuilder();
-
-        Map<String,String> replaceTxt = new HashMap<>();
-        replaceTxt.put("statusCode",statusCode);
-        replaceTxt.put("statusMsg",statusMsg);
-
-        responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
-                .append("Content-Type: text/html;charset=UTF-8\n\n");
-
         /*
             2-1. request 처리를 통해 response 메시지 각 구성요소(StartLine,Header,Body) 얻기
                 - Request 객체를 받아서 각 구성요소를 가공하는 클래스 필요
@@ -116,17 +107,27 @@ public class ResponseMsgCreator {
         ResponseBodyGenerator bodyGenerator = new ResponseBodyGenerator(startLineParser,httpHeaders,bodyLineGenerator);
         String responseBody = "";
         try{
-            responseBody =bodyGenerator.generate();
+            responseBody = bodyGenerator.generate();
         }catch (RuntimeException e) {
+            e.printStackTrace();
             statusCode = "500";
             statusMsg = "Server Error";
         }
+
+        StringBuilder responseMsg = new StringBuilder();
+
+        responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
+                .append("Content-Type: text/html;charset=UTF-8\n\n");
 
         if (Objects.equals(statusCode,"200")) {
             responseMsg.append(responseBody);
 
             return responseMsg.toString();
         }
+
+        Map<String,String> replaceTxt = new HashMap<>();
+        replaceTxt.put("statusCode",statusCode);
+        replaceTxt.put("statusMsg",statusMsg);
 
         InputStream is2 = new FileInputStream(Paths.get("src","main","resources","response","error.html").toString());
         BufferedInputStream bis2 = new BufferedInputStream(is2,8192);
