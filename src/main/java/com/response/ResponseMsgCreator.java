@@ -114,16 +114,9 @@ public class ResponseMsgCreator {
         */
 
         if (Objects.equals(statusCode,"200")) {
-            InputStream is2 = new FileInputStream(Paths.get("src","main","resources","response","hello.html").toString());
-            BufferedInputStream bis2 = new BufferedInputStream(is2,8192);
-            InputStreamReader isr2 = new InputStreamReader(bis2, StandardCharsets.UTF_8);
-
-            char[] buffer2 = new char[1024];
-            int len = -1;
-
-            while((len=isr2.read(buffer2)) != -1) {
-                responseMsg.append(buffer2,0,len);
-            }
+            ResponseBodyGenerator bodyGenerator = new ResponseBodyGenerator(startLineParser,httpHeaders,bodyLineGenerator);
+            String responseBody = bodyGenerator.generate();
+            responseMsg.append(responseBody);
 
             return responseMsg.toString();
         }
