@@ -1,6 +1,7 @@
 package com.response;
 
 import com.api.HttpApi;
+import com.exception.NotFoundHttpMethod;
 import com.path.HttpRequestPaths;
 import com.request.BodyLineGenerator;
 import com.request.HttpHeaders;
@@ -34,6 +35,6 @@ public class ResponseBodyGenerator {
             return httpApi.post(bodyLineGenerator);
         }
 
-        throw new RuntimeException();
+        throw new NotFoundHttpMethod("지원하지 않는 Method");
     }
 }
