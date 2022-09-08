@@ -176,7 +176,7 @@ class StartLineTest {
 
         //when
         StartLine startLine = StartLine.parse(request);
-        String actual = startLine.getMethod().name();
+        String actual = startLine.getMethod();
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
