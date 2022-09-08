@@ -1,7 +1,7 @@
 package com.response;
 
 import com.request.BodyLineGenerator;
-import com.request.Header;
+import com.request.HttpHeaders;
 import com.request.StartLine;
 
 import java.io.*;
@@ -51,8 +51,10 @@ public class ResponseMsgCreator {
 
         String startLine = br.readLine();
         System.out.println(startLine);
+
+        StartLine startLineParser = null;
         try {
-            StartLine startLineParser = StartLine.parse(startLine);
+            startLineParser = StartLine.parse(startLine);
         }catch (RuntimeException e) {
             statusCode = "400";
             statusMsg = "Bad Request";
@@ -66,9 +68,10 @@ public class ResponseMsgCreator {
                 - HTTP Header 에 길이 제한 스펙은 없지만 자체적으로 8192로 길이 제한
                 - 8192보다 긴 경우 431 Request header too large 응답
         */
+        HttpHeaders httpHeaders = null;
         try {
-            Header header = Header.parse(br,8192);
-            header.display();
+            httpHeaders = HttpHeaders.parse(br,8192);
+            httpHeaders.display();
         }catch (RuntimeException e) {
             statusCode = "431";
             statusMsg = "Request header too large";
@@ -82,9 +85,8 @@ public class ResponseMsgCreator {
                 - 2MB 이상이면 413 Request Entity Too Large 응답
                 - values 이면 Values 클래스 가공 필요
        */
+        BodyLineGenerator bodyLineGenerator = new BodyLineGenerator(br);
         try {
-            BodyLineGenerator bodyLineGenerator = new BodyLineGenerator(br,2_097_152);
-
             while(bodyLineGenerator.hasMoreLine()) {
                 System.out.print(bodyLineGenerator.generate());
             }
