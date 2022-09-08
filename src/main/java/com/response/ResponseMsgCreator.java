@@ -113,9 +113,16 @@ public class ResponseMsgCreator {
                 - body 길이는 2,097,152(2MB)로 길이 제한
         */
 
+        ResponseBodyGenerator bodyGenerator = new ResponseBodyGenerator(startLineParser,httpHeaders,bodyLineGenerator);
+        String responseBody = "";
+        try{
+            responseBody =bodyGenerator.generate();
+        }catch (RuntimeException e) {
+            statusCode = "500";
+            statusMsg = "Server Error";
+        }
+
         if (Objects.equals(statusCode,"200")) {
-            ResponseBodyGenerator bodyGenerator = new ResponseBodyGenerator(startLineParser,httpHeaders,bodyLineGenerator);
-            String responseBody = bodyGenerator.generate();
             responseMsg.append(responseBody);
 
             return responseMsg.toString();
@@ -153,7 +160,7 @@ public class ResponseMsgCreator {
                 }
 
                 String replace = tmp.substring(startIdx+2,endIdx);
-                tmp.replace(startIdx,endIdx+2,replaceStatus.get(replace));
+                tmp.replace(startIdx,endIdx+2,replaceTxt.get(replace));
 
                 startIdx=tmp.indexOf("{",endIdx);
                 replaceMode = false;
