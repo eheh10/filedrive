@@ -1,18 +1,21 @@
 package com.request;
 
+import com.method.HttpRequestMethod;
+import com.path.HttpRequestPath;
+
 import java.util.Objects;
 import java.util.StringTokenizer;
 
 public class StartLine {
 
-    private final String method;
-    private final String path;
+    private final HttpRequestMethod method;
+    private final HttpRequestPath path;
     private final String version;
 
 
-    private StartLine(String method, String path, String version) {
+    private StartLine(HttpRequestMethod method, HttpRequestPath path, String version) {
         if (method==null) {
-            throw new RuntimeException("StarLineParser.httpMethod is null");
+            throw new RuntimeException("StarLineParser.HttpRequestMethod is null");
         }
         if (path==null) {
             throw new RuntimeException("StarLineParser.path is null");
@@ -36,21 +39,19 @@ public class StartLine {
             throw new RuntimeException();
         }
 
-        String method = tokenizer.nextToken();
+        HttpRequestMethod method = HttpRequestMethod.valueOf(tokenizer.nextToken());
 
-        String path = tokenizer.nextToken();
+        String pathText = tokenizer.nextToken();
 
-        if(!Objects.equals(path.charAt(0),'/')) {
+        if(!Objects.equals(pathText.charAt(0),'/')) {
             throw new RuntimeException();
         }
-        if (Objects.equals(path,"/")) {
-            path = "/default";
-        }
-        path = path.substring(1);
 
         if (Objects.equals(method,"GET")) {
-            path = path.split("\\?")[0];
+            pathText = pathText.split("\\?")[0];
         }
+
+        HttpRequestPath path = HttpRequestPath.of(pathText);
 
         String version = tokenizer.nextToken();
 
@@ -61,11 +62,11 @@ public class StartLine {
         return new StartLine(method,path,version);
     }
 
-    public String getMethod() {
+    public HttpRequestMethod getMethod() {
         return method;
     }
 
-    public String getPath() {
+    public HttpRequestPath getPath() {
         return path;
     }
 
