@@ -1,5 +1,6 @@
 package com.main;
 
+import com.generator.InputStreamTextGenerator;
 import com.response.ResponseMsgCreator;
 
 import java.io.BufferedOutputStream;
@@ -18,12 +19,10 @@ public class Main2 {
         while(true) {
             Socket socket = serverSocket.accept();
 
-            ResponseMsgCreator response = ResponseMsgCreator.of(socket.getInputStream());
-            if (response == null) {
-                continue;
-            }
+            InputStreamTextGenerator generator = InputStreamTextGenerator.of(socket.getInputStream());
+            ResponseMsgCreator response = new ResponseMsgCreator();
 
-            String responseMsg = response.create();
+            String responseMsg = response.create(generator);
             if (responseMsg == null) {
                 continue;
             }
