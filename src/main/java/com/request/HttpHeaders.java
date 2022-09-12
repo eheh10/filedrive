@@ -4,8 +4,8 @@ import com.exception.ExceedingLengthLimitException;
 import com.exception.NotPositiveNumberException;
 import com.exception.NullException;
 import com.field.HttpHeaderField;
+import com.generator.InputStreamTextGenerator;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,10 +20,17 @@ public class HttpHeaders {
         this.values = Collections.unmodifiableMap(values);
     }
 
-    public static HttpHeaders parse(BufferedReader br, int limitLength) throws IOException {
-        if (br == null) {
-            throw new NullException("HeaderParser.parse().BufferedReader is null");
+    /**
+    * limitLength 쓰임
+     * 1. 유효성 검사 - 1이상 값인지 확인
+     * 2. 누적값 계산
+     * 3. 예외 발생
+    * */
+    public static HttpHeaders parse(InputStreamTextGenerator generator, int limitLength) throws IOException {
+        if (generator == null) {
+            throw new NullException("HeaderParser.parse().TextGenerator is null");
         }
+        // int 의 사용성을 제한 필요
         if (limitLength < 1) {
             throw new NotPositiveNumberException("HeaderParser.parse().limitLength must be positive number");
         }
@@ -33,7 +40,7 @@ public class HttpHeaders {
         String line = "";
         int headerLength = 0;
 
-        while(!(line=br.readLine()).isEmpty()) {
+        while(!(line=generator.generateLine()).isEmpty()) {
             headerLength += line.length();
 
             if (headerLength > limitLength) {
@@ -48,8 +55,12 @@ public class HttpHeaders {
         return new HttpHeaders(Collections.unmodifiableMap(fields));
     }
 
-    public static HttpHeaders parse(BufferedReader br) throws IOException {
-        return parse(br, 8192);
+    public static HttpHeaders parse(InputStreamTextGenerator generator) throws IOException {
+        return parse(generator, 8192);
+    }
+
+    public static HttpHeaders empty() {
+        return new HttpHeaders(Collections.emptyMap());
     }
 
     public void display() {
