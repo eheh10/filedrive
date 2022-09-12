@@ -1,40 +1,29 @@
 package com.response;
 
-import com.request.BodyLineGenerator;
+import com.api.HttpRequestHandler;
+import com.api.HttpRequestHandlers;
+import com.exception.NotFoundHttpMethod;
+import com.exception.NotFoundPage;
+import com.generator.InputStreamTextGenerator;
+import com.method.HttpRequestMethod;
+import com.path.HttpRequestPath;
 import com.request.HttpHeaders;
 import com.request.StartLine;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public class ResponseMsgCreator {
-
+    private static final HttpRequestHandlers HANDLERS = new HttpRequestHandlers();
     private String statusCode = "200";
     private String statusMsg = "OK";
-    private final BufferedReader br;
 
-    private ResponseMsgCreator(BufferedReader br) {
-        if (br == null) {
-            throw new RuntimeException();
-        }
-        this.br = br;
-    }
-
-    public static ResponseMsgCreator of(InputStream is) {
-        if (is == null) {
-            return null;
-        }
-
-        BufferedInputStream bis = new BufferedInputStream(is,8192);
-        InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
-        BufferedReader br = new BufferedReader(isr,8192);
-
-        return new ResponseMsgCreator(br);
-    }
-
-    public String create() throws IOException {
+    public String create(InputStreamTextGenerator generator) throws IOException {
 
         // 1. request 받기: 로직 모듈화 필요
         // request 의 구성요소를 하나로 묶기 위해 Request 클래스화 필요 - method, path, header, body, values 를 멤버변수로
@@ -45,21 +34,22 @@ public class ResponseMsgCreator {
                 - method 는 enum 으로 처리하여 메서드에 해당하는 처리클래스와 바인딩 (각 메서드 처리 클래스 필요)
                 - GET 인 경우 values 가공 필요 (Values 클래스화 필요)
         */
-        if (!br.ready()) {
+        if (!generator.hasMoreText()) {
             return null;
         }
 
-        String startLine = br.readLine();
-        System.out.println(startLine);
+        String startLineText = generator.generateLine();
+        System.out.println(startLineText);
 
-        StartLine startLineParser = null;
-        try {
-            startLineParser = StartLine.parse(startLine);
-        }catch (RuntimeException e) {
+        Optional<StartLine> startLineParser = getStartLine(startLineText);
+        if (startLineParser.isEmpty()) {
             statusCode = "400";
             statusMsg = "Bad Request";
+            //바로 응답
+            return null;
         }
 
+        StartLine startLine = startLineParser.get();
 
         /*
             1-2. Header 가공
@@ -70,9 +60,10 @@ public class ResponseMsgCreator {
         */
         HttpHeaders httpHeaders = null;
         try {
-            httpHeaders = HttpHeaders.parse(br,8192);
-            httpHeaders.display();
+            httpHeaders = HttpHeaders.parse(generator,8192);
+//            httpHeaders.display();
         }catch (RuntimeException e) {
+            e.printStackTrace();
             statusCode = "431";
             statusMsg = "Request header too large";
         }
@@ -85,11 +76,11 @@ public class ResponseMsgCreator {
                 - 2MB 이상이면 413 Request Entity Too Large 응답
                 - values 이면 Values 클래스 가공 필요
        */
-        BodyLineGenerator bodyLineGenerator = new BodyLineGenerator(br);
+//        BodyLineGenerator bodyLineGenerator = new BodyLineGenerator(generator);
         try {
-            while(bodyLineGenerator.hasMoreLine()) {
-                System.out.print(bodyLineGenerator.generate());
-            }
+//            while(bodyLineGenerator.hasMoreLine()) {
+//                System.out.print(bodyLineGenerator.generate());
+//            }
         }catch (RuntimeException e) {
             statusCode = "413";
             statusMsg = "Request Entity Too Large";
@@ -104,11 +95,21 @@ public class ResponseMsgCreator {
                 - body 길이는 2,097,152(2MB)로 길이 제한
         */
 
-        ResponseBodyGenerator bodyGenerator = new ResponseBodyGenerator(startLineParser,httpHeaders,bodyLineGenerator);
         String responseBody = "";
+
+        HttpRequestPath path = startLine.getPath();
+        HttpRequestMethod method = startLine.getMethod();
+
         try{
-            responseBody = bodyGenerator.generate();
-        }catch (RuntimeException e) {
+            HttpRequestHandler httpRequestHandler = HANDLERS.find(path,method);
+            responseBody = httpRequestHandler.handle(httpHeaders,generator);
+        } catch (NotFoundHttpMethod e) {
+            statusCode = "404";
+            statusMsg = "Not Found";
+        } catch (NotFoundPage e) {
+            statusCode = "404";
+            statusMsg = "Not Found";
+        } catch (RuntimeException e) { //각 에러별로 처리
             e.printStackTrace();
             statusCode = "500";
             statusMsg = "Server Error";
