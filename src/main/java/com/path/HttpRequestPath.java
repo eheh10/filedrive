@@ -14,11 +14,15 @@ public class HttpRequestPath {
             throw new NullException();
         }
 
-        this.value = value;
+        this.value = value.normalize();
     }
 
     public static HttpRequestPath of(String path) {
-        Path value = Paths.get(path).normalize();
+        if (path == null) {
+            throw new NullException();
+        }
+
+        Path value = Paths.get(path);
         return new HttpRequestPath(value);
     }
 
@@ -35,6 +39,6 @@ public class HttpRequestPath {
 
     @Override
     public int hashCode() {
-        return value != null ? value.hashCode() : 0;
+        return value.hashCode();
     }
 }
