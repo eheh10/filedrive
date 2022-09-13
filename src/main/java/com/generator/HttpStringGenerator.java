@@ -3,23 +3,23 @@ package com.generator;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
-public class InputStreamTextGenerator {
+public class HttpStringGenerator {
     private final BufferedReader br;
     private final char[] buffer = new char[1024];
 
-    public InputStreamTextGenerator(BufferedReader br) {
+    public HttpStringGenerator(BufferedReader br) {
         if (br == null){
             throw new RuntimeException();
         }
         this.br = br;
     }
 
-    public static InputStreamTextGenerator of(InputStream is) {
+    public static HttpStringGenerator of(InputStream is) {
         BufferedInputStream bis = new BufferedInputStream(is,8192);
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(isr,8192);
 
-        return new InputStreamTextGenerator(br);
+        return new HttpStringGenerator(br);
     }
 
     public boolean hasMoreText() throws IOException {
