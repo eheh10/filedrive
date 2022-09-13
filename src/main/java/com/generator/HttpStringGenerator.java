@@ -1,5 +1,8 @@
 package com.generator;
 
+import com.exception.NoMoreStringException;
+import com.exception.NullException;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
@@ -9,12 +12,16 @@ public class HttpStringGenerator {
 
     public HttpStringGenerator(BufferedReader br) {
         if (br == null){
-            throw new RuntimeException();
+            throw new NullException();
         }
         this.br = br;
     }
 
     public static HttpStringGenerator of(InputStream is) {
+        if (is == null){
+            throw new NullException();
+        }
+
         BufferedInputStream bis = new BufferedInputStream(is,8192);
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(isr,8192);
@@ -22,13 +29,13 @@ public class HttpStringGenerator {
         return new HttpStringGenerator(br);
     }
 
-    public boolean hasMoreText() throws IOException {
+    public boolean hasMoreString() throws IOException {
         return br.ready();
     }
 
     public String generate() throws IOException {
-        if (!hasMoreText()) {
-            throw new RuntimeException();
+        if (!hasMoreString()) {
+            throw new NoMoreStringException();
         }
 
         int len = br.read(buffer);
@@ -36,8 +43,8 @@ public class HttpStringGenerator {
     }
 
     public String generateLine() throws IOException {
-        if (!hasMoreText()) {
-            throw new RuntimeException();
+        if (!hasMoreString()) {
+            throw new NoMoreStringException();
         }
         return br.readLine();
     }
