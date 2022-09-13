@@ -1,7 +1,7 @@
 package com.api;
 
-import com.exception.NotFoundHttpMethod;
-import com.exception.NotFoundPage;
+import com.exception.NotAllowedHttpMethodException;
+import com.exception.NotFoundHttpPathException;
 import com.method.HttpRequestMethod;
 import com.path.HttpRequestPath;
 
@@ -16,13 +16,13 @@ public class HttpRequestHandlers {
 
     public HttpRequestHandler find(HttpRequestPath path, HttpRequestMethod method) {
         if (!VALUES.containsKey(path)) {
-            throw new NotFoundPage();
+            throw new NotFoundHttpPathException();
         }
 
         Map<HttpRequestMethod,HttpRequestHandler> methodHandler = VALUES.get(path);
 
         if (!methodHandler.containsKey(method)) {
-            throw new NotFoundHttpMethod();
+            throw new NotAllowedHttpMethodException();
         }
 
         return VALUES.get(path).get(method);
