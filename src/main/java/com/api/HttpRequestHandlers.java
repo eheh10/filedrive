@@ -2,6 +2,7 @@ package com.api;
 
 import com.exception.NotAllowedHttpMethodException;
 import com.exception.NotFoundHttpPathException;
+import com.exception.NullException;
 import com.method.HttpRequestMethod;
 import com.path.HttpRequestPath;
 
@@ -15,6 +16,10 @@ public class HttpRequestHandlers {
     );
 
     public HttpRequestHandler find(HttpRequestPath path, HttpRequestMethod method) {
+        if (path == null || method == null) {
+            throw new NullException();
+        }
+
         if (!VALUES.containsKey(path)) {
             throw new NotFoundHttpPathException();
         }
