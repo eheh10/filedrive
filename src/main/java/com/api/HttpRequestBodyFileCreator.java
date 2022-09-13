@@ -1,6 +1,7 @@
 package com.api;
 
-import com.generator.InputStreamTextGenerator;
+import com.exception.NullException;
+import com.generator.HttpStringGenerator;
 import com.request.HttpHeaders;
 
 import java.io.*;
@@ -11,7 +12,11 @@ import java.nio.file.Paths;
 
 public class HttpRequestBodyFileCreator implements HttpRequestHandler{
     @Override
-    public String handle(HttpHeaders httpHeaders, InputStreamTextGenerator generator) throws IOException {
+    public HttpStringGenerator handle(HttpHeaders httpHeaders, HttpStringGenerator generator) throws IOException {
+        if (httpHeaders == null || generator == null) {
+            throw new NullException();
+        }
+
         Path directoryPath = Paths.get(System.getProperty("user.home"),"fileDrive");
 
         if (!Files.isDirectory(directoryPath)) {
@@ -32,6 +37,9 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler{
         osw.flush();
         osw.close();
 
-        return "";
+        InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
+        HttpStringGenerator response = HttpStringGenerator.of(is);
+
+        return response;
     }
 }
