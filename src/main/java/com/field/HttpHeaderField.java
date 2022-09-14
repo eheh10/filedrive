@@ -1,5 +1,8 @@
 package com.field;
 
+import com.exception.InvalidValueException;
+import com.exception.NullException;
+
 import java.util.*;
 
 public class HttpHeaderField {
@@ -7,11 +10,8 @@ public class HttpHeaderField {
     private final List<String> values;
 
     public HttpHeaderField(String name, List<String> values) {
-        if (name == null) {
-            throw new RuntimeException();
-        }
-        if (values == null) {
-            throw new RuntimeException();
+        if (name == null || values == null) {
+            throw new NullException();
         }
         if (values.size() == 0) {
             throw new RuntimeException();
@@ -23,16 +23,16 @@ public class HttpHeaderField {
 
     public static HttpHeaderField of(String fieldLine) {
         if (fieldLine == null) {
-            throw new RuntimeException();
+            throw new NullException();
         }
 
-        StringTokenizer filedTokenizer = new StringTokenizer(fieldLine,":"+" ");
-        if (filedTokenizer.countTokens() < 2) {
-            throw new RuntimeException();
+        int delimiterIdx = fieldLine.indexOf(":");
+        if (delimiterIdx == -1) {
+            throw new InvalidValueException("HttpHeadersField 파싱 불가");
         }
 
-        String filedName = filedTokenizer.nextToken().strip().toUpperCase();
-        String filedValues = filedTokenizer.nextToken().strip();
+        String filedName = fieldLine.substring(0,delimiterIdx);
+        String filedValues = fieldLine.substring(delimiterIdx+1);
 
         StringTokenizer valueTokenizer = new StringTokenizer(filedValues,",");
         List<String> values = new ArrayList<>(Math.max(10,valueTokenizer.countTokens()));
