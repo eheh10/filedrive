@@ -23,7 +23,7 @@ public class ResponseMsgCreator {
     private String statusCode = "200";
     private String statusMsg = "OK";
 
-    public String create(InputStreamTextGenerator generator) throws IOException {
+    public String create(HttpStringGenerator generator, HttpRequestHandlers handlers) throws IOException {
 
         // 1. request 받기: 로직 모듈화 필요
         // request 의 구성요소를 하나로 묶기 위해 Request 클래스화 필요 - method, path, header, body, values 를 멤버변수로
@@ -34,7 +34,7 @@ public class ResponseMsgCreator {
                 - method 는 enum 으로 처리하여 메서드에 해당하는 처리클래스와 바인딩 (각 메서드 처리 클래스 필요)
                 - GET 인 경우 values 가공 필요 (Values 클래스화 필요)
         */
-        if (!generator.hasMoreText()) {
+        if (!generator.hasMoreString()) {
             return null;
         }
 
@@ -59,8 +59,9 @@ public class ResponseMsgCreator {
                 - 8192보다 긴 경우 431 Request header too large 응답
         */
         HttpHeaders httpHeaders = null;
+        StringLengthLimit headerLengthLimit = new StringLengthLimit(8192);
         try {
-            httpHeaders = HttpHeaders.parse(generator,8192);
+            httpHeaders = HttpHeaders.parse(generator,headerLengthLimit);
 //            httpHeaders.display();
         }catch (RuntimeException e) {
             e.printStackTrace();
@@ -95,18 +96,18 @@ public class ResponseMsgCreator {
                 - body 길이는 2,097,152(2MB)로 길이 제한
         */
 
-        String responseBody = "";
+        HttpStringGenerator responseBody = null;
 
         HttpRequestPath path = startLine.getPath();
         HttpRequestMethod method = startLine.getMethod();
 
         try{
-            HttpRequestHandler httpRequestHandler = HANDLERS.find(path,method);
+            HttpRequestHandler httpRequestHandler = handlers.find(path,method);
             responseBody = httpRequestHandler.handle(httpHeaders,generator);
-        } catch (NotFoundHttpMethod e) {
-            statusCode = "404";
-            statusMsg = "Not Found";
-        } catch (NotFoundPage e) {
+        } catch (NotAllowedHttpMethodException e) {
+            statusCode = "405";
+            statusMsg = "Method Not Allowed";
+        } catch (NotFoundHttpPathException e) {
             statusCode = "404";
             statusMsg = "Not Found";
         } catch (RuntimeException e) { //각 에러별로 처리
@@ -121,7 +122,9 @@ public class ResponseMsgCreator {
                 .append("Content-Type: text/html;charset=UTF-8\n\n");
 
         if (Objects.equals(statusCode,"200")) {
-            responseMsg.append(responseBody);
+            while (responseBody.hasMoreString()) {
+                responseMsg.append(responseBody.generate());
+            }
 
             return responseMsg.toString();
         }
@@ -138,7 +141,7 @@ public class ResponseMsgCreator {
         int len = -1;
 
         StringBuilder tmp = new StringBuilder();
-        boolean replaceMode = false;
+        boolean continueRead = false;
 
         while((len=isr2.read(buffer2)) != -1) {
             tmp.append(buffer2,0,len);
@@ -146,18 +149,18 @@ public class ResponseMsgCreator {
             int startIdx=tmp.indexOf("{");
             while(startIdx > -1) {
                 if (startIdx == tmp.length()-1) {
-                    replaceMode = true;
+                    continueRead = true;
                     break;
                 }
 
                 if (tmp.charAt(startIdx+1) != '{') {
-                    replaceMode = false;
+                    continueRead = false;
                     break;
                 }
 
                 int endIdx = tmp.indexOf("}}", startIdx+1);
                 if (endIdx == -1) {
-                    replaceMode = true;
+                    continueRead = true;
                     break;
                 }
 
@@ -165,10 +168,10 @@ public class ResponseMsgCreator {
                 tmp.replace(startIdx,endIdx+2,replaceTxt.get(replace));
 
                 startIdx=tmp.indexOf("{",endIdx);
-                replaceMode = false;
+                continueRead = false;
             }
 
-            if (replaceMode) {
+            if (continueRead) {
                 continue;
             }
 
