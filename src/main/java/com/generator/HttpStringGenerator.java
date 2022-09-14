@@ -17,6 +17,11 @@ public class HttpStringGenerator {
         this.br = br;
     }
 
+    public static HttpStringGenerator empty() {
+        InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
+        return HttpStringGenerator.of(is);
+    }
+
     public static HttpStringGenerator of(InputStream is) {
         if (is == null){
             throw new NullException();
