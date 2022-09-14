@@ -3,6 +3,7 @@ package com.api;
 import com.exception.NullException;
 import com.generator.HttpStringGenerator;
 import com.request.HttpHeaders;
+import com.request.StringLengthLimit;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class HttpRequestBodyFileCreatorTest {
-
+    private final StringLengthLimit requestBodyLengthLimit = new StringLengthLimit(2_097_152);
     @Test
     @DisplayName("파일 생성 테스트")
     void testFileCreated() throws IOException {
@@ -28,7 +29,7 @@ class HttpRequestBodyFileCreatorTest {
         HttpStringGenerator generator = HttpStringGenerator.of(is);
 
         //when
-        testHandler.handle(httpHeaders,generator);
+        testHandler.handle(httpHeaders,generator, requestBodyLengthLimit);
         Path filePath = Paths.get(System.getProperty("user.home"),"fileDrive","test.txt");
         String actual = Files.readString(filePath);
 
@@ -48,10 +49,10 @@ class HttpRequestBodyFileCreatorTest {
         HttpStringGenerator generator = HttpStringGenerator.of(is);
 
         //when
-        Assertions.assertThatThrownBy(()->testHandler.handle(null,generator))
+        Assertions.assertThatThrownBy(()->testHandler.handle(null,generator, requestBodyLengthLimit))
                 .isInstanceOf(NullException.class);
 
-        Assertions.assertThatThrownBy(()->testHandler.handle(httpHeaders,null))
+        Assertions.assertThatThrownBy(()->testHandler.handle(httpHeaders,null, requestBodyLengthLimit))
                 .isInstanceOf(NullException.class);
     }
 

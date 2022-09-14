@@ -3,6 +3,7 @@ package com.api;
 import com.exception.NullException;
 import com.generator.HttpStringGenerator;
 import com.request.HttpHeaders;
+import com.request.StringLengthLimit;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +13,7 @@ import java.nio.file.Paths;
 
 public class HttpRequestBodyFileCreator implements HttpRequestHandler{
     @Override
-    public HttpStringGenerator handle(HttpHeaders httpHeaders, HttpStringGenerator generator) throws IOException {
+    public HttpStringGenerator handle(HttpHeaders httpHeaders, HttpStringGenerator generator, StringLengthLimit requestBodyLengthLimit) throws IOException {
         if (httpHeaders == null || generator == null) {
             throw new NullException();
         }
@@ -31,7 +32,10 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler{
         BufferedWriter bw = new BufferedWriter(osw,8192);
 
         while(generator.hasMoreString()) {
-            bw.write(generator.generate());
+            String line = generator.generate();
+
+            requestBodyLengthLimit.accumulate(line);
+            bw.write(line);
         }
 
         bw.flush();
