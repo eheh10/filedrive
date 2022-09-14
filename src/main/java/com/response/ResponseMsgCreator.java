@@ -9,18 +9,16 @@ import com.path.HttpRequestPath;
 import com.request.HttpHeaders;
 import com.request.StartLine;
 import com.request.StringLengthLimit;
+import com.status.HttpStatus;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 public class ResponseMsgCreator {
-    private String statusCode = "200";
-    private String statusMsg = "OK";
 
     public String create(HttpStringGenerator generator, HttpRequestHandlers handlers) throws IOException {
 
@@ -41,9 +39,7 @@ public class ResponseMsgCreator {
 
         Optional<StartLine> startLineParser = getStartLine(startLineText);
         if (startLineParser.isEmpty()) {
-            statusCode = "400";
-            statusMsg = "Bad Request";
-            return createHttpErrorResponse();
+            return createHttpErrorResponse(HttpStatus.code400);
         }
 
         StartLine startLine = startLineParser.get();
@@ -61,18 +57,12 @@ public class ResponseMsgCreator {
             httpHeaders = HttpHeaders.parse(generator,headerLengthLimit);
 //            httpHeaders.display();
         }catch (ExceedingLengthLimitException e) {
-            statusCode = "431";
-            statusMsg = "Request header too large";
-            return createHttpErrorResponse();
+            return createHttpErrorResponse(HttpStatus.code431);
         }catch (InvalidValueException e) {
-            statusCode = "400";
-            statusMsg = "Bad Request";
-            return createHttpErrorResponse();
+            return createHttpErrorResponse(HttpStatus.code400);
         }catch (NullException | NotPositiveNumberException e) {
             e.printStackTrace();
-            statusCode = "500";
-            statusMsg = "Server Error";
-            return createHttpErrorResponse();
+            return createHttpErrorResponse(HttpStatus.code500);
         }
 
         /**
@@ -113,31 +103,19 @@ public class ResponseMsgCreator {
 
             responseBody = httpRequestHandler.handle(httpHeaders,generator,requestBodyLengthLimit);
         } catch (NotAllowedHttpMethodException e) {
-            statusCode = "405";
-            statusMsg = "Method Not Allowed";
-            return createHttpErrorResponse();
+            return createHttpErrorResponse(HttpStatus.code405);
         } catch (NotFoundHttpPathException e) {
-            statusCode = "404";
-            statusMsg = "Not Found";
-            return createHttpErrorResponse();
+            return createHttpErrorResponse(HttpStatus.code404);
         } catch (ExceedingLengthLimitException e) {
-            statusCode = "413";
-            statusMsg = "Request Entity Too Large";
-            return createHttpErrorResponse();
+            return createHttpErrorResponse(HttpStatus.code413);
         } catch (NullException e) {
             e.printStackTrace();
-            statusCode = "500";
-            statusMsg = "Server Error";
-            return createHttpErrorResponse();
-        }
-
-        if (!Objects.equals(statusCode,"200")) {
-            return createHttpErrorResponse();
+            return createHttpErrorResponse(HttpStatus.code500);
         }
 
         StringBuilder responseMsg = new StringBuilder();
 
-        responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
+        responseMsg.append("HTTP/1.1 ").append(HttpStatus.code200.code()).append(" ").append(HttpStatus.code200.message()).append("\n")
                 .append("Content-Type: text/html;charset=UTF-8\n\n");
 
         while (responseBody.hasMoreString()) {
@@ -148,8 +126,10 @@ public class ResponseMsgCreator {
 
     }
 
-    private String createHttpErrorResponse() throws IOException {
+    private String createHttpErrorResponse(HttpStatus status) throws IOException {
         StringBuilder responseMsg = new StringBuilder();
+        String statusCode = status.code();
+        String statusMsg = status.message();
 
         responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
                 .append("Content-Type: text/html;charset=UTF-8\n\n");
