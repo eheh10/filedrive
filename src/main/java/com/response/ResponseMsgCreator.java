@@ -43,8 +43,7 @@ public class ResponseMsgCreator {
         if (startLineParser.isEmpty()) {
             statusCode = "400";
             statusMsg = "Bad Request";
-            //바로 응답
-            return null;
+            return createHttpErrorResponse();
         }
 
         StartLine startLine = startLineParser.get();
@@ -64,13 +63,16 @@ public class ResponseMsgCreator {
         }catch (ExceedingLengthLimitException e) {
             statusCode = "431";
             statusMsg = "Request header too large";
+            return createHttpErrorResponse();
         }catch (InvalidValueException e) {
             statusCode = "400";
             statusMsg = "Bad Request";
+            return createHttpErrorResponse();
         }catch (NullException | NotPositiveNumberException e) {
             e.printStackTrace();
             statusCode = "500";
             statusMsg = "Server Error";
+            return createHttpErrorResponse();
         }
 
         /**
@@ -113,16 +115,24 @@ public class ResponseMsgCreator {
         } catch (NotAllowedHttpMethodException e) {
             statusCode = "405";
             statusMsg = "Method Not Allowed";
+            return createHttpErrorResponse();
         } catch (NotFoundHttpPathException e) {
             statusCode = "404";
             statusMsg = "Not Found";
+            return createHttpErrorResponse();
         } catch (ExceedingLengthLimitException e) {
             statusCode = "413";
             statusMsg = "Request Entity Too Large";
+            return createHttpErrorResponse();
         } catch (NullException e) {
             e.printStackTrace();
             statusCode = "500";
             statusMsg = "Server Error";
+            return createHttpErrorResponse();
+        }
+
+        if (!Objects.equals(statusCode,"200")) {
+            return createHttpErrorResponse();
         }
 
         StringBuilder responseMsg = new StringBuilder();
@@ -130,13 +140,19 @@ public class ResponseMsgCreator {
         responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
                 .append("Content-Type: text/html;charset=UTF-8\n\n");
 
-        if (Objects.equals(statusCode,"200")) {
-            while (responseBody.hasMoreString()) {
-                responseMsg.append(responseBody.generate());
-            }
-
-            return responseMsg.toString();
+        while (responseBody.hasMoreString()) {
+            responseMsg.append(responseBody.generate());
         }
+
+        return responseMsg.toString();
+
+    }
+
+    private String createHttpErrorResponse() throws IOException {
+        StringBuilder responseMsg = new StringBuilder();
+
+        responseMsg.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
+                .append("Content-Type: text/html;charset=UTF-8\n\n");
 
         Map<String,String> replaceTxt = new HashMap<>();
         replaceTxt.put("statusCode",statusCode);
