@@ -30,33 +30,16 @@ class HttpRequestBodyFileCreatorTest {
         //when
         testHandler.handle(httpHeaders,generator);
         Path filePath = Paths.get(System.getProperty("user.home"),"fileDrive","test.txt");
-
-        //then
-        Assertions.assertThat(filePath).exists();
-    }
-
-    @Test
-    @DisplayName("HttpStringGenerator 내용이 파일에 작성되는지 테스트")
-    void testFileContent() throws IOException {
-        //given
-        String expected = "Hello World";
-        HttpRequestBodyFileCreator testHandler = new HttpRequestBodyFileCreator();
-        HttpHeaders httpHeaders = HttpHeaders.empty();
-        InputStream is = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-        HttpStringGenerator generator = HttpStringGenerator.of(is);
-
-        //when
-        testHandler.handle(httpHeaders,generator);
-        Path filePath = Paths.get(System.getProperty("user.home"),"fileDrive","test.txt");
         String actual = Files.readString(filePath);
 
         //then
+        Assertions.assertThat(filePath).exists();
         Assertions.assertThat(actual).isEqualTo(expected);
     }
 
     @Test
     @DisplayName("HttpHeaders,HttpStringGenerator 가 null 일때 예외 발생 테스트")
-    void testHandleWithNull() throws IOException {
+    void testHandleWithNull() {
         //given
         String expected = "Hello World";
         HttpRequestBodyFileCreator testHandler = new HttpRequestBodyFileCreator();
