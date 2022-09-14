@@ -1,10 +1,8 @@
 package com.request;
 
-import com.exception.ExceedingLengthLimitException;
-import com.exception.NotPositiveNumberException;
 import com.exception.NullException;
 import com.field.HttpHeaderField;
-import com.generator.InputStreamTextGenerator;
+import com.generator.HttpStringGenerator;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -17,6 +15,10 @@ public class HttpHeaders {
     private final Map<String, HttpHeaderField> values;
 
     private HttpHeaders(Map<String, HttpHeaderField> values) {
+        if (values == null) {
+            throw new NullException();
+        }
+
         this.values = Collections.unmodifiableMap(values);
     }
 
@@ -26,26 +28,17 @@ public class HttpHeaders {
      * 2. 누적값 계산
      * 3. 예외 발생
     * */
-    public static HttpHeaders parse(InputStreamTextGenerator generator, int limitLength) throws IOException {
-        if (generator == null) {
-            throw new NullException("HeaderParser.parse().TextGenerator is null");
-        }
-        // int 의 사용성을 제한 필요
-        if (limitLength < 1) {
-            throw new NotPositiveNumberException("HeaderParser.parse().limitLength must be positive number");
+    public static HttpHeaders parse(HttpStringGenerator generator, StringLengthLimit limitLength) throws IOException {
+        if (generator == null || limitLength == null) {
+            throw new NullException();
         }
 
         Map<String, HttpHeaderField> fields = new HashMap<>();
 
         String line = "";
-        int headerLength = 0;
 
         while(!(line=generator.generateLine()).isEmpty()) {
-            headerLength += line.length();
-
-            if (headerLength > limitLength) {
-                throw new ExceedingLengthLimitException("Headers 가 제한길이를 초과");
-            }
+            limitLength.accumulate(line);
 
             HttpHeaderField httpHeaderField = HttpHeaderField.of(line);
 
@@ -55,8 +48,9 @@ public class HttpHeaders {
         return new HttpHeaders(Collections.unmodifiableMap(fields));
     }
 
-    public static HttpHeaders parse(InputStreamTextGenerator generator) throws IOException {
-        return parse(generator, 8192);
+    public static HttpHeaders parse(HttpStringGenerator generator) throws IOException {
+        StringLengthLimit lengthLimit = new StringLengthLimit(8192);
+        return parse(generator, lengthLimit);
     }
 
     public static HttpHeaders empty() {
@@ -82,6 +76,6 @@ public class HttpHeaders {
 
     @Override
     public int hashCode() {
-        return values != null ? values.hashCode() : 0;
+        return values.hashCode();
     }
 }
