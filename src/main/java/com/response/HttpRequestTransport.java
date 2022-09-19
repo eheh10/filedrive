@@ -42,7 +42,7 @@ public class HttpRequestTransport {
             startLineParser = Optional.of(StartLine.parse(startLineText));
         } catch (NotAllowedHttpMethodException e) {
             return createHttpErrorResponse(HttpStatus.code405);
-        } catch (NullException | InvalidValueException e) {
+        } catch (NullException | InvalidHttpRequestStartLineException e) {
             e.printStackTrace();
             return createHttpErrorResponse(HttpStatus.code400);
         }
