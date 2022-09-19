@@ -37,8 +37,13 @@ public class HttpRequestTransport {
         String startLineText = generator.generateLine();
         System.out.println(startLineText);
 
-        Optional<StartLine> startLineParser = getStartLine(startLineText);
-        if (startLineParser.isEmpty()) {
+        Optional<StartLine> startLineParser;
+        try {
+            startLineParser = Optional.of(StartLine.parse(startLineText));
+        } catch (NotAllowedHttpMethodException e) {
+            return createHttpErrorResponse(HttpStatus.code405);
+        } catch (NullException | InvalidValueException e) {
+            e.printStackTrace();
             return createHttpErrorResponse(HttpStatus.code400);
         }
 
