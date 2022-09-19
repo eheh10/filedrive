@@ -5,7 +5,7 @@ import com.api.HttpRequestHandlers;
 import com.generator.HttpStringGenerator;
 import com.method.HttpRequestMethod;
 import com.path.HttpRequestPath;
-import com.response.ResponseMsgCreator;
+import com.response.HttpRequestTransport;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -27,9 +27,9 @@ public class Main2 {
             Socket socket = serverSocket.accept();
 
             HttpStringGenerator generator = HttpStringGenerator.of(socket.getInputStream());
-            ResponseMsgCreator response = new ResponseMsgCreator();
+            HttpRequestTransport response = new HttpRequestTransport();
 
-            String responseMsg = response.create(generator,handlers);
+            String responseMsg = response.transport(generator,handlers);
             if (responseMsg == null) {
                 continue;
             }

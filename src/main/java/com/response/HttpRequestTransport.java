@@ -18,9 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class ResponseMsgCreator {
+public class HttpRequestTransport {
 
-    public String create(HttpStringGenerator generator, HttpRequestHandlers handlers) throws IOException {
+    public String transport(HttpStringGenerator generator, HttpRequestHandlers handlers) throws IOException {
 
         /**
          * 1. request 받기: 로직 모듈화 필요
