@@ -41,10 +41,10 @@ public class HttpRequestTransport {
         try {
             startLineParser = Optional.of(StartLine.parse(startLineText));
         } catch (NotAllowedHttpMethodException e) {
-            return createHttpErrorResponse(HttpStatus.code405);
+            return createHttpErrorResponse(HttpStatus.CODE_405);
         } catch (NullException | InvalidHttpRequestStartLineException e) {
             e.printStackTrace();
-            return createHttpErrorResponse(HttpStatus.code400);
+            return createHttpErrorResponse(HttpStatus.CODE_400);
         }
 
         StartLine startLine = startLineParser.get();
@@ -62,12 +62,12 @@ public class HttpRequestTransport {
             httpHeaders = HttpHeaders.parse(generator,headerLengthLimit);
 //            httpHeaders.display();
         }catch (ExceedingLengthLimitException e) {
-            return createHttpErrorResponse(HttpStatus.code431);
+            return createHttpErrorResponse(HttpStatus.CODE_431);
         }catch (InvalidValueException e) {
-            return createHttpErrorResponse(HttpStatus.code400);
+            return createHttpErrorResponse(HttpStatus.CODE_400);
         }catch (NullException | NotPositiveNumberException e) {
             e.printStackTrace();
-            return createHttpErrorResponse(HttpStatus.code500);
+            return createHttpErrorResponse(HttpStatus.CODE_500);
         }
 
         /**
@@ -108,19 +108,19 @@ public class HttpRequestTransport {
 
             responseBody = httpRequestHandler.handle(httpHeaders,generator,requestBodyLengthLimit);
         } catch (NotAllowedHttpMethodException e) {
-            return createHttpErrorResponse(HttpStatus.code405);
+            return createHttpErrorResponse(HttpStatus.CODE_405);
         } catch (NotFoundHttpPathException e) {
-            return createHttpErrorResponse(HttpStatus.code404);
+            return createHttpErrorResponse(HttpStatus.CODE_404);
         } catch (ExceedingLengthLimitException e) {
-            return createHttpErrorResponse(HttpStatus.code413);
+            return createHttpErrorResponse(HttpStatus.CODE_413);
         } catch (NullException e) {
             e.printStackTrace();
-            return createHttpErrorResponse(HttpStatus.code500);
+            return createHttpErrorResponse(HttpStatus.CODE_500);
         }
 
         StringBuilder responseMsg = new StringBuilder();
 
-        responseMsg.append("HTTP/1.1 ").append(HttpStatus.code200.code()).append(" ").append(HttpStatus.code200.message()).append("\n")
+        responseMsg.append("HTTP/1.1 ").append(HttpStatus.CODE_200.code()).append(" ").append(HttpStatus.CODE_200.message()).append("\n")
                 .append("Content-Type: text/html;charset=UTF-8\n\n");
 
         while (responseBody.hasMoreString()) {

@@ -1,13 +1,13 @@
 package com.status;
 
 public enum HttpStatus {
-    code200("OK"),
-    code400("Bad Request"),
-    code404("Not Found"),
-    code405("Method Not Allowed"),
-    code413("Request Entity Too Large"),
-    code431("Request header too large"),
-    code500("Server Error");
+    CODE_200("OK"),
+    CODE_400("Bad Request"),
+    CODE_404("Not Found"),
+    CODE_405("Method Not Allowed"),
+    CODE_413("Request Entity Too Large"),
+    CODE_431("Request header too large"),
+    CODE_500("Server Error");
 
     private final String message;
     HttpStatus(String message) {
