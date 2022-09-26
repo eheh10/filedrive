@@ -1,22 +1,22 @@
-package com.status;
+package com.response;
 
-public enum HttpStatus {
+public enum HttpResponseStatus {
     CODE_200("OK"),
     CODE_400("Bad Request"),
     CODE_404("Not Found"),
     CODE_405("Method Not Allowed"),
     CODE_413("Request Entity Too Large"),
-    CODE_431("Request header too large"),
+    CODE_431("Request Header Too Large"),
     CODE_500("Server Error");
 
     private final String message;
-    HttpStatus(String message) {
+    HttpResponseStatus(String message) {
 
         this.message = message;
     }
 
     public String code() {
-        return this.name().substring(4);
+        return this.name().substring(5);
     }
 
     public String message() {

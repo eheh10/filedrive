@@ -1,10 +1,10 @@
-package com.api;
+package com.request.handler;
 
 import com.exception.NotAllowedHttpMethodException;
 import com.exception.NotFoundHttpPathException;
 import com.exception.NullException;
-import com.method.HttpRequestMethod;
-import com.path.HttpRequestPath;
+import com.request.HttpRequestMethod;
+import com.request.HttpRequestPath;
 
 import java.util.HashMap;
 import java.util.Map;
