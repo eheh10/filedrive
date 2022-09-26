@@ -43,9 +43,9 @@ public class FileTemplateReplacer {
                     continue;
                 }
 
-                String replace = replaceTemplate(templateTxt,0,txtMaxLength,templateNodes);
+                String replace = replaceTemplate(templateTxt,startTemplate,endTemplate,0,txtMaxLength,templateNodes);
 
-                int nextStartIdx = templateTxt.indexOf("{");
+                int nextStartIdx = templateTxt.indexOf(startTemplate.substring(0,1));
                 if (nextStartIdx != -1) {
                     osw.write(replace.substring(0,nextStartIdx));
                     templateTxt.setLength(0);
@@ -58,7 +58,7 @@ public class FileTemplateReplacer {
                 templateTxt.setLength(0);
             }
 
-            int startIdx= findIndexOf('{',buffer);
+            int startIdx= findIndexOf(startTemplate.charAt(0),buffer);
             if (startIdx == -1) {
                 osw.write(buffer,0,len);
                 continue;
@@ -69,7 +69,7 @@ public class FileTemplateReplacer {
         }
 
         if (templateTxt.length() != 0) {
-            String replace = replaceTemplate(templateTxt,0,txtMaxLength,templateNodes);
+            String replace = replaceTemplate(templateTxt,startTemplate,endTemplate,0,txtMaxLength,templateNodes);
             osw.write(replace);
         }
 
@@ -77,28 +77,28 @@ public class FileTemplateReplacer {
         osw.close();
     }
 
-    private String replaceTemplate(StringBuilder templateTxt, int initialIdx, int max, TemplateNodes replaceTxt) {
-        int templateStartIdx = templateTxt.indexOf("{{",initialIdx);
+    private String replaceTemplate(StringBuilder templateTxt, String startTemplate, String endTemplate, int initialIdx, int max, TemplateNodes replaceTxt) {
+        int templateStartIdx = templateTxt.indexOf(startTemplate,initialIdx);
 
         if (templateStartIdx == -1) {
             return templateTxt.toString();
         }
 
-        int templateEndIdx = templateTxt.indexOf("}}",templateStartIdx+2);
+        int templateEndIdx = templateTxt.indexOf(endTemplate,templateStartIdx+startTemplate.length());
 
         if (templateEndIdx == -1) {
             return templateTxt.toString();
         }
 
-        String template = templateTxt.substring(templateStartIdx+2,templateEndIdx);
+        String template = templateTxt.substring(templateStartIdx+startTemplate.length(),templateEndIdx);
         if (template.length() > max) {
-            return replaceTemplate(templateTxt,templateEndIdx+2,max,replaceTxt);
+            return replaceTemplate(templateTxt,startTemplate,endTemplate,templateEndIdx+2,max,replaceTxt);
         }
 
         String replace = replaceTxt.replaceWithDefault(template,template);
-        templateTxt.replace(templateStartIdx,templateEndIdx+2,replace);
+        templateTxt.replace(templateStartIdx,templateEndIdx+endTemplate.length(),replace);
 
-        return replaceTemplate(templateTxt,templateStartIdx+replace.length(),max,replaceTxt);
+        return replaceTemplate(templateTxt,startTemplate,endTemplate,templateStartIdx+replace.length(),max,replaceTxt);
     }
 
     private int findIndexOf(char target, char[] buffer, int fromIdx) {
