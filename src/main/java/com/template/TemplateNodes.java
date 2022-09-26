@@ -1,6 +1,6 @@
 package com.template;
 
-import com.exception.NotFoundKeyException;
+import com.exception.NotFoundTemplateException;
 import com.exception.NullException;
 
 import java.util.*;
@@ -24,7 +24,7 @@ public class TemplateNodes {
         }
 
         if (!values.containsKey(templateTxt)) {
-            throw new NotFoundKeyException();
+            throw new NotFoundTemplateException();
         }
 
         return values.get(templateTxt);
