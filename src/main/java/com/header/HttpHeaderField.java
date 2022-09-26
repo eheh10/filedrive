@@ -1,6 +1,6 @@
-package com.field;
+package com.header;
 
-import com.exception.InvalidValueException;
+import com.exception.InvalidHttpRequestInputException;
 import com.exception.NullException;
 
 import java.util.*;
@@ -28,7 +28,7 @@ public class HttpHeaderField {
 
         int delimiterIdx = fieldLine.indexOf(":");
         if (delimiterIdx == -1) {
-            throw new InvalidValueException("HttpHeadersField 파싱 불가");
+            throw new InvalidHttpRequestInputException("Invalid HttpHeadersField");
         }
 
         String filedName = fieldLine.substring(0,delimiterIdx);
