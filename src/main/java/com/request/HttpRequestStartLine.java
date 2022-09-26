@@ -1,22 +1,20 @@
 package com.request;
 
-import com.exception.InvalidValueException;
+import com.exception.InvalidHttpRequestInputException;
 import com.exception.NotAllowedHttpMethodException;
 import com.exception.NullException;
-import com.method.HttpRequestMethod;
-import com.path.HttpRequestPath;
 
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-public class StartLine {
+public class HttpRequestStartLine {
 
     private final HttpRequestMethod method;
     private final HttpRequestPath path;
     private final String version;
 
 
-    private StartLine(HttpRequestMethod method, HttpRequestPath path, String version) {
+    private HttpRequestStartLine(HttpRequestMethod method, HttpRequestPath path, String version) {
         if (method==null) {
             throw new NullException("StarLineParser.HttpRequestMethod is null");
         }
@@ -32,14 +30,14 @@ public class StartLine {
         this.version = version;
     }
 
-    public static StartLine parse(String startLine) {
+    public static HttpRequestStartLine parse(String startLine) {
         if (startLine == null || startLine.isBlank()) {
             throw new NullException();
         }
 
         StringTokenizer tokenizer = new StringTokenizer(startLine," ");
         if (tokenizer.countTokens() != 3) {
-            throw new InvalidValueException();
+            throw new InvalidHttpRequestInputException("Invalid Http Request StartLine");
         }
 
         HttpRequestMethod method;
@@ -52,7 +50,7 @@ public class StartLine {
         String pathText = tokenizer.nextToken();
 
         if(!Objects.equals(pathText.charAt(0),'/')) {
-            throw new InvalidValueException();
+            throw new InvalidHttpRequestInputException("Invalid Path In Http Request StartLine");
         }
 
         if (Objects.equals(method,"GET")) {
@@ -64,10 +62,10 @@ public class StartLine {
         String version = tokenizer.nextToken();
 
         if(version.length() < 6 || !Objects.equals(version.substring(0,5),"HTTP/")) {
-            throw new InvalidValueException();
+            throw new InvalidHttpRequestInputException("Invalid Version In Http Request StartLine");
         }
 
-        return new StartLine(method,path,version);
+        return new HttpRequestStartLine(method,path,version);
     }
 
     public HttpRequestMethod getMethod() {
