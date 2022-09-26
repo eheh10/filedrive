@@ -1,9 +1,9 @@
-package com.api;
+package com.request.handler;
 
 import com.exception.NullException;
-import com.generator.HttpStringGenerator;
-import com.request.HttpHeaders;
-import com.request.StringLengthLimit;
+import com.HttpStreamGenerator;
+import com.header.HttpHeaders;
+import com.limiter.HttpLengthLimiter;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -11,9 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class HttpRequestBodyFileCreator implements HttpRequestHandler{
+public class HttpRequestBodyFileCreator implements HttpRequestHandler {
     @Override
-    public HttpStringGenerator handle(HttpHeaders httpHeaders, HttpStringGenerator generator, StringLengthLimit requestBodyLengthLimit) throws IOException {
+    public HttpStreamGenerator handle(HttpHeaders httpHeaders, HttpStreamGenerator generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         if (httpHeaders == null || generator == null) {
             throw new NullException();
         }
@@ -34,13 +34,13 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler{
         while(generator.hasMoreString()) {
             String line = generator.generate();
 
-            requestBodyLengthLimit.accumulate(line);
+            requestBodyLengthLimit.accumulate(line.length());
             bw.write(line);
         }
 
         bw.flush();
         bw.close();
 
-        return HttpStringGenerator.empty();
+        return HttpStreamGenerator.empty();
     }
 }
