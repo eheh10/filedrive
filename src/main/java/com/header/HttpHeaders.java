@@ -1,8 +1,8 @@
-package com.request;
+package com.header;
 
 import com.exception.NullException;
-import com.field.HttpHeaderField;
-import com.generator.HttpStringGenerator;
+import com.HttpStreamGenerator;
+import com.limiter.HttpLengthLimiter;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -28,7 +28,7 @@ public class HttpHeaders {
      * 2. 누적값 계산
      * 3. 예외 발생
     * */
-    public static HttpHeaders parse(HttpStringGenerator generator, StringLengthLimit limitLength) throws IOException {
+    public static HttpHeaders parse(HttpStreamGenerator generator, HttpLengthLimiter limitLength) throws IOException {
         if (generator == null || limitLength == null) {
             throw new NullException();
         }
@@ -38,7 +38,7 @@ public class HttpHeaders {
         String line = "";
 
         while(!(line=generator.generateLine()).isEmpty()) {
-            limitLength.accumulate(line);
+            limitLength.accumulate(line.length());
 
             HttpHeaderField httpHeaderField = HttpHeaderField.of(line);
 
@@ -48,8 +48,8 @@ public class HttpHeaders {
         return new HttpHeaders(Collections.unmodifiableMap(fields));
     }
 
-    public static HttpHeaders parse(HttpStringGenerator generator) throws IOException {
-        StringLengthLimit lengthLimit = new StringLengthLimit(8192);
+    public static HttpHeaders parse(HttpStreamGenerator generator) throws IOException {
+        HttpLengthLimiter lengthLimit = new HttpLengthLimiter(8192);
         return parse(generator, lengthLimit);
     }
 
