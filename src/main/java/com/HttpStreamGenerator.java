@@ -5,18 +5,19 @@ import com.exception.NullException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 public class HttpStreamGenerator implements Closeable{
-    private final BufferedReader br;
-    private final InputStream is;
     private final char[] buffer = new char[1024];
+    private final Queue<BufferedReader> values;
+    private BufferedReader currentBufferedReader = null;
 
-    private HttpStreamGenerator(InputStream is, BufferedReader br) {
-        if (is == null || br == null){
+    private HttpStreamGenerator(Queue<BufferedReader> values) {
+        if (values == null){
             throw new NullException();
         }
-        this.is = is;
-        this.br = br;
+        this.values = values;
     }
 
     public static HttpStreamGenerator empty() {
@@ -33,7 +34,10 @@ public class HttpStreamGenerator implements Closeable{
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(isr,8192);
 
-        return new HttpStreamGenerator(is,br);
+        Queue<BufferedReader> values = new ArrayDeque<>();
+        values.offer(br);
+
+        return new HttpStreamGenerator(values);
     }
 
     public HttpStreamGenerator sequenceOf(HttpStreamGenerator generator) {
@@ -41,15 +45,24 @@ public class HttpStreamGenerator implements Closeable{
             throw new NullException();
         }
 
-        SequenceInputStream si = new SequenceInputStream(this.is,generator.is);
-        InputStreamReader isr = new InputStreamReader(si, StandardCharsets.UTF_8);
-        BufferedReader br = new BufferedReader(isr,8192);
+        values.addAll(generator.values);
 
-        return new HttpStreamGenerator(si,br);
+        return new HttpStreamGenerator(values);
     }
 
     public boolean hasMoreString() throws IOException {
-        return br.ready();
+        if (currentBufferedReader == null) {
+            currentBufferedReader = values.poll();
+        }
+
+        while(!currentBufferedReader.ready()) {
+            if (values.size() == 0) {
+                return false;
+            }
+            currentBufferedReader = values.poll();
+        }
+
+        return true;
     }
 
     public String generate() throws IOException {
@@ -57,7 +70,7 @@ public class HttpStreamGenerator implements Closeable{
             throw new NoMoreHttpContentException();
         }
 
-        int len = br.read(buffer);
+        int len = currentBufferedReader.read(buffer);
         return new String(buffer,0,len);
     }
 
@@ -65,7 +78,7 @@ public class HttpStreamGenerator implements Closeable{
         if (!hasMoreString()) {
             throw new NoMoreHttpContentException();
         }
-        return br.readLine();
+        return currentBufferedReader.readLine();
     }
 
     @Override
