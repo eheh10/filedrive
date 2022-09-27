@@ -29,17 +29,20 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler {
         OutputStream os = new FileOutputStream(filePath.toString());
         BufferedOutputStream bos = new BufferedOutputStream(os,8192);
         OutputStreamWriter osw = new OutputStreamWriter(bos, StandardCharsets.UTF_8);
-        BufferedWriter bw = new BufferedWriter(osw,8192);
 
-        while(generator.hasMoreString()) {
-            String line = generator.generate();
+        try (BufferedWriter bw = new BufferedWriter(osw,8192);) {
 
-            requestBodyLengthLimit.accumulate(line.length());
-            bw.write(line);
+            while (generator.hasMoreString()) {
+                String line = generator.generate();
+
+                requestBodyLengthLimit.accumulate(line.length());
+                bw.write(line);
+            }
+
+            bw.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        bw.flush();
-        bw.close();
 
         return HttpStreamGenerator.empty();
     }
