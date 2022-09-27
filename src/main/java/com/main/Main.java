@@ -31,32 +31,24 @@ public class Main {
         while (true) {
             Socket socket = serverSocket.accept();
 
-            HttpStreamGenerator generator = HttpStreamGenerator.of(socket.getInputStream());
-            HttpRequestProcessor response = new HttpRequestProcessor();
-
-            HttpStreamGenerator responseGenerator = null;
-            try {
-                responseGenerator = response.process(generator, handlers, requestHeadersLengthLimit, requestBodyLengthLimit);
-            } catch (FaviconException e) {
-                continue;
-            }
-
             OutputStream os = socket.getOutputStream();
             BufferedOutputStream bos = new BufferedOutputStream(os, 8192);
 
-            try (OutputStreamWriter bsw = new OutputStreamWriter(bos, StandardCharsets.UTF_8);) {
+            HttpRequestProcessor response = new HttpRequestProcessor();
+
+            try (HttpStreamGenerator generator = HttpStreamGenerator.of(socket.getInputStream());
+                 HttpStreamGenerator responseGenerator = response.process(generator, handlers, requestHeadersLengthLimit, requestBodyLengthLimit);
+                 OutputStreamWriter bsw = new OutputStreamWriter(bos, StandardCharsets.UTF_8)) {
                 while (responseGenerator.hasMoreString()) {
-//                    String str = responseGenerator.generate();
-//                    System.out.println(str);
                     bsw.write(responseGenerator.generate());
                 }
-                System.out.println("end");
                 bsw.flush();
 
+            } catch (FaviconException e) {
+                continue;
             } catch (Exception e) {
                 e.printStackTrace();
             }
-//            bsw.close();
         }
     }
 }
