@@ -4,7 +4,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
-public class FileTemplateReplacer {
+public class FileTemplateReplacer implements Closeable{
     private final InputStreamReader isr;
     private final OutputStreamWriter osw;
 
@@ -74,7 +74,6 @@ public class FileTemplateReplacer {
         }
 
         osw.flush();
-        osw.close();
     }
 
     private String replaceTemplate(StringBuilder templateTxt, String startTemplate, String endTemplate, int initialIdx, int max, TemplateNodes replaceTxt) {
@@ -112,5 +111,11 @@ public class FileTemplateReplacer {
 
     private int findIndexOf(char target, char[] buffer) {
         return findIndexOf(target,buffer,0);
+    }
+
+    @Override
+    public void close() throws IOException {
+        isr.close();
+        osw.close();
     }
 }
