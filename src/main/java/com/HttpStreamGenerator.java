@@ -60,9 +60,7 @@ public class HttpStreamGenerator implements Closeable{
                 return false;
             }
 
-            BufferedReader usedBufferedReader = currentBufferedReader;
-            usedBufferedReader.close();
-
+            currentBufferedReader.close();
             currentBufferedReader = values.poll();
         }
 
@@ -93,5 +91,9 @@ public class HttpStreamGenerator implements Closeable{
 
         currentBufferedReader.close();
 
+    }
+
+    public void close(ResourceReleaser releaser) {
+        System.out.println(releaser.release());
     }
 }
