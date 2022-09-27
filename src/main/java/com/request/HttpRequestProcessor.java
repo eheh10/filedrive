@@ -116,17 +116,15 @@ public class HttpRequestProcessor {
             return createHttpErrorResponse(HttpResponseStatus.CODE_500);
         }
 
-        return createHttpErrorResponse(HttpResponseStatus.CODE_404);
+        StringBuilder responseMsg = new StringBuilder();
 
-//        StringBuilder responseMsg = new StringBuilder();
-//
-//        responseMsg.append("HTTP/1.1 ").append(HttpResponseStatus.CODE_200.code()).append(" ").append(HttpResponseStatus.CODE_200.message()).append("\n")
-//                .append("Content-Type: text/html;charset=UTF-8\n");
-//
-//        InputStream is = new ByteArrayInputStream(responseMsg.toString().getBytes(StandardCharsets.UTF_8));
-//        HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(is);
-//
-//        return responseStartLine.sequenceOf(responseBody);
+        responseMsg.append("HTTP/1.1 ").append(HttpResponseStatus.CODE_200.code()).append(" ").append(HttpResponseStatus.CODE_200.message()).append("\n")
+                .append("Content-Type: text/html;charset=UTF-8\n");
+
+        InputStream is = new ByteArrayInputStream(responseMsg.toString().getBytes(StandardCharsets.UTF_8));
+        HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(is);
+
+        return responseStartLine.sequenceOf(responseBody);
     }
 
     private HttpStreamGenerator createHttpErrorResponse(HttpResponseStatus status) throws IOException {
@@ -149,8 +147,13 @@ public class HttpRequestProcessor {
 
         String startTemplate = "{{";
         String endTemplate = "}}";
-        FileTemplateReplacer replacer = FileTemplateReplacer.of(errorTemplateFile,replacedFile);
-        replacer.replace(templateNodes,startTemplate,endTemplate);
+
+        try (FileTemplateReplacer replacer = FileTemplateReplacer.of(errorTemplateFile,replacedFile);
+        ) {
+            replacer.replace(templateNodes, startTemplate, endTemplate);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         InputStream body = new FileInputStream(replacedFile.toString());
         HttpStreamGenerator responseBody = HttpStreamGenerator.of(body);
