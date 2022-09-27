@@ -59,6 +59,10 @@ public class HttpStreamGenerator implements Closeable{
             if (values.size() == 0) {
                 return false;
             }
+
+            BufferedReader usedBufferedReader = currentBufferedReader;
+            usedBufferedReader.close();
+
             currentBufferedReader = values.poll();
         }
 
@@ -83,6 +87,11 @@ public class HttpStreamGenerator implements Closeable{
 
     @Override
     public void close() throws IOException {
+        while(values.size() != 0) {
+            values.poll().close();
+        }
+
+        currentBufferedReader.close();
 
     }
 }
