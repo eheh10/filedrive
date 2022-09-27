@@ -1,4 +1,4 @@
-package com.response;
+package com;
 
 public enum HttpResponseStatus {
     CODE_200("OK"),

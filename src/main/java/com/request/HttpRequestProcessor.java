@@ -3,10 +3,10 @@ package com.request;
 import com.HttpStreamGenerator;
 import com.exception.*;
 import com.header.HttpHeaders;
-import com.limiter.HttpLengthLimiter;
+import com.HttpLengthLimiter;
 import com.request.handler.HttpRequestHandler;
 import com.request.handler.HttpRequestHandlers;
-import com.response.HttpResponseStatus;
+import com.HttpResponseStatus;
 import com.template.FileTemplateReplacer;
 import com.template.TemplateNodes;
 

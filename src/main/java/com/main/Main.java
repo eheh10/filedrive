@@ -2,7 +2,7 @@ package com.main;
 
 import com.HttpStreamGenerator;
 import com.exception.FaviconException;
-import com.limiter.HttpLengthLimiter;
+import com.HttpLengthLimiter;
 import com.request.HttpRequestMethod;
 import com.request.HttpRequestPath;
 import com.request.HttpRequestProcessor;

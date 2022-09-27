@@ -2,7 +2,7 @@ package com.request.handler;
 
 import com.HttpStreamGenerator;
 import com.header.HttpHeaders;
-import com.limiter.HttpLengthLimiter;
+import com.HttpLengthLimiter;
 
 import java.io.IOException;
 

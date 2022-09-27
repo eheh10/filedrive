@@ -1,4 +1,4 @@
-package com.limiter;
+package com;
 
 import com.exception.ExceedingHttpLengthLimitException;
 import com.exception.NotPositiveNumberException;
