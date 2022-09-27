@@ -31,7 +31,7 @@ public class HttpRequestProcessor {
                 - GET 인 경우 values 가공 필요 (Values 클래스화 필요)
         **/
         if (!requestGenerator.hasMoreString()) {
-            return null;
+            throw new FaviconException();
         }
 
         String startLineText = requestGenerator.generateLine();
@@ -116,15 +116,17 @@ public class HttpRequestProcessor {
             return createHttpErrorResponse(HttpResponseStatus.CODE_500);
         }
 
-        StringBuilder responseMsg = new StringBuilder();
+        return createHttpErrorResponse(HttpResponseStatus.CODE_404);
 
-        responseMsg.append("HTTP/1.1 ").append(HttpResponseStatus.CODE_200.code()).append(" ").append(HttpResponseStatus.CODE_200.message()).append("\n")
-                .append("Content-Type: text/html;charset=UTF-8\n");
-
-        InputStream is = new ByteArrayInputStream(responseMsg.toString().getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(is);
-
-        return responseStartLine.sequenceOf(responseBody);
+//        StringBuilder responseMsg = new StringBuilder();
+//
+//        responseMsg.append("HTTP/1.1 ").append(HttpResponseStatus.CODE_200.code()).append(" ").append(HttpResponseStatus.CODE_200.message()).append("\n")
+//                .append("Content-Type: text/html;charset=UTF-8\n");
+//
+//        InputStream is = new ByteArrayInputStream(responseMsg.toString().getBytes(StandardCharsets.UTF_8));
+//        HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(is);
+//
+//        return responseStartLine.sequenceOf(responseBody);
     }
 
     private HttpStreamGenerator createHttpErrorResponse(HttpResponseStatus status) throws IOException {
