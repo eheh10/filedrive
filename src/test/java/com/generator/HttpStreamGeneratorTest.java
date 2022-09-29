@@ -2,6 +2,8 @@ package com.generator;
 
 import com.HttpStreamGenerator;
 import com.exception.NullException;
+import com.releaser.FileResourceReleaser;
+import com.releaser.ResourceReleaser;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,9 +11,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 class HttpStreamGeneratorTest {
 
@@ -99,6 +103,26 @@ class HttpStreamGeneratorTest {
 
         //then
         Assertions.assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("파일 삭제 releaser 등록시 파일 삭제 테스트")
+    void testRegisterReleaser() throws IOException {
+        //given
+        boolean expected = false;
+        File file = Path.of("src","test","resources","test-delete.txt").toFile();
+        file.createNewFile();
+
+        ResourceReleaser releaser = new FileResourceReleaser(file);
+        HttpStreamGenerator generator = HttpStreamGenerator.empty();
+        generator.registerReleaser(releaser);
+
+        //when
+        generator.close();
+        boolean deleted = file.exists();
+
+        //then
+        Assertions.assertThat(deleted).isEqualTo(expected);
     }
 
     @Test
