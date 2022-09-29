@@ -11,7 +11,7 @@ import java.util.Queue;
 public class HttpStreamGenerator implements Closeable{
     private final char[] buffer = new char[1024];
     private final Queue<BufferedReader> values;
-    private BufferedReader currentBufferedReader = null;
+    private final Queue<ResourceReleaser> releasers = new ArrayDeque<>();
 
     private HttpStreamGenerator(Queue<BufferedReader> values) {
         if (values == null){
@@ -50,18 +50,25 @@ public class HttpStreamGenerator implements Closeable{
         return new HttpStreamGenerator(values);
     }
 
-    public boolean hasMoreString() throws IOException {
-        if (currentBufferedReader == null) {
-            currentBufferedReader = values.poll();
+    public void registerReleaser(ResourceReleaser releaser) {
+        if (releaser == null) {
+            throw new NullException();
         }
 
-        while(!currentBufferedReader.ready()) {
-            if (values.size() == 0) {
+        releasers.add(releaser);
+    }
+
+    public boolean hasMoreString() throws IOException {
+        if (values.isEmpty()) {
+            return false;
+        }
+
+        while(!values.peek().ready()) {
+            if (values.size() == 1) {
                 return false;
             }
 
-            currentBufferedReader.close();
-            currentBufferedReader = values.poll();
+            values.poll();
         }
 
         return true;
@@ -72,7 +79,7 @@ public class HttpStreamGenerator implements Closeable{
             throw new NoMoreHttpContentException();
         }
 
-        int len = currentBufferedReader.read(buffer);
+        int len = values.peek().read(buffer);
         return new String(buffer,0,len);
     }
 
@@ -80,20 +87,17 @@ public class HttpStreamGenerator implements Closeable{
         if (!hasMoreString()) {
             throw new NoMoreHttpContentException();
         }
-        return currentBufferedReader.readLine();
+        return values.peek().readLine();
     }
 
     @Override
     public void close() throws IOException {
-        while(values.size() != 0) {
+        while(!values.isEmpty()) {
             values.poll().close();
         }
 
-        currentBufferedReader.close();
-
-    }
-
-    public void close(ResourceReleaser releaser) {
-        System.out.println(releaser.release());
+        while(!releasers.isEmpty()) {
+            releasers.poll().release();
+        }
     }
 }
