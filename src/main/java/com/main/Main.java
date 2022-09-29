@@ -1,21 +1,21 @@
 package com.main;
 
+import com.HttpLengthLimiter;
 import com.HttpStreamGenerator;
 import com.exception.FaviconException;
-import com.HttpLengthLimiter;
+import com.releaser.FileResourceReleaser;
+import com.releaser.ResourceReleaser;
 import com.request.HttpRequestMethod;
 import com.request.HttpRequestPath;
 import com.request.HttpRequestProcessor;
 import com.request.handler.HttpRequestBodyFileCreator;
 import com.request.handler.HttpRequestHandlers;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 public class Main {
 
@@ -34,16 +34,21 @@ public class Main {
             OutputStream os = socket.getOutputStream();
             BufferedOutputStream bos = new BufferedOutputStream(os, 8192);
 
-            HttpRequestProcessor response = new HttpRequestProcessor();
+            HttpRequestProcessor processor = new HttpRequestProcessor();
 
             try (HttpStreamGenerator generator = HttpStreamGenerator.of(socket.getInputStream());
-                 HttpStreamGenerator responseGenerator = response.process(generator, handlers, requestHeadersLengthLimit, requestBodyLengthLimit);
+                 HttpStreamGenerator responseGenerator = processor.process(generator, handlers, requestHeadersLengthLimit, requestBodyLengthLimit);
                  OutputStreamWriter bsw = new OutputStreamWriter(bos, StandardCharsets.UTF_8)) {
+
+                ResourceReleaser releaser = new FileResourceReleaser(Path.of("src","main","resources","response","errorBody.html").toFile());
+                responseGenerator.registerReleaser(releaser);
+
                 while (responseGenerator.hasMoreString()) {
-                    bsw.write(responseGenerator.generate());
+                    String line = responseGenerator.generate();
+                    System.out.println(line);
+                    bsw.write(line);
                 }
                 bsw.flush();
-
             } catch (FaviconException e) {
                 continue;
             } catch (Exception e) {
