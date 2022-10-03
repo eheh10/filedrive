@@ -1,0 +1,23 @@
+POST /test HTTP/1.1
+Host: localhost:7777
+Connection: keep-alive
+Content-Length: 116
+Cache-Control: max-age=0
+sec-ch-ua: "Google Chrome";v="105", "Not)A;Brand";v="8", "Chromium";v="105"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+Upgrade-Insecure-Requests: 1
+Origin: http://localhost:63342
+Content-Type: application/x-www-form-urlencoded
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Referer: http://localhost:63342/
+Accept-Encoding: gzip, deflate, br
+Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7
+Cookie: Idea-4c0cb4e3=03097c6d-180f-447d-b23f-287734b95ea9
+
+name=%EC%95%84%EC%9D%B4%EB%94%94+%EC%9E%85%EB%A0%A5&password=%EB%B9%84%EB%B0%80%EB%B2%88%ED%98%B8+%EC%9E%85%EB%A0%A5

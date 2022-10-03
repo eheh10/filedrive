@@ -2,6 +2,7 @@ package com;
 
 import com.exception.NoMoreHttpContentException;
 import com.exception.NullException;
+import com.releaser.ResourceReleaser;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +46,35 @@ public class HttpStreamGenerator implements Closeable{
             throw new NullException();
         }
 
+//        Queue<BufferedReader> values = new ArrayDeque<>();
+//
+//        for(BufferedReader br : this.values) {
+//            InputStream is = new ByteArrayInputStream(br.);
+//            BufferedInputStream bis = new BufferedInputStream(is,8192);
+//            InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
+//            BufferedReader newBr = new BufferedReader(isr,8192);
+//
+//            values.add(newBr);
+//        }
+//
+//        for(BufferedReader br : generator.values) {
+//            InputStream is = new ByteArrayInputStream(br.);
+//            BufferedInputStream bis = new BufferedInputStream(is,8192);
+//            InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
+//            BufferedReader newBr = new BufferedReader(isr,8192);
+//
+//            values.add(newBr);
+//        }
+
         values.addAll(generator.values);
+
+        Queue<ResourceReleaser> releasers = new ArrayDeque<>();
+        for(ResourceReleaser releaser:this.releasers) {
+            releasers.add(releaser);
+        }
+        for(ResourceReleaser releaser:generator.releasers) {
+            releasers.add(releaser);
+        }
 
         return new HttpStreamGenerator(values);
     }

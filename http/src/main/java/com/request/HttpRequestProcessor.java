@@ -1,12 +1,14 @@
 package com.request;
 
+import com.HttpLengthLimiter;
+import com.HttpResponseStatus;
 import com.HttpStreamGenerator;
 import com.exception.*;
 import com.header.HttpHeaders;
-import com.HttpLengthLimiter;
+import com.releaser.FileResourceReleaser;
+import com.releaser.ResourceReleaser;
 import com.request.handler.HttpRequestHandler;
 import com.request.handler.HttpRequestHandlers;
-import com.HttpResponseStatus;
 import com.template.FileTemplateReplacer;
 import com.template.TemplateNodes;
 
@@ -116,6 +118,9 @@ public class HttpRequestProcessor {
             return createHttpErrorResponse(HttpResponseStatus.CODE_500);
         }
 
+//        return createHttpErrorResponse(HttpResponseStatus.CODE_413);
+        System.out.println("=====");
+
         StringBuilder responseMsg = new StringBuilder();
 
         responseMsg.append("HTTP/1.1 ").append(HttpResponseStatus.CODE_200.code()).append(" ").append(HttpResponseStatus.CODE_200.message()).append("\n")
@@ -133,7 +138,7 @@ public class HttpRequestProcessor {
         String statusMsg = status.message();
 
         startLine.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
-                .append("Content-Type: text/html;charset=UTF-8\n");
+                .append("Content-Type: text/html;charset=UTF-8\n\n");
 
         InputStream is = new ByteArrayInputStream(startLine.toString().getBytes(StandardCharsets.UTF_8));
         HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(is);
@@ -157,6 +162,9 @@ public class HttpRequestProcessor {
 
         InputStream body = new FileInputStream(replacedFile.toString());
         HttpStreamGenerator responseBody = HttpStreamGenerator.of(body);
+
+        ResourceReleaser releaser = new FileResourceReleaser(Path.of("src","main","resources","response","errorBody.html").toFile());
+        responseBody.registerReleaser(releaser);
 
         return responseStartLine.sequenceOf(responseBody);
     }

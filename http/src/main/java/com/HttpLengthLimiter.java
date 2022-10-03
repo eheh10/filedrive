@@ -4,6 +4,8 @@ import com.exception.ExceedingHttpLengthLimitException;
 import com.exception.NotPositiveNumberException;
 
 public class HttpLengthLimiter {
+//    public static final int HTTP_REQUEST_BODY_LIMIT_LENGTH = 100;
+//    public static final int HTTP_RESPONSE_BODY_LIMIT_LENGTH = 100;
 
     private int lengthSum = 0;
     private final int limitLength;
