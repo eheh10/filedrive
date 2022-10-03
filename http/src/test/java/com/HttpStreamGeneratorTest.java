@@ -1,4 +1,4 @@
-package com.generator;
+package com;
 
 import com.HttpStreamGenerator;
 import com.exception.NullException;

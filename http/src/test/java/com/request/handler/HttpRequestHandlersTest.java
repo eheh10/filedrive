@@ -1,13 +1,9 @@
-package com.handler;
+package com.request.handler;
 
 import com.exception.NotAllowedHttpMethodException;
 import com.exception.NotFoundHttpPathException;
 import com.exception.NullException;
-import com.request.HttpRequestMethod;
-import com.request.HttpRequestPath;
-import com.request.handler.HttpRequestBodyFileCreator;
-import com.request.handler.HttpRequestHandler;
-import com.request.handler.HttpRequestHandlers;
+import com.request.*;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
