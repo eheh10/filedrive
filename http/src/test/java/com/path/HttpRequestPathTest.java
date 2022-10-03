@@ -1,6 +1,7 @@
 package com.path;
 
 import com.exception.NullException;
+import com.request.HttpRequestPath;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

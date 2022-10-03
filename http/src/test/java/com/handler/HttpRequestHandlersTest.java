@@ -1,10 +1,13 @@
-package com.api;
+package com.handler;
 
 import com.exception.NotAllowedHttpMethodException;
 import com.exception.NotFoundHttpPathException;
 import com.exception.NullException;
-import com.method.HttpRequestMethod;
-import com.path.HttpRequestPath;
+import com.request.HttpRequestMethod;
+import com.request.HttpRequestPath;
+import com.request.handler.HttpRequestBodyFileCreator;
+import com.request.handler.HttpRequestHandler;
+import com.request.handler.HttpRequestHandlers;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,7 @@ class HttpRequestHandlersTest {
         HttpRequestPath path = HttpRequestPath.of("/test");
         HttpRequestMethod method = HttpRequestMethod.POST;
         HttpRequestHandlers handlers = new HttpRequestHandlers();
+        handlers.register(HttpRequestPath.of("/test"), HttpRequestMethod.POST,new HttpRequestBodyFileCreator());
 
         //when
         HttpRequestHandler actual = handlers.find(path,method);
@@ -46,6 +50,7 @@ class HttpRequestHandlersTest {
         HttpRequestPath path = HttpRequestPath.of("/test");
         HttpRequestMethod method = HttpRequestMethod.DELETE;
         HttpRequestHandlers handlers = new HttpRequestHandlers();
+        handlers.register(HttpRequestPath.of("/test"), HttpRequestMethod.POST,new HttpRequestBodyFileCreator());
 
         //when
         Assertions.assertThatThrownBy(()->handlers.find(path,method))

@@ -1,9 +1,10 @@
-package com.api;
+package com.handler;
 
+import com.HttpLengthLimiter;
+import com.HttpStreamGenerator;
 import com.exception.NullException;
-import com.generator.HttpStringGenerator;
-import com.request.HttpHeaders;
-import com.request.StringLengthLimit;
+import com.header.HttpHeaders;
+import com.request.handler.HttpRequestBodyFileCreator;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class HttpRequestBodyFileCreatorTest {
-    private final StringLengthLimit requestBodyLengthLimit = new StringLengthLimit(2_097_152);
+    private final HttpLengthLimiter requestBodyLengthLimit = new HttpLengthLimiter(2_097_152);
     @Test
     @DisplayName("파일 생성 테스트")
     void testFileCreated() throws IOException {
@@ -26,7 +27,7 @@ class HttpRequestBodyFileCreatorTest {
         HttpRequestBodyFileCreator testHandler = new HttpRequestBodyFileCreator();
         HttpHeaders httpHeaders = HttpHeaders.empty();
         InputStream is = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-        HttpStringGenerator generator = HttpStringGenerator.of(is);
+        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
 
         //when
         testHandler.handle(httpHeaders,generator, requestBodyLengthLimit);
@@ -46,7 +47,7 @@ class HttpRequestBodyFileCreatorTest {
         HttpRequestBodyFileCreator testHandler = new HttpRequestBodyFileCreator();
         HttpHeaders httpHeaders = HttpHeaders.empty();
         InputStream is = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-        HttpStringGenerator generator = HttpStringGenerator.of(is);
+        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
 
         //when
         Assertions.assertThatThrownBy(()->testHandler.handle(null,generator, requestBodyLengthLimit))
