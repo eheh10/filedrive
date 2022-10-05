@@ -34,7 +34,7 @@ public class HttpHeaderField {
         String filedName = fieldLine.substring(0,delimiterIdx);
         String filedValues = fieldLine.substring(delimiterIdx+1);
 
-        StringTokenizer valueTokenizer = new StringTokenizer(filedValues,",");
+        StringTokenizer valueTokenizer = new StringTokenizer(filedValues,";");
         List<String> values = new ArrayList<>(Math.max(10,valueTokenizer.countTokens()));
 
         while(valueTokenizer.hasMoreTokens()) {
@@ -42,6 +42,10 @@ public class HttpHeaderField {
         }
 
         return new HttpHeaderField(filedName, Collections.unmodifiableList(values));
+    }
+
+    public List<String> getValues() {
+        return Collections.unmodifiableList(values);
     }
 
     public String getName() {
