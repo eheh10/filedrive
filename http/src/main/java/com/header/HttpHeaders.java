@@ -2,6 +2,7 @@ package com.header;
 
 import com.HttpLengthLimiter;
 import com.HttpStreamGenerator;
+import com.exception.NotFoundHttpHeadersPropertyException;
 import com.exception.NullException;
 
 import java.io.IOException;
@@ -55,6 +56,18 @@ public class HttpHeaders {
 
     public static HttpHeaders empty() {
         return new HttpHeaders(Collections.emptyMap());
+    }
+
+    public HttpHeaderField findProperty(String propertyName) {
+        if (propertyName==null) {
+            throw new NullException();
+        }
+
+        if (!values.containsKey(propertyName)) {
+            throw new NotFoundHttpHeadersPropertyException();
+        }
+
+        return values.get(propertyName);
     }
 
     public void display() {
