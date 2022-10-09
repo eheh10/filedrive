@@ -4,10 +4,10 @@ import com.exception.NullException;
 
 import java.io.File;
 
-public class FileResourceReleaser implements ResourceReleaser{
+public class FileResourceCloser implements ResourceCloser {
     private final File value;
 
-    public FileResourceReleaser(File value) {
+    public FileResourceCloser(File value) {
         if (value == null) {
             throw new NullException();
         }
@@ -15,7 +15,7 @@ public class FileResourceReleaser implements ResourceReleaser{
     }
 
     @Override
-    public boolean release() {
+    public boolean close() {
         if (!value.exists()) {
             return false;
         }
