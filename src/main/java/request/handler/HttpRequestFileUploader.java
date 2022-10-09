@@ -25,7 +25,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         }
 
         Properties properties = new Properties();
-        properties.load(new FileInputStream(Path.of("system.properties").toString()));
+        properties.load(new FileInputStream(Path.of("config.properties").toString()));
 
         Path directoryPath = Paths.get("src","main","resources","uploaded-file");
 
@@ -61,6 +61,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
             }
 
             if (!Objects.equals(line,fileBoundary)) {
+                requestBodyLengthLimit.accumulate(line.length());
                 bw.write(line);
                 continue;
             }
@@ -103,13 +104,12 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
     }
 
     private boolean isNotAllowedExtension(Properties properties, String targetExtension) {
-        for(String extension : properties.getProperty("allowed_extension").split(",")) {
-            System.out.println("value "+extension);
+        for(String extension : properties.getProperty("not_allowed_extension").split(",")) {
             if (Objects.equals(extension,targetExtension)) {
-                return false;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 }
