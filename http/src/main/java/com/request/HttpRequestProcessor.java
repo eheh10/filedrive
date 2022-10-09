@@ -39,14 +39,7 @@ public class HttpRequestProcessor {
             String startLineText = requestGenerator.generateLine();
             System.out.println(startLineText);
 
-            Optional<HttpRequestStartLine> startLineParser;
-            try {
-                startLineParser = Optional.of(HttpRequestStartLine.parse(startLineText));
-            } catch (NullException e) {
-                e.printStackTrace();
-                return createHttpErrorResponse(HttpResponseStatus.CODE_400);
-            }
-
+            Optional<HttpRequestStartLine> startLineParser = Optional.of(HttpRequestStartLine.parse(startLineText));
             HttpRequestStartLine httpRequestStartLine = startLineParser.get();
 
             /**
@@ -56,13 +49,7 @@ public class HttpRequestProcessor {
                     - HTTP Header 에 길이 제한 스펙은 없지만 자체적으로 8192로 길이 제한
                     - 8192보다 긴 경우 431 Request header too large 응답
             **/
-            HttpHeaders httpHeaders = null;
-            try {
-                httpHeaders = HttpHeaders.parse(requestGenerator,requestHeadersLengthLimit);
-            } catch (NullException e) {
-                e.printStackTrace();
-                return createHttpErrorResponse(HttpResponseStatus.CODE_500);
-            }
+            HttpHeaders httpHeaders = HttpHeaders.parse(requestGenerator,requestHeadersLengthLimit);
 
             /**
                 1-3. Body 가공
@@ -82,19 +69,11 @@ public class HttpRequestProcessor {
                     - body 길이는 2,097,152(2MB)로 길이 제한
             **/
 
-            HttpStreamGenerator responseBody = null;
-
             HttpRequestPath path = httpRequestStartLine.getPath();
             HttpRequestMethod method = httpRequestStartLine.getMethod();
 
-            try {
-                HttpRequestHandler httpRequestHandler = handlers.find(path, method);
-
-                responseBody = httpRequestHandler.handle(httpHeaders, requestGenerator, requestBodyLengthLimit);
-            } catch (NullException e) {
-                e.printStackTrace();
-                return createHttpErrorResponse(HttpResponseStatus.CODE_500);
-            }
+            HttpRequestHandler httpRequestHandler = handlers.find(path, method);
+            HttpStreamGenerator responseBody = httpRequestHandler.handle(httpHeaders, requestGenerator, requestBodyLengthLimit);
 
             StringBuilder responseMsg = new StringBuilder();
 
@@ -106,18 +85,18 @@ public class HttpRequestProcessor {
 
             return responseStartLine.sequenceOf(responseBody);
 
-        } catch (NotPositiveNumberException e) {
-            e.printStackTrace();
-            return createHttpErrorResponse(HttpResponseStatus.CODE_500);
-        } catch (ExceedingHttpLengthLimitException e) {
-            return createHttpErrorResponse(HttpResponseStatus.CODE_431);
         } catch (InvalidHttpRequestInputException e) {
             e.printStackTrace();
             return createHttpErrorResponse(HttpResponseStatus.CODE_400);
-        } catch (NotAllowedHttpMethodException e) {
-            return createHttpErrorResponse(HttpResponseStatus.CODE_405);
         } catch (NotFoundHttpPathException e) {
             return createHttpErrorResponse(HttpResponseStatus.CODE_404);
+        } catch (NotAllowedHttpMethodException e) {
+            return createHttpErrorResponse(HttpResponseStatus.CODE_405);
+        } catch (ExceedingHttpLengthLimitException e) {
+            return createHttpErrorResponse(HttpResponseStatus.CODE_431);
+        } catch (InputNullParameterException | NotPositiveNumberException | NoMoreHttpContentException | NotFoundHttpHeadersPropertyException e) {
+            e.printStackTrace();
+            return createHttpErrorResponse(HttpResponseStatus.CODE_500);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException();
@@ -151,8 +130,6 @@ public class HttpRequestProcessor {
         try (FileTemplateReplacer replacer = FileTemplateReplacer.of(errorTemplateFile,replacedFile);
         ) {
             replacer.replace(templateNodes, startTemplate, endTemplate);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         InputStream body = new FileInputStream(replacedFile.toString());
