@@ -2,7 +2,7 @@ package request.handler;
 
 import com.HttpLengthLimiter;
 import com.HttpStreamGenerator;
-import com.exception.NullException;
+import com.exception.InputNullParameterException;
 import com.header.HttpHeaders;
 import com.request.handler.HttpRequestHandler;
 
@@ -16,7 +16,7 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler {
     @Override
     public HttpStreamGenerator handle(HttpHeaders httpHeaders, HttpStreamGenerator generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         if (httpHeaders == null || generator == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         Path directoryPath = Paths.get(System.getProperty("user.home"),"fileDrive");

@@ -1,6 +1,6 @@
 package com.releaser;
 
-import com.exception.NullException;
+import com.exception.InputNullParameterException;
 
 import java.io.File;
 
@@ -9,7 +9,7 @@ public class FileResourceCloser implements ResourceCloser {
 
     public FileResourceCloser(File value) {
         if (value == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
         this.value = value;
     }

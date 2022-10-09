@@ -1,7 +1,7 @@
 package com.header;
 
 import com.exception.InvalidHttpRequestInputException;
-import com.exception.NullException;
+import com.exception.InputNullParameterException;
 
 import java.util.*;
 
@@ -11,10 +11,10 @@ public class HttpHeaderField {
 
     public HttpHeaderField(String name, List<String> values) {
         if (name == null || values == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
         if (values.size() == 0) {
-            throw new RuntimeException();
+            throw new InvalidHttpRequestInputException();
         }
 
         this.name = name;
@@ -23,7 +23,7 @@ public class HttpHeaderField {
 
     public static HttpHeaderField of(String fieldLine) {
         if (fieldLine == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         int delimiterIdx = fieldLine.indexOf(":");

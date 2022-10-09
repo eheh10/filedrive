@@ -2,7 +2,7 @@ package com.request.handler;
 
 import com.exception.NotAllowedHttpMethodException;
 import com.exception.NotFoundHttpPathException;
-import com.exception.NullException;
+import com.exception.InputNullParameterException;
 import com.request.HttpRequestMethod;
 import com.request.HttpRequestPath;
 
@@ -14,7 +14,7 @@ public class HttpRequestHandlers {
 
     public void register(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
         if (path == null || method == null || handler == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         values.put(path,Map.of(method,handler));
@@ -22,7 +22,7 @@ public class HttpRequestHandlers {
 
     public HttpRequestHandler find(HttpRequestPath path, HttpRequestMethod method) {
         if (path == null || method == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         if (!values.containsKey(path)) {

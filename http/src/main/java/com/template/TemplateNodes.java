@@ -1,7 +1,7 @@
 package com.template;
 
 import com.exception.NotFoundTemplateException;
-import com.exception.NullException;
+import com.exception.InputNullParameterException;
 
 import java.util.*;
 
@@ -11,7 +11,7 @@ public class TemplateNodes {
 
     public void register(String templateTxt, String replaceTxt) {
         if (templateTxt == null || replaceTxt == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         values.put(templateTxt, replaceTxt);
@@ -20,7 +20,7 @@ public class TemplateNodes {
 
     public String replace(String templateTxt) {
         if (templateTxt == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         if (!values.containsKey(templateTxt)) {
@@ -32,7 +32,7 @@ public class TemplateNodes {
 
     public String replaceWithDefault(String templateTxt, String defaultTxt) {
         if (templateTxt == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         if (!values.containsKey(templateTxt)) {

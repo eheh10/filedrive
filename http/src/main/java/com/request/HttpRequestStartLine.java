@@ -2,7 +2,7 @@ package com.request;
 
 import com.exception.InvalidHttpRequestInputException;
 import com.exception.NotAllowedHttpMethodException;
-import com.exception.NullException;
+import com.exception.InputNullParameterException;
 
 import java.util.Objects;
 import java.util.StringTokenizer;
@@ -16,13 +16,13 @@ public class HttpRequestStartLine {
 
     private HttpRequestStartLine(HttpRequestMethod method, HttpRequestPath path, String version) {
         if (method==null) {
-            throw new NullException("StarLineParser.HttpRequestMethod is null");
+            throw new InputNullParameterException("StarLineParser.HttpRequestMethod is null");
         }
         if (path==null) {
-            throw new NullException("StarLineParser.path is null");
+            throw new InputNullParameterException("StarLineParser.path is null");
         }
         if (version==null) {
-            throw new NullException("StarLineParser.version is null");
+            throw new InputNullParameterException("StarLineParser.version is null");
         }
 
         this.method = method;
@@ -32,7 +32,7 @@ public class HttpRequestStartLine {
 
     public static HttpRequestStartLine parse(String startLine) {
         if (startLine == null || startLine.isBlank()) {
-            throw new NullException();
+            throw new InvalidHttpRequestInputException();
         }
 
         StringTokenizer tokenizer = new StringTokenizer(startLine," ");

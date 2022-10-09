@@ -1,8 +1,8 @@
 package com;
 
 import com.exception.NoMoreHttpContentException;
-import com.exception.NullException;
-import com.releaser.ResourceReleaser;
+import com.exception.InputNullParameterException;
+import com.releaser.ResourceCloser;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -10,13 +10,13 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class HttpStreamGenerator implements Closeable{
-    private final char[] buffer = new char[1024];
+    private final char[] buffer = new char[8192];
     private final Queue<BufferedReader> values;
-    private final Queue<ResourceReleaser> releasers = new ArrayDeque<>();
+    private final Queue<ResourceCloser> releasers = new ArrayDeque<>();
 
     private HttpStreamGenerator(Queue<BufferedReader> values) {
         if (values == null){
-            throw new NullException();
+            throw new InputNullParameterException();
         }
         this.values = values;
     }
@@ -28,7 +28,7 @@ public class HttpStreamGenerator implements Closeable{
 
     public static HttpStreamGenerator of(InputStream is) {
         if (is == null){
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         BufferedInputStream bis = new BufferedInputStream(is,8192);
@@ -43,7 +43,7 @@ public class HttpStreamGenerator implements Closeable{
 
     public HttpStreamGenerator sequenceOf(HttpStreamGenerator generator) {
         if (generator == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
 //        Queue<BufferedReader> values = new ArrayDeque<>();
@@ -68,20 +68,20 @@ public class HttpStreamGenerator implements Closeable{
 
         values.addAll(generator.values);
 
-        Queue<ResourceReleaser> releasers = new ArrayDeque<>();
-        for(ResourceReleaser releaser:this.releasers) {
+        Queue<ResourceCloser> releasers = new ArrayDeque<>();
+        for(ResourceCloser releaser:this.releasers) {
             releasers.add(releaser);
         }
-        for(ResourceReleaser releaser:generator.releasers) {
+        for(ResourceCloser releaser:generator.releasers) {
             releasers.add(releaser);
         }
 
         return new HttpStreamGenerator(values);
     }
 
-    public void registerReleaser(ResourceReleaser releaser) {
+    public void registerReleaser(ResourceCloser releaser) {
         if (releaser == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         releasers.add(releaser);
@@ -126,7 +126,7 @@ public class HttpStreamGenerator implements Closeable{
         }
 
         while(!releasers.isEmpty()) {
-            releasers.poll().release();
+            releasers.poll().close();
         }
     }
 }

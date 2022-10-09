@@ -4,7 +4,7 @@ import com.HttpLengthLimiter;
 import com.HttpStreamGenerator;
 import com.exception.NotAllowedFileExtensionException;
 import com.exception.NotFoundHttpHeadersPropertyException;
-import com.exception.NullException;
+import com.exception.InputNullParameterException;
 import com.header.HttpHeaderField;
 import com.header.HttpHeaders;
 import com.request.handler.HttpRequestHandler;
@@ -21,7 +21,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
     @Override
     public HttpStreamGenerator handle(HttpHeaders httpHeaders, HttpStreamGenerator generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         if (httpHeaders == null || generator == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         Properties properties = new Properties();

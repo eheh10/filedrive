@@ -1,6 +1,6 @@
 package com.request;
 
-import com.exception.NullException;
+import com.exception.InputNullParameterException;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,7 +11,7 @@ public class HttpRequestPath {
 
     public HttpRequestPath(Path value) {
         if (value == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         this.value = value.normalize();
@@ -19,7 +19,7 @@ public class HttpRequestPath {
 
     public static HttpRequestPath of(String path) {
         if (path == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         Path value = Paths.get(path);

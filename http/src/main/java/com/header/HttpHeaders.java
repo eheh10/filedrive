@@ -2,8 +2,8 @@ package com.header;
 
 import com.HttpLengthLimiter;
 import com.HttpStreamGenerator;
+import com.exception.InputNullParameterException;
 import com.exception.NotFoundHttpHeadersPropertyException;
-import com.exception.NullException;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -17,7 +17,7 @@ public class HttpHeaders {
 
     private HttpHeaders(Map<String, HttpHeaderField> values) {
         if (values == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         this.values = Collections.unmodifiableMap(values);
@@ -31,7 +31,7 @@ public class HttpHeaders {
     * */
     public static HttpHeaders parse(HttpStreamGenerator generator, HttpLengthLimiter limitLength) throws IOException {
         if (generator == null || limitLength == null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         Map<String, HttpHeaderField> fields = new HashMap<>();
@@ -60,7 +60,7 @@ public class HttpHeaders {
 
     public HttpHeaderField findProperty(String propertyName) {
         if (propertyName==null) {
-            throw new NullException();
+            throw new InputNullParameterException();
         }
 
         if (!values.containsKey(propertyName)) {
