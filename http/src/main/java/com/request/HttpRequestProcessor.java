@@ -3,6 +3,7 @@ package com.request;
 import com.HttpLengthLimiter;
 import com.HttpResponseStatus;
 import com.HttpStreamGenerator;
+import com.InputStreamGenerator;
 import com.exception.*;
 import com.header.HttpHeaders;
 import com.releaser.FileResourceCloser;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 public class HttpRequestProcessor {
@@ -80,8 +82,9 @@ public class HttpRequestProcessor {
             responseMsg.append("HTTP/1.1 ").append(HttpResponseStatus.CODE_200.code()).append(" ").append(HttpResponseStatus.CODE_200.message()).append("\n")
                     .append("Content-Type: text/html;charset=UTF-8\n");
 
-            InputStream is = new ByteArrayInputStream(responseMsg.toString().getBytes(StandardCharsets.UTF_8));
-            HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(is);
+            InputStream startLineOutput = new ByteArrayInputStream(responseMsg.toString().getBytes(StandardCharsets.UTF_8));
+            InputStreamGenerator startLineGenerator = InputStreamGenerator.of(startLineOutput);
+            HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(startLineGenerator);
 
             return responseStartLine.sequenceOf(responseBody);
 
@@ -114,8 +117,9 @@ public class HttpRequestProcessor {
         startLine.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
                 .append("Content-Type: text/html;charset=UTF-8\n\n");
 
-        InputStream is = new ByteArrayInputStream(startLine.toString().getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(is);
+        InputStream startLineInput = new ByteArrayInputStream(startLine.toString().getBytes(StandardCharsets.UTF_8));
+        InputStreamGenerator startLineGenerator = InputStreamGenerator.of(startLineInput);
+        HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(startLineGenerator);
 
         TemplateNodes templateNodes = new TemplateNodes();
         templateNodes.register("statusCode",statusCode);
@@ -132,8 +136,9 @@ public class HttpRequestProcessor {
             replacer.replace(templateNodes, startTemplate, endTemplate);
         }
 
-        InputStream body = new FileInputStream(replacedFile.toString());
-        HttpStreamGenerator responseBody = HttpStreamGenerator.of(body);
+        InputStream bodyInput = new FileInputStream(replacedFile.toString());
+        InputStreamGenerator bodyGenerator = InputStreamGenerator.of(bodyInput);
+        HttpStreamGenerator responseBody = HttpStreamGenerator.of(bodyGenerator);
 
         ResourceCloser releaser = new FileResourceCloser(Path.of("src","main","resources", "template","errorBody.html").toFile());
         responseBody.registerReleaser(releaser);
