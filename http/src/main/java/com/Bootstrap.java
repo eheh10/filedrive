@@ -7,13 +7,12 @@ import com.request.HttpRequestProcessor;
 import com.request.handler.HttpRequestHandler;
 import com.request.handler.HttpRequestHandlers;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.Properties;
 
 public class Bootstrap {
     private final HttpRequestHandlers handlers = new HttpRequestHandlers();
@@ -25,8 +24,14 @@ public class Bootstrap {
     public void start() throws IOException {
         ServerSocket serverSocket = new ServerSocket(7777);
 
-        HttpLengthLimiter requestHeadersLengthLimit = new HttpLengthLimiter(8192);
-        HttpLengthLimiter requestBodyLengthLimit = new HttpLengthLimiter(2_097_152);
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(Path.of("config.properties").toString()));
+
+        int headersLimit = Integer.parseInt(properties.getProperty("http_request_headers_length_limit"));
+        int bodyLimit = Integer.parseInt(properties.getProperty("http_request_body_length_limit"));
+
+        HttpLengthLimiter requestHeadersLengthLimit = new HttpLengthLimiter(headersLimit);
+        HttpLengthLimiter requestBodyLengthLimit = new HttpLengthLimiter(bodyLimit);
 
 //        HttpLengthLimiter test = HttpLimitLength.REQUEST_BODY.createLimiter();
 
@@ -38,7 +43,8 @@ public class Bootstrap {
 
             HttpRequestProcessor processor = new HttpRequestProcessor();
 
-            try (HttpStreamGenerator generator = HttpStreamGenerator.of(socket.getInputStream());
+            try (InputStreamGenerator isGenerator = InputStreamGenerator.of(socket.getInputStream());
+                 HttpStreamGenerator generator = HttpStreamGenerator.of(isGenerator);
                  HttpStreamGenerator responseGenerator = processor.process(generator, handlers, requestHeadersLengthLimit, requestBodyLengthLimit);
                  OutputStreamWriter bsw = new OutputStreamWriter(bos, StandardCharsets.UTF_8)) {
 
@@ -47,6 +53,7 @@ public class Bootstrap {
                     System.out.println(line);
                     bsw.write(line);
                 }
+
                 bsw.flush();
             } catch (FaviconException e) {
                 continue;
