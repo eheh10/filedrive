@@ -10,11 +10,10 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class HttpStreamGenerator implements Closeable{
-    private final char[] buffer = new char[8192];
-    private final Queue<BufferedReader> values;
+    private final Queue<InputStreamGenerator> values;
     private final Queue<ResourceCloser> releasers = new ArrayDeque<>();
 
-    private HttpStreamGenerator(Queue<BufferedReader> values) {
+    private HttpStreamGenerator(Queue<InputStreamGenerator> values) {
         if (values == null){
             throw new InputNullParameterException();
         }
@@ -23,20 +22,17 @@ public class HttpStreamGenerator implements Closeable{
 
     public static HttpStreamGenerator empty() {
         InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
-        return HttpStreamGenerator.of(is);
+        InputStreamGenerator isGenerator = InputStreamGenerator.of(is);
+        return HttpStreamGenerator.of(isGenerator);
     }
 
-    public static HttpStreamGenerator of(InputStream is) {
-        if (is == null){
+    public static HttpStreamGenerator of(InputStreamGenerator isGenerator) {
+        if (isGenerator == null){
             throw new InputNullParameterException();
         }
 
-        BufferedInputStream bis = new BufferedInputStream(is,8192);
-        InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
-        BufferedReader br = new BufferedReader(isr,8192);
-
-        Queue<BufferedReader> values = new ArrayDeque<>();
-        values.offer(br);
+        Queue<InputStreamGenerator> values = new ArrayDeque<>();
+        values.offer(isGenerator);
 
         return new HttpStreamGenerator(values);
     }
@@ -46,35 +42,13 @@ public class HttpStreamGenerator implements Closeable{
             throw new InputNullParameterException();
         }
 
-//        Queue<BufferedReader> values = new ArrayDeque<>();
-//
-//        for(BufferedReader br : this.values) {
-//            InputStream is = new ByteArrayInputStream(br.);
-//            BufferedInputStream bis = new BufferedInputStream(is,8192);
-//            InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
-//            BufferedReader newBr = new BufferedReader(isr,8192);
-//
-//            values.add(newBr);
-//        }
-//
-//        for(BufferedReader br : generator.values) {
-//            InputStream is = new ByteArrayInputStream(br.);
-//            BufferedInputStream bis = new BufferedInputStream(is,8192);
-//            InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
-//            BufferedReader newBr = new BufferedReader(isr,8192);
-//
-//            values.add(newBr);
-//        }
-
+        Queue<InputStreamGenerator> values = new ArrayDeque<>();
+        values.addAll(this.values);
         values.addAll(generator.values);
 
         Queue<ResourceCloser> releasers = new ArrayDeque<>();
-        for(ResourceCloser releaser:this.releasers) {
-            releasers.add(releaser);
-        }
-        for(ResourceCloser releaser:generator.releasers) {
-            releasers.add(releaser);
-        }
+        releasers.addAll(this.releasers);
+        releasers.addAll(generator.releasers);
 
         return new HttpStreamGenerator(values);
     }
@@ -92,7 +66,7 @@ public class HttpStreamGenerator implements Closeable{
             return false;
         }
 
-        while(!values.peek().ready()) {
+        while(!values.peek().hasMoreString()) {
             if (values.size() == 1) {
                 return false;
             }
@@ -108,15 +82,15 @@ public class HttpStreamGenerator implements Closeable{
             throw new NoMoreHttpContentException();
         }
 
-        int len = values.peek().read(buffer);
-        return new String(buffer,0,len);
+        return values.peek().generate();
     }
 
     public String generateLine() throws IOException {
         if (!hasMoreString()) {
             throw new NoMoreHttpContentException();
         }
-        return values.peek().readLine();
+
+        return values.peek().generateLine();
     }
 
     @Override
