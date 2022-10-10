@@ -1,9 +1,8 @@
 package com;
 
-import com.HttpStreamGenerator;
-import com.exception.NullException;
-import com.releaser.FileResourceReleaser;
-import com.releaser.ResourceReleaser;
+import com.exception.InputNullParameterException;
+import com.releaser.FileResourceCloser;
+import com.releaser.ResourceCloser;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,8 @@ class HttpStreamGeneratorTest {
     void testGenerate(String expected) throws IOException {
         //given
         InputStream is = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
+        InputStreamGenerator isGenerator = InputStreamGenerator.of(is);
+        HttpStreamGenerator generator = HttpStreamGenerator.of(isGenerator);
 
         //when
         StringBuilder actual = new StringBuilder();
@@ -44,7 +44,8 @@ class HttpStreamGeneratorTest {
         //given
         String expected = str.split("\n")[0];
         InputStream is = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
+        InputStreamGenerator isGenerator = InputStreamGenerator.of(is);
+        HttpStreamGenerator generator = HttpStreamGenerator.of(isGenerator);
 
         //when
         String actual = generator.generateLine();
@@ -62,8 +63,10 @@ class HttpStreamGeneratorTest {
         String expected = txt1 + txt2;
         InputStream is1 = new ByteArrayInputStream(txt1.getBytes(StandardCharsets.UTF_8));
         InputStream is2 = new ByteArrayInputStream(txt2.getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator generator1 = HttpStreamGenerator.of(is1);
-        HttpStreamGenerator generator2 = HttpStreamGenerator.of(is2);
+        InputStreamGenerator isGenerator1 = InputStreamGenerator.of(is1);
+        HttpStreamGenerator generator1 = HttpStreamGenerator.of(isGenerator1);
+        InputStreamGenerator isGenerator2 = InputStreamGenerator.of(is2);
+        HttpStreamGenerator generator2 = HttpStreamGenerator.of(isGenerator2);
 
         //then
         HttpStreamGenerator generator = generator1.sequenceOf(generator2);
@@ -81,7 +84,8 @@ class HttpStreamGeneratorTest {
         //given
         boolean expected = true;
         InputStream is = new ByteArrayInputStream("data".getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
+        InputStreamGenerator isGenerator = InputStreamGenerator.of(is);
+        HttpStreamGenerator generator = HttpStreamGenerator.of(isGenerator);
 
         //when
         boolean actual = generator.hasMoreString();
@@ -96,7 +100,8 @@ class HttpStreamGeneratorTest {
         //given
         boolean expected = false;
         InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
+        InputStreamGenerator isGenerator = InputStreamGenerator.of(is);
+        HttpStreamGenerator generator = HttpStreamGenerator.of(isGenerator);
 
         //when
         boolean actual = generator.hasMoreString();
@@ -113,7 +118,7 @@ class HttpStreamGeneratorTest {
         File file = Path.of("src","test","resources","test-delete.txt").toFile();
         file.createNewFile();
 
-        ResourceReleaser releaser = new FileResourceReleaser(file);
+        ResourceCloser releaser = new FileResourceCloser(file);
         HttpStreamGenerator generator = HttpStreamGenerator.empty();
         generator.registerReleaser(releaser);
 
@@ -129,7 +134,7 @@ class HttpStreamGeneratorTest {
     @DisplayName("null 로 인스턴스 생성시 에러 발생 테스트")
     void testConstructWithNull() {
         Assertions.assertThatThrownBy(()-> HttpStreamGenerator.of(null))
-                .isInstanceOf(NullException.class);
+                .isInstanceOf(InputNullParameterException.class);
     }
 
     @Test
@@ -138,10 +143,11 @@ class HttpStreamGeneratorTest {
         //given
         String str = "Hello";
         InputStream is = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
+        InputStreamGenerator isGenerator = InputStreamGenerator.of(is);
+        HttpStreamGenerator generator = HttpStreamGenerator.of(isGenerator);
 
         Assertions.assertThatThrownBy(()-> generator.sequenceOf(null))
-                .isInstanceOf(NullException.class);
+                .isInstanceOf(InputNullParameterException.class);
     }
 
 }
