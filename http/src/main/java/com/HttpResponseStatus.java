@@ -1,5 +1,7 @@
 package com;
 
+import com.exception.*;
+
 public enum HttpResponseStatus {
     CODE_200("OK"),
     CODE_400("Bad Request"),
@@ -13,6 +15,36 @@ public enum HttpResponseStatus {
     HttpResponseStatus(String message) {
 
         this.message = message;
+    }
+
+    public static HttpResponseStatus httpResponseStatusOf(Exception exception) {
+        Class clz = exception.getClass();
+
+        if (clz.isInstance(InvalidHttpRequestInputException.class)) {
+            return CODE_400;
+        }
+
+        if (clz.isInstance(NotFoundHttpPathException.class)) {
+            return CODE_404;
+        }
+
+        if (clz.isInstance(NotAllowedHttpMethodException.class)) {
+            return CODE_405;
+        }
+
+        if (clz.isInstance(ExceedingHttpLengthLimitException.class)) {
+            return CODE_431;
+        }
+
+        if (clz.isInstance(InputNullParameterException.class) ||
+                clz.isInstance(NotPositiveNumberException.class) ||
+                clz.isInstance(NoMoreHttpContentException.class) ||
+                clz.isInstance(NotFoundHttpHeadersPropertyException.class)) {
+            return CODE_500;
+        }
+
+        exception.printStackTrace();
+        throw new RuntimeException();
     }
 
     public String code() {
