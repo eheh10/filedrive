@@ -94,23 +94,10 @@ public class HttpRequestProcessor {
 
             return responseStartLine.sequenceOf(responseBody);
 
-        } catch (InvalidHttpRequestInputException e) {
-            e.printStackTrace();
-            return createHttpErrorResponse(HttpResponseStatus.CODE_400);
-        } catch (NotFoundHttpPathException e) {
-            return createHttpErrorResponse(HttpResponseStatus.CODE_404);
-        } catch (NotAllowedHttpMethodException e) {
-            return createHttpErrorResponse(HttpResponseStatus.CODE_405);
-        } catch (ExceedingHttpLengthLimitException e) {
-            return createHttpErrorResponse(HttpResponseStatus.CODE_431);
-        } catch (InputNullParameterException | NotPositiveNumberException | NoMoreHttpContentException | NotFoundHttpHeadersPropertyException e) {
-            e.printStackTrace();
-            return createHttpErrorResponse(HttpResponseStatus.CODE_500);
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException();
+            HttpResponseStatus status = HttpResponseStatus.httpResponseStatusOf(e);
+            return createHttpErrorResponse(status);
         }
-
     }
 
     private HttpsStream createHttpErrorResponse(HttpResponseStatus status) throws IOException {
