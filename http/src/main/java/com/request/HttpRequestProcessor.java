@@ -83,12 +83,8 @@ public class HttpRequestProcessor {
             HttpRequestHandler httpRequestHandler = handlers.find(path, method);
             HttpsStream responseBody = httpRequestHandler.handle(httpHeaders, requestGenerator, requestBodyLengthLimit);
 
-            StringBuilder responseMsg = new StringBuilder();
-
-            responseMsg.append("HTTP/1.1 ").append(HttpResponseStatus.CODE_200.code()).append(" ").append(HttpResponseStatus.CODE_200.message()).append("\n")
-                    .append("Content-Type: text/html;charset=UTF-8\n");
-
-            InputStream startLineOutput = new ByteArrayInputStream(responseMsg.toString().getBytes(StandardCharsets.UTF_8));
+            String startLine = createHttpResponseStartLine(HttpResponseStatus.CODE_200);
+            InputStream startLineOutput = new ByteArrayInputStream(startLine.getBytes(StandardCharsets.UTF_8));
             StringStream startLineGenerator = StringStream.of(startLineOutput);
             HttpsStream responseStartLine = HttpsStream.of(startLineGenerator);
 
@@ -101,22 +97,14 @@ public class HttpRequestProcessor {
     }
 
     private HttpsStream createHttpErrorResponse(HttpResponseStatus status) throws IOException {
-        StringBuilder startLine = new StringBuilder();
-        String statusCode = status.code();
-        String statusMsg = status.message();
-
-        System.out.println(statusCode + " " + statusMsg);
-
-        startLine.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
-                .append("Content-Type: text/html;charset=UTF-8\n\n");
-
-        InputStream startLineInput = new ByteArrayInputStream(startLine.toString().getBytes(StandardCharsets.UTF_8));
+        String startLine = createHttpResponseStartLine(status)+"\n";
+        InputStream startLineInput = new ByteArrayInputStream(startLine.getBytes(StandardCharsets.UTF_8));
         StringStream startLineGenerator = StringStream.of(startLineInput);
         HttpsStream responseStartLine = HttpsStream.of(startLineGenerator);
 
         TemplateNodes templateNodes = new TemplateNodes();
-        templateNodes.register("statusCode",statusCode);
-        templateNodes.register("statusMsg",statusMsg);
+        templateNodes.register("statusCode",status.code());
+        templateNodes.register("statusMsg",status.message());
 
         Path errorTemplateFile = Path.of("src","main","resources", "template","error.html");
         Path replacedFile = Path.of("src","main","resources", "template","errorBody.html");
@@ -139,4 +127,17 @@ public class HttpRequestProcessor {
         return responseStartLine.sequenceOf(responseBody);
     }
 
+    public String createHttpResponseStartLine(HttpResponseStatus status) {
+        StringBuilder startLine = new StringBuilder();
+        String statusCode = status.code();
+        String statusMsg = status.message();
+
+        System.out.println(statusCode + " " + statusMsg);
+
+        startLine.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
+                .append("Content-Type: text/html;charset=UTF-8\n");
+
+        return startLine.toString();
+
+    }
 }
