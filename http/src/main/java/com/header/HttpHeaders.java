@@ -1,7 +1,7 @@
 package com.header;
 
 import com.HttpLengthLimiter;
-import com.HttpStreamGenerator;
+import com.HttpsStream;
 import com.exception.InputNullParameterException;
 import com.exception.NotFoundHttpHeadersPropertyException;
 
@@ -29,7 +29,7 @@ public class HttpHeaders {
      * 2. 누적값 계산
      * 3. 예외 발생
     * */
-    public static HttpHeaders parse(HttpStreamGenerator generator, HttpLengthLimiter limitLength) throws IOException {
+    public static HttpHeaders parse(HttpsStream generator, HttpLengthLimiter limitLength) throws IOException {
         if (generator == null || limitLength == null) {
             throw new InputNullParameterException();
         }
@@ -49,7 +49,7 @@ public class HttpHeaders {
         return new HttpHeaders(Collections.unmodifiableMap(fields));
     }
 
-    public static HttpHeaders parse(HttpStreamGenerator generator) throws IOException {
+    public static HttpHeaders parse(HttpsStream generator) throws IOException {
         HttpLengthLimiter lengthLimit = new HttpLengthLimiter(8192);
         return parse(generator, lengthLimit);
     }

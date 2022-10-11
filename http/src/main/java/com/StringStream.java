@@ -6,18 +6,18 @@ import com.exception.NoMoreInputException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
-public class InputStreamGenerator implements Closeable{
+public class StringStream implements Closeable{
     private final BufferedReader br;
     private final char[] buffer = new char[8192];
 
-    public InputStreamGenerator(BufferedReader br) {
+    public StringStream(BufferedReader br) {
         if (br == null) {
             throw new InputNullParameterException();
         }
         this.br = br;
     }
 
-    public static InputStreamGenerator of(InputStream is ) {
+    public static StringStream of(InputStream is ) {
         if (is == null){
             throw new InputNullParameterException();
         }
@@ -26,7 +26,7 @@ public class InputStreamGenerator implements Closeable{
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(isr,8192);
 
-        return new InputStreamGenerator(br);
+        return new StringStream(br);
     }
 
     public boolean hasMoreString() throws IOException {

@@ -2,8 +2,8 @@ package com.request;
 
 import com.HttpLengthLimiter;
 import com.HttpResponseStatus;
-import com.HttpStreamGenerator;
-import com.InputStreamGenerator;
+import com.HttpsStream;
+import com.StringStream;
 import com.exception.*;
 import com.header.HttpHeaders;
 import com.releaser.FileResourceCloser;
@@ -24,7 +24,7 @@ import java.util.Optional;
 
 public class HttpRequestProcessor {
 
-    public HttpStreamGenerator process(HttpStreamGenerator requestGenerator, HttpRequestHandlers handlers, HttpLengthLimiter requestHeadersLengthLimit, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
+    public HttpsStream process(HttpsStream requestGenerator, HttpRequestHandlers handlers, HttpLengthLimiter requestHeadersLengthLimit, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         try {
             /**
              * 1. request 받기: 로직 모듈화 필요
@@ -35,6 +35,7 @@ public class HttpRequestProcessor {
                     - GET 인 경우 values 가공 필요 (Values 클래스화 필요)
             **/
             if (!requestGenerator.hasMoreString()) {
+                System.out.println("favicon1");
                 throw new FaviconException();
             }
 
@@ -74,8 +75,13 @@ public class HttpRequestProcessor {
             HttpRequestPath path = httpRequestStartLine.getPath();
             HttpRequestMethod method = httpRequestStartLine.getMethod();
 
+            if (Objects.equals(path,HttpRequestPath.of("/favicon.ico"))) {
+                System.out.println("favicon2");
+                throw new FaviconException();
+            }
+
             HttpRequestHandler httpRequestHandler = handlers.find(path, method);
-            HttpStreamGenerator responseBody = httpRequestHandler.handle(httpHeaders, requestGenerator, requestBodyLengthLimit);
+            HttpsStream responseBody = httpRequestHandler.handle(httpHeaders, requestGenerator, requestBodyLengthLimit);
 
             StringBuilder responseMsg = new StringBuilder();
 
@@ -83,8 +89,8 @@ public class HttpRequestProcessor {
                     .append("Content-Type: text/html;charset=UTF-8\n");
 
             InputStream startLineOutput = new ByteArrayInputStream(responseMsg.toString().getBytes(StandardCharsets.UTF_8));
-            InputStreamGenerator startLineGenerator = InputStreamGenerator.of(startLineOutput);
-            HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(startLineGenerator);
+            StringStream startLineGenerator = StringStream.of(startLineOutput);
+            HttpsStream responseStartLine = HttpsStream.of(startLineGenerator);
 
             return responseStartLine.sequenceOf(responseBody);
 
@@ -107,7 +113,7 @@ public class HttpRequestProcessor {
 
     }
 
-    private HttpStreamGenerator createHttpErrorResponse(HttpResponseStatus status) throws IOException {
+    private HttpsStream createHttpErrorResponse(HttpResponseStatus status) throws IOException {
         StringBuilder startLine = new StringBuilder();
         String statusCode = status.code();
         String statusMsg = status.message();
@@ -118,8 +124,8 @@ public class HttpRequestProcessor {
                 .append("Content-Type: text/html;charset=UTF-8\n\n");
 
         InputStream startLineInput = new ByteArrayInputStream(startLine.toString().getBytes(StandardCharsets.UTF_8));
-        InputStreamGenerator startLineGenerator = InputStreamGenerator.of(startLineInput);
-        HttpStreamGenerator responseStartLine = HttpStreamGenerator.of(startLineGenerator);
+        StringStream startLineGenerator = StringStream.of(startLineInput);
+        HttpsStream responseStartLine = HttpsStream.of(startLineGenerator);
 
         TemplateNodes templateNodes = new TemplateNodes();
         templateNodes.register("statusCode",statusCode);
@@ -137,8 +143,8 @@ public class HttpRequestProcessor {
         }
 
         InputStream bodyInput = new FileInputStream(replacedFile.toString());
-        InputStreamGenerator bodyGenerator = InputStreamGenerator.of(bodyInput);
-        HttpStreamGenerator responseBody = HttpStreamGenerator.of(bodyGenerator);
+        StringStream bodyGenerator = StringStream.of(bodyInput);
+        HttpsStream responseBody = HttpsStream.of(bodyGenerator);
 
         ResourceCloser releaser = new FileResourceCloser(Path.of("src","main","resources", "template","errorBody.html").toFile());
         responseBody.registerReleaser(releaser);

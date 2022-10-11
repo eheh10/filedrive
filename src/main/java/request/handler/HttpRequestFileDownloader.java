@@ -1,8 +1,8 @@
 package request.handler;
 
 import com.HttpLengthLimiter;
-import com.HttpStreamGenerator;
-import com.InputStreamGenerator;
+import com.HttpsStream;
+import com.StringStream;
 import com.exception.NotFoundHttpRequestFileException;
 import com.exception.InputNullParameterException;
 import com.header.HttpHeaders;
@@ -19,7 +19,7 @@ import java.nio.file.Paths;
 
 public class HttpRequestFileDownloader implements HttpRequestHandler {
     @Override
-    public HttpStreamGenerator handle(HttpHeaders httpHeaders, HttpStreamGenerator generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
+    public HttpsStream handle(HttpHeaders httpHeaders, HttpsStream generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         if (httpHeaders == null || generator == null || requestBodyLengthLimit == null) {
             throw new InputNullParameterException();
         }
@@ -39,12 +39,12 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
                 .append("\"\n\n");
 
         InputStream headerInput = new ByteArrayInputStream(headers.toString().getBytes(StandardCharsets.UTF_8));
-        InputStreamGenerator headerGenerator = InputStreamGenerator.of(headerInput);
-        HttpStreamGenerator responseHeaders = HttpStreamGenerator.of(headerGenerator);
+        StringStream headerGenerator = StringStream.of(headerInput);
+        HttpsStream responseHeaders = HttpsStream.of(headerGenerator);
 
         InputStream bodyInput = new FileInputStream(targetPath.toFile());
-        InputStreamGenerator bodyGenerator = InputStreamGenerator.of(bodyInput);
-        HttpStreamGenerator responseBody = HttpStreamGenerator.of(bodyGenerator);
+        StringStream bodyGenerator = StringStream.of(bodyInput);
+        HttpsStream responseBody = HttpsStream.of(bodyGenerator);
 
         return responseHeaders.sequenceOf(responseBody);
     }

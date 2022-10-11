@@ -12,14 +12,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-class InputStreamGeneratorTest {
+class StringStreamTest {
     @ParameterizedTest
     @ValueSource(strings = {"Hello","Hello World\n","Hello\n World\n\n"})
     @DisplayName("끝까지 데이터를 읽는지 테스트")
     void testGenerate(String expected) throws IOException {
         //given
         InputStream is = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-        InputStreamGenerator generator = InputStreamGenerator.of(is);
+        StringStream generator = StringStream.of(is);
 
         //when
         StringBuilder actual = new StringBuilder();
@@ -38,7 +38,7 @@ class InputStreamGeneratorTest {
         //given
         String expected = str.split("\n")[0];
         InputStream is = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
-        InputStreamGenerator generator = InputStreamGenerator.of(is);
+        StringStream generator = StringStream.of(is);
 
         //when
         String actual = generator.generateLine();
@@ -53,7 +53,7 @@ class InputStreamGeneratorTest {
         //given
         boolean expected = true;
         InputStream is = new ByteArrayInputStream("data".getBytes(StandardCharsets.UTF_8));
-        InputStreamGenerator generator = InputStreamGenerator.of(is);
+        StringStream generator = StringStream.of(is);
 
         //when
         boolean actual = generator.hasMoreString();
@@ -68,7 +68,7 @@ class InputStreamGeneratorTest {
         //given
         boolean expected = false;
         InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
-        InputStreamGenerator generator = InputStreamGenerator.of(is);
+        StringStream generator = StringStream.of(is);
 
         //when
         boolean actual = generator.hasMoreString();
@@ -80,7 +80,7 @@ class InputStreamGeneratorTest {
     @Test
     @DisplayName("null 로 인스턴스 생성시 에러 발생 테스트")
     void testConstructWithNull() {
-        Assertions.assertThatThrownBy(()-> InputStreamGenerator.of(null))
+        Assertions.assertThatThrownBy(()-> StringStream.of(null))
                 .isInstanceOf(InputNullParameterException.class);
     }
 }

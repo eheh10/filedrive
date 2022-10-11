@@ -43,9 +43,9 @@ public class Bootstrap {
 
             HttpRequestProcessor processor = new HttpRequestProcessor();
 
-            try (InputStreamGenerator isGenerator = InputStreamGenerator.of(socket.getInputStream());
-                 HttpStreamGenerator generator = HttpStreamGenerator.of(isGenerator);
-                 HttpStreamGenerator responseGenerator = processor.process(generator, handlers, requestHeadersLengthLimit, requestBodyLengthLimit);
+            try (StringStream isGenerator = StringStream.of(socket.getInputStream());
+                 HttpsStream generator = HttpsStream.of(isGenerator);
+                 HttpsStream responseGenerator = processor.process(generator, handlers, requestHeadersLengthLimit, requestBodyLengthLimit);
                  OutputStreamWriter bsw = new OutputStreamWriter(bos, StandardCharsets.UTF_8)) {
 
                 while (responseGenerator.hasMoreString()) {

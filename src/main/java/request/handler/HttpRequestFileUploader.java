@@ -1,7 +1,7 @@
 package request.handler;
 
 import com.HttpLengthLimiter;
-import com.HttpStreamGenerator;
+import com.HttpsStream;
 import com.exception.NotAllowedFileExtensionException;
 import com.exception.NotFoundHttpHeadersPropertyException;
 import com.exception.InputNullParameterException;
@@ -19,7 +19,7 @@ import java.util.Properties;
 
 public class HttpRequestFileUploader implements HttpRequestHandler {
     @Override
-    public HttpStreamGenerator handle(HttpHeaders httpHeaders, HttpStreamGenerator generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
+    public HttpsStream handle(HttpHeaders httpHeaders, HttpsStream generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         if (httpHeaders == null || generator == null) {
             throw new InputNullParameterException();
         }
@@ -100,7 +100,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         bw.flush();
         bw.close();
 
-        return HttpStreamGenerator.empty();
+        return HttpsStream.empty();
     }
 
     private boolean isNotAllowedExtension(Properties properties, String targetExtension) {

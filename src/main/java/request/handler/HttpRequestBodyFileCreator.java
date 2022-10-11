@@ -1,7 +1,7 @@
 package request.handler;
 
 import com.HttpLengthLimiter;
-import com.HttpStreamGenerator;
+import com.HttpsStream;
 import com.exception.InputNullParameterException;
 import com.header.HttpHeaders;
 import com.request.handler.HttpRequestHandler;
@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 
 public class HttpRequestBodyFileCreator implements HttpRequestHandler {
     @Override
-    public HttpStreamGenerator handle(HttpHeaders httpHeaders, HttpStreamGenerator generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
+    public HttpsStream handle(HttpHeaders httpHeaders, HttpsStream generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         if (httpHeaders == null || generator == null) {
             throw new InputNullParameterException();
         }
@@ -45,6 +45,6 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler {
             e.printStackTrace();
         }
 
-        return HttpStreamGenerator.empty();
+        return HttpsStream.empty();
     }
 }

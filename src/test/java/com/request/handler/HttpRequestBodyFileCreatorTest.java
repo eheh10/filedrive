@@ -1,12 +1,14 @@
 package com.request.handler;
 
 import com.HttpLengthLimiter;
-import com.HttpStreamGenerator;
-import com.exception.NullException;
+import com.HttpsStream;
+import com.StringStream;
+import com.exception.InputNullParameterException;
 import com.header.HttpHeaders;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import request.handler.HttpRequestBodyFileCreator;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -26,7 +28,8 @@ class HttpRequestBodyFileCreatorTest {
         HttpRequestBodyFileCreator testHandler = new HttpRequestBodyFileCreator();
         HttpHeaders httpHeaders = HttpHeaders.empty();
         InputStream is = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
+        StringStream isGenerator = StringStream.of(is);
+        HttpsStream generator = HttpsStream.of(isGenerator);
 
         //when
         testHandler.handle(httpHeaders,generator, requestBodyLengthLimit);
@@ -46,14 +49,15 @@ class HttpRequestBodyFileCreatorTest {
         HttpRequestBodyFileCreator testHandler = new HttpRequestBodyFileCreator();
         HttpHeaders httpHeaders = HttpHeaders.empty();
         InputStream is = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-        HttpStreamGenerator generator = HttpStreamGenerator.of(is);
+        StringStream isGenerator = StringStream.of(is);
+        HttpsStream generator = HttpsStream.of(isGenerator);
 
         //when
         Assertions.assertThatThrownBy(()->testHandler.handle(null,generator, requestBodyLengthLimit))
-                .isInstanceOf(NullException.class);
+                .isInstanceOf(InputNullParameterException.class);
 
         Assertions.assertThatThrownBy(()->testHandler.handle(httpHeaders,null, requestBodyLengthLimit))
-                .isInstanceOf(NullException.class);
+                .isInstanceOf(InputNullParameterException.class);
     }
 
 }

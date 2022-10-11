@@ -9,40 +9,40 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-public class HttpStreamGenerator implements Closeable{
-    private final Queue<InputStreamGenerator> values;
+public class HttpsStream implements Closeable{
+    private final Queue<StringStream> values;
     private final Queue<ResourceCloser> releasers = new ArrayDeque<>();
 
-    private HttpStreamGenerator(Queue<InputStreamGenerator> values) {
+    private HttpsStream(Queue<StringStream> values) {
         if (values == null){
             throw new InputNullParameterException();
         }
         this.values = values;
     }
 
-    public static HttpStreamGenerator empty() {
+    public static HttpsStream empty() {
         InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
-        InputStreamGenerator isGenerator = InputStreamGenerator.of(is);
-        return HttpStreamGenerator.of(isGenerator);
+        StringStream isGenerator = StringStream.of(is);
+        return HttpsStream.of(isGenerator);
     }
 
-    public static HttpStreamGenerator of(InputStreamGenerator isGenerator) {
+    public static HttpsStream of(StringStream isGenerator) {
         if (isGenerator == null){
             throw new InputNullParameterException();
         }
 
-        Queue<InputStreamGenerator> values = new ArrayDeque<>();
+        Queue<StringStream> values = new ArrayDeque<>();
         values.offer(isGenerator);
 
-        return new HttpStreamGenerator(values);
+        return new HttpsStream(values);
     }
 
-    public HttpStreamGenerator sequenceOf(HttpStreamGenerator generator) {
+    public HttpsStream sequenceOf(HttpsStream generator) {
         if (generator == null) {
             throw new InputNullParameterException();
         }
 
-        Queue<InputStreamGenerator> values = new ArrayDeque<>();
+        Queue<StringStream> values = new ArrayDeque<>();
         values.addAll(this.values);
         values.addAll(generator.values);
 
@@ -50,7 +50,7 @@ public class HttpStreamGenerator implements Closeable{
         releasers.addAll(this.releasers);
         releasers.addAll(generator.releasers);
 
-        return new HttpStreamGenerator(values);
+        return new HttpsStream(values);
     }
 
     public void registerReleaser(ResourceCloser releaser) {
