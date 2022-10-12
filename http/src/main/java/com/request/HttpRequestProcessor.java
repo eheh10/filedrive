@@ -12,6 +12,7 @@ import com.request.handler.HttpRequestHandler;
 import com.request.handler.HttpRequestHandlers;
 import com.template.FileTemplateReplacer;
 import com.template.TemplateNodes;
+import com.template.TemplateText;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -109,12 +110,9 @@ public class HttpRequestProcessor {
         Path errorTemplateFile = Path.of("src","main","resources", "template","error.html");
         Path replacedFile = Path.of("src","main","resources", "template","errorBody.html");
 
-        String startTemplate = "{{";
-        String endTemplate = "}}";
-
         try (FileTemplateReplacer replacer = FileTemplateReplacer.of(errorTemplateFile,replacedFile);
         ) {
-            replacer.replace(templateNodes, startTemplate, endTemplate);
+            replacer.replace(templateNodes, TemplateText.ERROR_TEMPLATE);
         }
 
         InputStream bodyInput = new FileInputStream(replacedFile.toString());
