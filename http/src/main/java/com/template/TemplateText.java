@@ -1,0 +1,21 @@
+package com.template;
+
+public enum TemplateText {
+    ERROR_TEMPLATE("{{","}}");
+
+    private final String start;
+    private final String end;
+
+    TemplateText(String start, String end) {
+        this.start = start;
+        this.end = end;
+    }
+
+    public String getStart() {
+        return start;
+    }
+
+    public String getEnd() {
+        return end;
+    }
+}
