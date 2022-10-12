@@ -28,34 +28,36 @@ public class FileTemplateReplacer implements Closeable{
         return new FileTemplateReplacer(isr,osw);
     }
 
-    public void replace(TemplateNodes templateNodes, String startTemplate, String endTemplate) throws IOException {
-        StringBuilder templateTxt = new StringBuilder();
+    public void replace(TemplateNodes templateNodes, TemplateText template) throws IOException {
+        StringBuilder foundTemplateText = new StringBuilder();
         char[] buffer = new char[1024];
         int len = -1;
 
+        String startTemplate = template.getStart();
+        String endTemplate = template.getEnd();
         int txtMaxLength = templateNodes.getTemplateMaxLength();
         int templateLength = startTemplate.length() + endTemplate.length();
 
         while((len=isr.read(buffer)) != -1) {
-            if (templateTxt.length() != 0) {
-                if (templateTxt.length() < txtMaxLength+templateLength) {
-                    templateTxt.append(buffer,0,len);
+            if (foundTemplateText.length() != 0) {
+                if (foundTemplateText.length() < txtMaxLength+templateLength) {
+                    foundTemplateText.append(buffer,0,len);
                     continue;
                 }
 
-                String replace = replaceTemplate(templateTxt,startTemplate,endTemplate,0,txtMaxLength,templateNodes);
+                String replace = replaceTemplate(foundTemplateText,startTemplate,endTemplate,0,txtMaxLength,templateNodes);
 
-                int nextStartIdx = templateTxt.indexOf(startTemplate.substring(0,1));
+                int nextStartIdx = foundTemplateText.indexOf(startTemplate.substring(0,1));
                 if (nextStartIdx != -1) {
                     osw.write(replace.substring(0,nextStartIdx));
-                    templateTxt.setLength(0);
-                    templateTxt.append(replace.substring(nextStartIdx));
-                    templateTxt.append(buffer,0,len);
+                    foundTemplateText.setLength(0);
+                    foundTemplateText.append(replace.substring(nextStartIdx));
+                    foundTemplateText.append(buffer,0,len);
                     continue;
                 }
 
                 osw.write(replace);
-                templateTxt.setLength(0);
+                foundTemplateText.setLength(0);
             }
 
             int startIdx= findIndexOf(startTemplate.charAt(0),buffer);
@@ -65,11 +67,11 @@ public class FileTemplateReplacer implements Closeable{
             }
 
             osw.write(buffer,0,startIdx);
-            templateTxt.append(buffer,startIdx,len-startIdx);
+            foundTemplateText.append(buffer,startIdx,len-startIdx);
         }
 
-        if (templateTxt.length() != 0) {
-            String replace = replaceTemplate(templateTxt,startTemplate,endTemplate,0,txtMaxLength,templateNodes);
+        if (foundTemplateText.length() != 0) {
+            String replace = replaceTemplate(foundTemplateText,startTemplate,endTemplate,0,txtMaxLength,templateNodes);
             osw.write(replace);
         }
 
