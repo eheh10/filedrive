@@ -2,6 +2,7 @@ package com;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.exception.InputNullParameterException;
 import com.releaser.FileResourceCloser;
 import com.releaser.ResourceCloser;
 import org.assertj.core.api.Assertions;
@@ -16,8 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 class HttpMessageStreamTest {
-
-
 
     @Test
     @DisplayName("파일 삭제 releaser 등록시 파일 삭제 테스트")
@@ -40,6 +39,15 @@ class HttpMessageStreamTest {
 
         //then
         Assertions.assertThat(deleted).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("null 로 인스턴스 생성시 에러 발생 테스트")
+    void testConstructWithNull() {
+        Assertions.assertThatThrownBy(()-> HttpMessageStream.of(null))
+                .isInstanceOf(InputNullParameterException.class);
+        Assertions.assertThatThrownBy(()-> HttpMessageStream.of(null,null))
+                .isInstanceOf(InputNullParameterException.class);
     }
 
 }
