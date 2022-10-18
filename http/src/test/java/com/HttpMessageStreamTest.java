@@ -1,44 +1,55 @@
 package com;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.exception.InputNullParameterException;
-import com.releaser.FileResourceCloser;
 import com.releaser.ResourceCloser;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 
 class HttpMessageStreamTest {
+    private static final ByteArrayOutputStream OUTPUT_STREAM = new ByteArrayOutputStream();
+    private static final PrintStream PRINT_STREAM = System.out;
+    @BeforeEach
+    void setUp() {
+        System.setOut(new PrintStream(OUTPUT_STREAM));
+    }
+
+    @AfterEach
+    void tearDown() {
+        System.setOut(PRINT_STREAM);
+    }
+
+    class TestResourceCloser implements ResourceCloser {
+        @Override
+        public boolean close() {
+            System.out.println("TestResourceCloser.close() is called");
+            return true;
+        }
+    }
 
     @Test
-    @DisplayName("파일 삭제 releaser 등록시 파일 삭제 테스트")
-    void testRegisterReleaser() throws IOException {
+    @DisplayName("Closer 등록시 close 테스트")
+    void testCloser() throws IOException {
         //given
-        boolean expected = false;
+        String expected = "TestResourceCloser.close() is called";
         String str = "Hello";
         InputStream is = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
         StringStream stringStream = StringStream.of(is);
 
-        File file = Path.of("src","test","resources","test-delete.txt").toFile();
-        file.createNewFile();
-
-        ResourceCloser closer = new FileResourceCloser(file);
+        ResourceCloser closer = new TestResourceCloser();
         HttpMessageStream stream = HttpMessageStream.of(stringStream,closer);
 
         //when
         stream.close();
-        boolean deleted = file.exists();
+        String actual = OUTPUT_STREAM.toString().trim();
 
         //then
-        Assertions.assertThat(deleted).isEqualTo(expected);
+        Assertions.assertThat(actual).isEqualTo(expected);
     }
 
     @Test
