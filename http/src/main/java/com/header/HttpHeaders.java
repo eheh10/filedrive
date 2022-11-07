@@ -1,9 +1,11 @@
 package com.header;
 
 import com.HttpLengthLimiter;
-import com.HttpsStream;
+import com.HttpMessageStreams;
 import com.exception.InputNullParameterException;
 import com.exception.NotFoundHttpHeadersPropertyException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -12,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class HttpHeaders {
+    private static final Logger LOG = LoggerFactory.getLogger(HttpHeaders.class);
 
     private final Map<String, HttpHeaderField> values;
 
@@ -29,7 +32,7 @@ public class HttpHeaders {
      * 2. 누적값 계산
      * 3. 예외 발생
     * */
-    public static HttpHeaders parse(HttpsStream generator, HttpLengthLimiter limitLength) throws IOException {
+    public static HttpHeaders parse(HttpMessageStreams generator, HttpLengthLimiter limitLength) throws IOException {
         if (generator == null || limitLength == null) {
             throw new InputNullParameterException();
         }
@@ -49,7 +52,7 @@ public class HttpHeaders {
         return new HttpHeaders(Collections.unmodifiableMap(fields));
     }
 
-    public static HttpHeaders parse(HttpsStream generator) throws IOException {
+    public static HttpHeaders parse(HttpMessageStreams generator) throws IOException {
         HttpLengthLimiter lengthLimit = new HttpLengthLimiter(8192);
         return parse(generator, lengthLimit);
     }
@@ -72,8 +75,8 @@ public class HttpHeaders {
 
     public void display() {
         for(Map.Entry<String, HttpHeaderField> entry:values.entrySet()) {
-            System.out.print(entry.getKey()+": ");
-            System.out.println(entry.getValue().toString());
+            LOG.debug(entry.getKey()+": ");
+            LOG.debug(entry.getValue().toString());
         }
     }
 

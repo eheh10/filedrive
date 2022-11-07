@@ -1,10 +1,7 @@
 package com.request;
 
-import com.HttpLengthLimiter;
-import com.HttpResponseStatus;
-import com.HttpsStream;
-import com.StringStream;
-import com.exception.*;
+import com.*;
+import com.exception.EmptyRequestException;
 import com.header.HttpHeaders;
 import com.releaser.FileResourceCloser;
 import com.releaser.ResourceCloser;
@@ -13,6 +10,8 @@ import com.request.handler.HttpRequestHandlers;
 import com.template.FileTemplateReplacer;
 import com.template.TemplateNodes;
 import com.template.TemplateText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -20,12 +19,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 
 public class HttpRequestProcessor {
+    private static final Logger LOG = LoggerFactory.getLogger(HttpRequestProcessor.class);
 
-    public HttpsStream process(HttpsStream requestGenerator, HttpRequestHandlers handlers, HttpLengthLimiter requestHeadersLengthLimit, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
+    public HttpMessageStreams process(HttpMessageStreams requestGenerator, HttpRequestHandlers handlers, HttpLengthLimiter requestHeadersLengthLimit, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         try {
             /**
              * 1. request 받기: 로직 모듈화 필요
@@ -36,12 +35,11 @@ public class HttpRequestProcessor {
                     - GET 인 경우 values 가공 필요 (Values 클래스화 필요)
             **/
             if (!requestGenerator.hasMoreString()) {
-                System.out.println("favicon1");
-                throw new FaviconException();
+                throw new EmptyRequestException();
             }
 
             String startLineText = requestGenerator.generateLine();
-            System.out.println(startLineText);
+            LOG.debug("request startLine: " + startLineText);
 
             Optional<HttpRequestStartLine> startLineParser = Optional.of(HttpRequestStartLine.parse(startLineText));
             HttpRequestStartLine httpRequestStartLine = startLineParser.get();
@@ -54,6 +52,7 @@ public class HttpRequestProcessor {
                     - 8192보다 긴 경우 431 Request header too large 응답
             **/
             HttpHeaders httpHeaders = HttpHeaders.parse(requestGenerator,requestHeadersLengthLimit);
+//            httpHeaders.display();
 
             /**
                 1-3. Body 가공
@@ -76,53 +75,53 @@ public class HttpRequestProcessor {
             HttpRequestPath path = httpRequestStartLine.getPath();
             HttpRequestMethod method = httpRequestStartLine.getMethod();
 
-            if (Objects.equals(path,HttpRequestPath.of("/favicon.ico"))) {
-                System.out.println("favicon2");
-                throw new FaviconException();
-            }
-
             HttpRequestHandler httpRequestHandler = handlers.find(path, method);
-            HttpsStream responseBody = httpRequestHandler.handle(httpHeaders, requestGenerator, requestBodyLengthLimit);
+            HttpMessageStreams responseBody = httpRequestHandler.handle(path, httpHeaders, requestGenerator);
 
             String startLine = createHttpResponseStartLine(HttpResponseStatus.CODE_200);
             InputStream startLineOutput = new ByteArrayInputStream(startLine.getBytes(StandardCharsets.UTF_8));
             StringStream startLineGenerator = StringStream.of(startLineOutput);
-            HttpsStream responseStartLine = HttpsStream.of(startLineGenerator);
 
-            return responseStartLine.sequenceOf(responseBody);
+            HttpMessageStreams responseMessage = HttpMessageStreams.of(startLineGenerator);
 
+            return responseMessage.sequenceOf(responseBody);
+
+        } catch (EmptyRequestException e) {
+            throw new EmptyRequestException();
         } catch (Exception e) {
             HttpResponseStatus status = HttpResponseStatus.httpResponseStatusOf(e);
             return createHttpErrorResponse(status);
         }
     }
 
-    private HttpsStream createHttpErrorResponse(HttpResponseStatus status) throws IOException {
-        String startLine = createHttpResponseStartLine(status)+"\n";
+    private HttpMessageStreams createHttpErrorResponse(HttpResponseStatus status) throws IOException {
+        String startLine = createHttpResponseStartLine(status);
         InputStream startLineInput = new ByteArrayInputStream(startLine.getBytes(StandardCharsets.UTF_8));
         StringStream startLineGenerator = StringStream.of(startLineInput);
-        HttpsStream responseStartLine = HttpsStream.of(startLineGenerator);
+        HttpMessageStreams responseStartLine = HttpMessageStreams.of(startLineGenerator);
 
         TemplateNodes templateNodes = new TemplateNodes();
         templateNodes.register("statusCode",status.code());
         templateNodes.register("statusMsg",status.message());
 
-        Path errorTemplateFile = Path.of("src","main","resources", "template","error.html");
-        Path replacedFile = Path.of("src","main","resources", "template","errorBody.html");
+        ResourceFinder resourceFinder = new ResourceFinder();
+        TemplateFileStream errorTemplateFile = resourceFinder.findTemplate("error.html");
+        Path replacedFile = Path.of("src","main","resources", "errorBody.html");
 
         try (FileTemplateReplacer replacer = FileTemplateReplacer.of(errorTemplateFile,replacedFile);
         ) {
             replacer.replace(templateNodes, TemplateText.ERROR_TEMPLATE);
         }
 
+        ResourceCloser releaser = new FileResourceCloser(replacedFile.toFile());
+
         InputStream bodyInput = new FileInputStream(replacedFile.toString());
         StringStream bodyGenerator = StringStream.of(bodyInput);
-        HttpsStream responseBody = HttpsStream.of(bodyGenerator);
+        HttpMessageStream responseBody = HttpMessageStream.of(bodyGenerator,releaser);
 
-        ResourceCloser releaser = new FileResourceCloser(Path.of("src","main","resources", "template","errorBody.html").toFile());
-        responseBody.registerReleaser(releaser);
+        HttpMessageStreams responseMessage = responseStartLine.sequenceOf(responseBody);
 
-        return responseStartLine.sequenceOf(responseBody);
+        return responseMessage;
     }
 
     public String createHttpResponseStartLine(HttpResponseStatus status) {
@@ -130,10 +129,7 @@ public class HttpRequestProcessor {
         String statusCode = status.code();
         String statusMsg = status.message();
 
-        System.out.println(statusCode + " " + statusMsg);
-
-        startLine.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg).append("\n")
-                .append("Content-Type: text/html;charset=UTF-8\n");
+        startLine.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg);
 
         return startLine.toString();
 
