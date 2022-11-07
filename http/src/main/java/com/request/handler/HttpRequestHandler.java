@@ -1,11 +1,11 @@
 package com.request.handler;
 
-import com.HttpLengthLimiter;
-import com.HttpsStream;
+import com.HttpMessageStreams;
 import com.header.HttpHeaders;
+import com.request.HttpRequestPath;
 
 import java.io.IOException;
 
 public interface HttpRequestHandler {
-    HttpsStream handle(HttpHeaders httpHeaders, HttpsStream generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException;
+    HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStreams bodyStream) throws IOException;
 }

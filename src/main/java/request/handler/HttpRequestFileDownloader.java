@@ -1,12 +1,15 @@
 package request.handler;
 
-import com.HttpLengthLimiter;
-import com.HttpsStream;
+import com.HttpMessageStream;
+import com.HttpMessageStreams;
 import com.StringStream;
-import com.exception.NotFoundHttpRequestFileException;
+import com.dto.FileDto;
 import com.exception.InputNullParameterException;
+import com.exception.NotFoundHttpRequestFileException;
 import com.header.HttpHeaders;
+import com.request.HttpRequestPath;
 import com.request.handler.HttpRequestHandler;
+import com.table.FileTable;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -18,9 +21,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class HttpRequestFileDownloader implements HttpRequestHandler {
+    //???
+    private final FileTable fileTable = new FileTable();
+
     @Override
-    public HttpsStream handle(HttpHeaders httpHeaders, HttpsStream generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
-        if (httpHeaders == null || generator == null || requestBodyLengthLimit == null) {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStreams bodyStream) throws IOException {
+        if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
 
@@ -32,6 +38,13 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
             throw new NotFoundHttpRequestFileException();
         }
 
+        FileDto fileDto = FileDto.builder()
+                .fileName(fileName)
+                .filePath(targetPath.toString())
+                .build();
+
+        fileTable.insert(fileDto);
+
         StringBuilder headers = new StringBuilder();
         headers.append("Content-Type: application/octet-stream;charset=euc-kr\n")
                 .append("Content-Disposition: attachment; filename=\"")
@@ -40,12 +53,14 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
 
         InputStream headerInput = new ByteArrayInputStream(headers.toString().getBytes(StandardCharsets.UTF_8));
         StringStream headerGenerator = StringStream.of(headerInput);
-        HttpsStream responseHeaders = HttpsStream.of(headerGenerator);
+        HttpMessageStreams responseHeaders = HttpMessageStreams.of(headerGenerator);
 
         InputStream bodyInput = new FileInputStream(targetPath.toFile());
         StringStream bodyGenerator = StringStream.of(bodyInput);
-        HttpsStream responseBody = HttpsStream.of(bodyGenerator);
+        HttpMessageStream responseBody = HttpMessageStream.of(bodyGenerator);
 
-        return responseHeaders.sequenceOf(responseBody);
+        HttpMessageStreams response = responseHeaders.sequenceOf(responseBody);
+
+        return response;
     }
 }
