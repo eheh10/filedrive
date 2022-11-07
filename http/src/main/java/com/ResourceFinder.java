@@ -28,7 +28,7 @@ public class ResourceFinder {
         try {
             URL resource = Thread.currentThread()
                     .getContextClassLoader()
-                    .getResource(filePath.getValue().toString());
+                    .getResource(filePath.getPath());
 
             if (resource == null) {
                 throw new NotFoundResourceException();
