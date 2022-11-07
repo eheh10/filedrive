@@ -1,16 +1,17 @@
 package com.request.handler;
 
+import com.exception.InputNullParameterException;
 import com.exception.NotAllowedHttpMethodException;
 import com.exception.NotFoundHttpPathException;
-import com.exception.InputNullParameterException;
 import com.request.HttpRequestMethod;
 import com.request.HttpRequestPath;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class HttpRequestHandlers {
-    private static Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values = new HashMap<>();
+    private final Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values = new HashMap<>();
 
     public void register(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
         if (path == null || method == null || handler == null) {
@@ -25,7 +26,9 @@ public class HttpRequestHandlers {
             throw new InputNullParameterException();
         }
 
-        if (!values.containsKey(path)) {
+        path = convertPathIfResourceRequest(values,path,method);
+
+        if (!values.containsKey(path) ) {
             throw new NotFoundHttpPathException();
         }
 
@@ -36,5 +39,15 @@ public class HttpRequestHandlers {
         }
 
         return values.get(path).get(method);
+    }
+
+    private HttpRequestPath convertPathIfResourceRequest(Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values, HttpRequestPath path, HttpRequestMethod method) {
+        if (values.containsKey(path) && path.isResourcePath()) {
+            throw new NotFoundHttpPathException();
+        }
+        if (Objects.equals(method, HttpRequestMethod.GET) && !values.containsKey(path)) {
+            return HttpRequestPath.ofResourcePath();
+        }
+        return path;
     }
 }
