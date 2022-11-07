@@ -1,5 +1,6 @@
 package com.request;
 
+import com.exception.EmptyHttpRequestPathException;
 import com.exception.InputNullParameterException;
 
 import java.io.IOException;
@@ -13,7 +14,7 @@ public class HttpRequestPath {
 
     private final Path value;
 
-    public HttpRequestPath(Path value) {
+    private HttpRequestPath(Path value) {
         if (value == null) {
             throw new InputNullParameterException();
         }
@@ -24,6 +25,10 @@ public class HttpRequestPath {
     public static HttpRequestPath of(String path) {
         if (path == null) {
             throw new InputNullParameterException();
+        }
+
+        if (path.isBlank()) {
+            throw new EmptyHttpRequestPathException();
         }
 
         if (path.charAt(0) == '/') {
@@ -67,5 +72,9 @@ public class HttpRequestPath {
     @Override
     public int hashCode() {
         return value.hashCode();
+    }
+
+    public String getPath() {
+        return value.toString();
     }
 }
