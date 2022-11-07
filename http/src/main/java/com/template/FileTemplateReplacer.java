@@ -1,47 +1,45 @@
 package com.template;
 
+import com.TemplateFileStream;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 public class FileTemplateReplacer implements Closeable{
-    private final InputStreamReader isr;
+    private final TemplateFileStream templateFileStream;
     private final OutputStreamWriter osw;
 
-    private FileTemplateReplacer(InputStreamReader isr, OutputStreamWriter osw) {
-        if (isr == null || osw == null) {
+    private FileTemplateReplacer(TemplateFileStream templateFileStream, OutputStreamWriter osw) {
+        if (templateFileStream == null || osw == null) {
             new NullPointerException();
         }
-        this.isr = isr;
+        this.templateFileStream = templateFileStream;
         this.osw = osw;
     }
 
-    public static FileTemplateReplacer of(Path templateFileName, Path replacedFileName) throws FileNotFoundException {
-        InputStream is = new FileInputStream(templateFileName.toString());
-        BufferedInputStream bis = new BufferedInputStream(is,8192);
-        InputStreamReader isr = new InputStreamReader(bis,StandardCharsets.UTF_8);
-
-        OutputStream os = new FileOutputStream(replacedFileName.toString());
+    public static FileTemplateReplacer of(TemplateFileStream templateFileStream, Path replacedFileName) throws FileNotFoundException {
+        OutputStream os = new FileOutputStream(replacedFileName.toFile());
         BufferedOutputStream bos = new BufferedOutputStream(os, 8192);
         OutputStreamWriter osw = new OutputStreamWriter(bos,StandardCharsets.UTF_8);
 
-        return new FileTemplateReplacer(isr,osw);
+        return new FileTemplateReplacer(templateFileStream,osw);
     }
 
     public void replace(TemplateNodes templateNodes, TemplateText template) throws IOException {
         StringBuilder foundTemplateText = new StringBuilder();
-        char[] buffer = new char[1024];
-        int len = -1;
 
         String startTemplate = template.getStart();
         String endTemplate = template.getEnd();
         int txtMaxLength = templateNodes.getTemplateMaxLength();
         int templateLength = startTemplate.length() + endTemplate.length();
 
-        while((len=isr.read(buffer)) != -1) {
+        while(templateFileStream.hasMoreFileContent()) {
+            String fileContent = templateFileStream.generate();
+
             if (foundTemplateText.length() != 0) {
                 if (foundTemplateText.length() < txtMaxLength+templateLength) {
-                    foundTemplateText.append(buffer,0,len);
+                    foundTemplateText.append(fileContent);
                     continue;
                 }
 
@@ -52,7 +50,7 @@ public class FileTemplateReplacer implements Closeable{
                     osw.write(replace.substring(0,nextStartIdx));
                     foundTemplateText.setLength(0);
                     foundTemplateText.append(replace.substring(nextStartIdx));
-                    foundTemplateText.append(buffer,0,len);
+                    foundTemplateText.append(fileContent);
                     continue;
                 }
 
@@ -60,14 +58,14 @@ public class FileTemplateReplacer implements Closeable{
                 foundTemplateText.setLength(0);
             }
 
-            int startIdx= findIndexOf(startTemplate.charAt(0),buffer);
+            int startIdx = fileContent.indexOf(startTemplate.charAt(0));
             if (startIdx == -1) {
-                osw.write(buffer,0,len);
+                osw.write(fileContent);
                 continue;
             }
 
-            osw.write(buffer,0,startIdx);
-            foundTemplateText.append(buffer,startIdx,len-startIdx);
+            osw.write(fileContent.substring(0,startIdx));
+            foundTemplateText.append(fileContent.substring(startIdx,fileContent.length()-startIdx));
         }
 
         if (foundTemplateText.length() != 0) {
@@ -102,22 +100,9 @@ public class FileTemplateReplacer implements Closeable{
         return replaceTemplate(templateTxt,startTemplate,endTemplate,templateStartIdx+replace.length(),max,replaceTxt);
     }
 
-    private int findIndexOf(char target, char[] buffer, int fromIdx) {
-        for(int i=fromIdx; i< buffer.length; i++) {
-            if (buffer[i] == target) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private int findIndexOf(char target, char[] buffer) {
-        return findIndexOf(target,buffer,0);
-    }
-
     @Override
     public void close() throws IOException {
-        isr.close();
+        templateFileStream.close();
         osw.close();
     }
 }
