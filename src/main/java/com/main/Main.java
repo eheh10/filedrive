@@ -11,8 +11,10 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
         Bootstrap bootstrap = new Bootstrap();
-        bootstrap.registerHandler(HttpRequestPath.of("/test"), HttpRequestMethod.POST,new HttpRequestBodyFileCreator());
-        bootstrap.registerHandler(HttpRequestPath.of("/upload"), HttpRequestMethod.POST,new HttpRequestFileUploader());
+        bootstrap.registerHandler(HttpRequestPath.of("/upload"), HttpRequestMethod.POST, new HttpRequestFileUploader());
+        bootstrap.registerHandler(HttpRequestPath.of("/download"), HttpRequestMethod.POST, new HttpRequestFileDownloader());
+        bootstrap.registerHandler(HttpRequestPath.ofResourcePath(), HttpRequestMethod.GET, new HttpResourceStream());
+
         bootstrap.start();
     }
 }
