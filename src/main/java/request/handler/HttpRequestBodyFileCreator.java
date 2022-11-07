@@ -1,9 +1,10 @@
 package request.handler;
 
-import com.HttpLengthLimiter;
-import com.HttpsStream;
+import com.HttpMessageStreams;
+import com.StringStream;
 import com.exception.InputNullParameterException;
 import com.header.HttpHeaders;
+import com.request.HttpRequestPath;
 import com.request.handler.HttpRequestHandler;
 
 import java.io.*;
@@ -14,16 +15,20 @@ import java.nio.file.Paths;
 
 public class HttpRequestBodyFileCreator implements HttpRequestHandler {
     @Override
-    public HttpsStream handle(HttpHeaders httpHeaders, HttpsStream generator, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
-        if (httpHeaders == null || generator == null) {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStreams bodyStream) throws IOException {
+        if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
+
+        String headers = "Content-Type: text/html;charset=UTF-8\n\n";
+        InputStream headerInput = new ByteArrayInputStream(headers.getBytes(StandardCharsets.UTF_8));
+        StringStream headerGenerator = StringStream.of(headerInput);
+        HttpMessageStreams responseHeaders = HttpMessageStreams.of(headerGenerator);
 
         Path directoryPath = Paths.get(System.getProperty("user.home"),"fileDrive");
 
         if (!Files.isDirectory(directoryPath)) {
             Files.createDirectory(directoryPath);
-            System.out.println("directory 생성: " +directoryPath.toAbsolutePath().toString());
         }
 
         Path filePath = directoryPath.resolve("test.txt");
@@ -33,11 +38,8 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler {
 
         try (BufferedWriter bw = new BufferedWriter(osw,8192);) {
 
-            while (generator.hasMoreString()) {
-                String line = generator.generate();
-
-                requestBodyLengthLimit.accumulate(line.length());
-                bw.write(line);
+            while (bodyStream.hasMoreString()) {
+                bw.write(bodyStream.generate());
             }
 
             bw.flush();
@@ -45,6 +47,6 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler {
             e.printStackTrace();
         }
 
-        return HttpsStream.empty();
+        return responseHeaders;
     }
 }
