@@ -31,13 +31,8 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         StringStream headerGenerator = StringStream.of(headerInput);
         HttpMessageStreams responseHeaders = HttpMessageStreams.of(headerGenerator);
 
-//        Properties properties = new Properties();
-//        properties.load(new FileInputStream(Path.of("config.properties").toString()));
-
-
         if (!Files.isDirectory(DIRECTORY_PATH)) {
             Files.createDirectory(DIRECTORY_PATH);
-            System.out.println("directory 생성: " +DIRECTORY_PATH.toAbsolutePath().toString());
         }
 
         HttpHeaderField contentType = httpHeaders.findProperty("Content-Type");
@@ -49,7 +44,6 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
 
         while (bodyStream.hasMoreString()) {
             String line = bodyStream.generateLine();
-            System.out.println(line);
 
             if (Objects.equals(line,lastBoundary)) {
                 break;
@@ -109,7 +103,6 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
     private void passContentDisposition(HttpMessageStreams generator) throws IOException {
         while(generator.hasMoreString()) {
             String content = generator.generateLine();
-            System.out.println(content);
             if (Objects.equals(content,"")) {
                 return;
             }
