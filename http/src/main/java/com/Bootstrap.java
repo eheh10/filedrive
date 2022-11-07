@@ -21,6 +21,7 @@ public class Bootstrap {
     private static final Logger LOG = LoggerFactory.getLogger(Bootstrap.class);
 
     private final HttpRequestHandlers handlers = new HttpRequestHandlers();
+    private final PropertyFinder finder = new PropertyFinder();
 
     public void registerHandler(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
         handlers.register(path, method, handler);
@@ -28,13 +29,6 @@ public class Bootstrap {
 
     public void start() throws IOException {
         ServerSocket serverSocket = new ServerSocket(7777);
-
-//        Properties properties = new Properties();
-//        properties.load(new FileInputStream(Path.of("config.properties").toString()));
-//
-//        int headersLimit = Integer.parseInt(properties.getProperty("http_request_headers_length_limit"));
-//        int bodyLimit = Integer.parseInt(properties.getProperty("http_request_body_length_limit"));
-        PropertyFinder finder = new PropertyFinder();
 
         //임피던스 불일치
         int headersLimit = Integer.parseInt(finder.find(PropertyKey.HTTP_REQUEST_HEADERS_LENGTH_LIMIT));
