@@ -24,7 +24,7 @@ import java.util.Optional;
 public class HttpRequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(HttpRequestProcessor.class);
 
-    public HttpMessageStreams process(HttpMessageStreams requestGenerator, HttpRequestHandlers handlers, HttpLengthLimiter requestHeadersLengthLimit, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
+    public HttpMessageStreams process(HttpMessageStream requestGenerator, HttpRequestHandlers handlers, HttpLengthLimiter requestHeadersLengthLimit, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
         try {
             /**
              * 1. request 받기: 로직 모듈화 필요
@@ -76,15 +76,9 @@ public class HttpRequestProcessor {
             HttpRequestMethod method = httpRequestStartLine.getMethod();
 
             HttpRequestHandler httpRequestHandler = handlers.find(path, method);
-            HttpMessageStreams responseBody = httpRequestHandler.handle(path, httpHeaders, requestGenerator);
+            HttpMessageStreams responseMsg = httpRequestHandler.handle(path, httpHeaders, requestGenerator);
 
-            String startLine = createHttpResponseStartLine(HttpResponseStatus.CODE_200);
-            InputStream startLineOutput = new ByteArrayInputStream(startLine.getBytes(StandardCharsets.UTF_8));
-            StringStream startLineGenerator = StringStream.of(startLineOutput);
-
-            HttpMessageStreams responseMessage = HttpMessageStreams.of(startLineGenerator);
-
-            return responseMessage.sequenceOf(responseBody);
+            return responseMsg;
 
         } catch (EmptyRequestException e) {
             throw new EmptyRequestException();
