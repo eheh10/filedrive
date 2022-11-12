@@ -15,6 +15,9 @@ public class HttpMessageStreams implements Closeable{
     private final Queue<HttpMessageStream> values;
 
     private HttpMessageStreams(Queue<HttpMessageStream> values) {
+        if (values == null) {
+            throw new InputNullParameterException();
+        }
         this.values = values;
     }
 
@@ -65,12 +68,16 @@ public class HttpMessageStreams implements Closeable{
             return false;
         }
 
+        if (values.size() == 1) {
+            return values.peek().hasMoreString();
+        }
+
         while(!values.peek().hasMoreString()) {
-            if (values.size() == 1) {
+            values.poll();
+
+            if (values.isEmpty()) {
                 return false;
             }
-
-            values.poll();
         }
 
         return true;
