@@ -4,7 +4,10 @@ import com.exception.*;
 
 public enum HttpResponseStatus {
     CODE_200("OK"),
+    CODE_303("See Other"),
+    CODE_304("Not Modified"),
     CODE_400("Bad Request"),
+    CODE_401("Unauthorized"),
     CODE_404("Not Found"),
     CODE_405("Method Not Allowed"),
     CODE_413("Request Entity Too Large"),
@@ -37,7 +40,7 @@ public enum HttpResponseStatus {
         }
 
         if (clz.isInstance(InputNullParameterException.class) ||
-                clz.isInstance(NotPositiveNumberException.class) ||
+                clz.isInstance(MustBePositiveNumberException.class) ||
                 clz.isInstance(NoMoreHttpContentException.class) ||
                 clz.isInstance(NotFoundHttpHeadersPropertyException.class)) {
             return CODE_500;
