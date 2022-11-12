@@ -1,4 +1,4 @@
-package request.handler;
+package com.request.handler;
 
 import com.HttpMessageStream;
 import com.HttpMessageStreams;
@@ -8,7 +8,6 @@ import com.exception.InputNullParameterException;
 import com.exception.NotFoundHttpRequestFileException;
 import com.header.HttpHeaders;
 import com.request.HttpRequestPath;
-import com.request.handler.HttpRequestHandler;
 import com.table.FileTable;
 
 import java.io.ByteArrayInputStream;
@@ -21,11 +20,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class HttpRequestFileDownloader implements HttpRequestHandler {
-    //???
     private final FileTable fileTable = new FileTable();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStreams bodyStream) throws IOException {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStream bodyStream) throws IOException {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -39,8 +37,8 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
         }
 
         FileDto fileDto = FileDto.builder()
-                .fileName(fileName)
-                .filePath(targetPath.toString())
+                .name(fileName)
+                .path(targetPath.toString())
                 .build();
 
         fileTable.insert(fileDto);
