@@ -1,13 +1,16 @@
-package request.handler;
+package com.request.handler;
 
 import com.*;
+import com.dto.FileDto;
+import com.dto.UserDto;
 import com.exception.InputNullParameterException;
 import com.exception.NotAllowedFileExtensionException;
 import com.exception.NotFoundHttpHeadersPropertyException;
 import com.header.HttpHeaderField;
 import com.header.HttpHeaders;
 import com.request.HttpRequestPath;
-import com.request.handler.HttpRequestHandler;
+import com.table.FileTable;
+import com.table.UserTable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -19,17 +22,41 @@ import java.util.Objects;
 public class HttpRequestFileUploader implements HttpRequestHandler {
     private static final Path DIRECTORY_PATH = Paths.get("src","main","resources","uploaded-file");
     private final PropertyFinder finder = new PropertyFinder();
+    private final SessionStorage sessionStorage = new SessionStorage();
+    private final UserTable userTable = new UserTable();
+    private final FileTable fileTable = new FileTable();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStreams bodyStream) throws IOException {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStream bodyStream) throws IOException {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
 
-        String headers = "Content-Type: text/html;charset=UTF-8\n\n";
-        InputStream headerInput = new ByteArrayInputStream(headers.getBytes(StandardCharsets.UTF_8));
-        StringStream headerGenerator = StringStream.of(headerInput);
-        HttpMessageStreams responseHeaders = HttpMessageStreams.of(headerGenerator);
+        System.out.println("====");
+
+        HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
+        String sessionId = searchSessionId(cookie);
+
+        if(sessionId == null) {
+            return createRedirectionResponse(HttpResponseStatus.CODE_304);
+        }
+
+        if (!sessionStorage.validSession(sessionId)) {
+            return createRedirectionResponse(HttpResponseStatus.CODE_401);
+        }
+
+        Cookies cookies = sessionStorage.getCookie(sessionId);
+        String cookieId = cookies.searchValue("userId");
+        String cookiePwd = cookies.searchValue("userPwd");
+
+        UserDto userDto = UserDto.builder()
+                .id(cookieId)
+                .pwd(cookiePwd)
+                .build();
+
+        if (userTable.IsUnregisteredUser(userDto)) {
+            return createRedirectionResponse(HttpResponseStatus.CODE_401);
+        }
 
         if (!Files.isDirectory(DIRECTORY_PATH)) {
             Files.createDirectory(DIRECTORY_PATH);
@@ -42,18 +69,35 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         BufferedWriter bw = null;
         boolean writeFileBodyMode = false;
 
+        String filename = "";
+        int fileSize = 0;
+
         while (bodyStream.hasMoreString()) {
             String line = bodyStream.generateLine();
 
             if (Objects.equals(line,lastBoundary)) {
+                FileDto fileDto = FileDto.builder()
+                        .name(filename)
+                        .path(DIRECTORY_PATH.resolve(filename).toString())
+                        .size(fileSize)
+                        .build();
+                fileTable.insert(fileDto);
                 break;
             }
 
             if (Objects.equals(line,fileBoundary)) {
+                FileDto fileDto = FileDto.builder()
+                        .name(filename)
+                        .path(DIRECTORY_PATH.resolve(filename).toString())
+                        .size(fileSize)
+                        .build();
+                fileTable.insert(fileDto);
+                fileSize = 0;
                 writeFileBodyMode = false;
             }
 
             if (writeFileBodyMode) {
+                fileSize += line.length();
                 bw.write(line);
                 continue;
             }
@@ -64,7 +108,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
             }
 
             String contentDisposition = bodyStream.generateLine();
-            String filename = parsingFilename(contentDisposition,finder);
+            filename = parsingFilename(contentDisposition,finder);
 
             bw = generateNewFileWriter(filename);
 
@@ -76,7 +120,17 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         bw.flush();
         bw.close();
 
-        return responseHeaders;
+        StringBuilder response = new StringBuilder();
+
+        response.append("HTTP/1.1 ")
+                .append(HttpResponseStatus.CODE_200.code()).append(" ")
+                .append(HttpResponseStatus.CODE_200.message()).append("\n")
+                .append("Content-Type: text/html;charset=UTF-8\n");
+
+        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
+        StringStream responseStream = StringStream.of(responseIs);
+
+        return HttpMessageStreams.of(responseStream);
     }
 
     private String parsingFilename(String contentDisposition, PropertyFinder finder) {
@@ -100,7 +154,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         return new BufferedWriter(osw,8192);
     }
 
-    private void passContentDisposition(HttpMessageStreams generator) throws IOException {
+    private void passContentDisposition(HttpMessageStream generator) throws IOException {
         while(generator.hasMoreString()) {
             String content = generator.generateLine();
             if (Objects.equals(content,"")) {
@@ -137,5 +191,32 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         }
 
         return false;
+    }
+
+    private String searchSessionId(HttpHeaderField cookie) {
+        for(String value:cookie.getValues()) {
+            int delIdx = value.indexOf('=');
+            if (delIdx == -1) {
+                continue;
+            }
+
+            if (Objects.equals(value.substring(0,delIdx),SessionStorage.SESSION_ID_NAME)) {
+                return value.substring(delIdx+1);
+            }
+        }
+        throw new NotFoundHttpHeadersPropertyException();
+    }
+
+    private HttpMessageStreams createRedirectionResponse(HttpResponseStatus status) {
+        StringBuilder response = new StringBuilder();
+
+        response.append("HTTP/1.1 ")
+                .append(status.code()).append(" ")
+                .append(status.message()).append("\n");
+
+        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
+        StringStream responseStream = StringStream.of(responseIs);
+
+        return HttpMessageStreams.of(responseStream);
     }
 }
