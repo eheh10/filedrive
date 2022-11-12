@@ -1,11 +1,12 @@
-package request.handler;
+package com.request.handler;
 
+import com.HttpMessageStream;
 import com.HttpMessageStreams;
+import com.HttpResponseStatus;
 import com.StringStream;
 import com.exception.InputNullParameterException;
 import com.header.HttpHeaders;
 import com.request.HttpRequestPath;
-import com.request.handler.HttpRequestHandler;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -15,15 +16,10 @@ import java.nio.file.Paths;
 
 public class HttpRequestBodyFileCreator implements HttpRequestHandler {
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStreams bodyStream) throws IOException {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStream bodyStream) throws IOException {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
-
-        String headers = "Content-Type: text/html;charset=UTF-8\n\n";
-        InputStream headerInput = new ByteArrayInputStream(headers.getBytes(StandardCharsets.UTF_8));
-        StringStream headerGenerator = StringStream.of(headerInput);
-        HttpMessageStreams responseHeaders = HttpMessageStreams.of(headerGenerator);
 
         Path directoryPath = Paths.get(System.getProperty("user.home"),"fileDrive");
 
@@ -47,6 +43,16 @@ public class HttpRequestBodyFileCreator implements HttpRequestHandler {
             e.printStackTrace();
         }
 
-        return responseHeaders;
+        StringBuilder response = new StringBuilder();
+
+        response.append("HTTP/1.1 ")
+                .append(HttpResponseStatus.CODE_200.code()).append(" ")
+                .append(HttpResponseStatus.CODE_200.message()).append("\n")
+                .append("Content-Type: text/html;charset=UTF-8\n");
+
+        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
+        StringStream responseStream = StringStream.of(responseIs);
+
+        return HttpMessageStreams.of(responseStream);
     }
 }
