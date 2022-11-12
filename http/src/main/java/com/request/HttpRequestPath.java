@@ -55,6 +55,14 @@ public class HttpRequestPath {
         return Objects.equals(this.value,RESOURCE_REQUEST_PATH.value);
     }
 
+    public String getName() {
+        return value.getFileName().toString();
+    }
+
+    public String getPath() {
+        return value.toString();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -74,7 +82,4 @@ public class HttpRequestPath {
         return value.hashCode();
     }
 
-    public String getPath() {
-        return value.toString();
-    }
 }
