@@ -30,7 +30,23 @@ public class StringStream implements Closeable{
     }
 
     public boolean hasMoreString() throws IOException {
-        return br.ready();
+        int retry = 100;
+        int tryCount = 0;
+
+        do {
+            if (br.ready()) {
+                return true;
+            }
+            tryCount++;
+
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }while(tryCount < retry);
+
+        return false;
     }
 
     public String generate() throws IOException {
