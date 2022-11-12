@@ -1,23 +1,41 @@
 package com.dto;
 
-import lombok.AccessLevel;
+import com.exception.InputNullParameterException;
+import com.exception.MustBePositiveNumberException;
 import lombok.Builder;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import java.util.Objects;
+
 @Builder
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString
 public class FileDto {
-    private final String fileName;
-    private final String filePath;
+    private final String name;
+    private final String path;
+    private final int size;
 
-    public String getFileName() {
-        return fileName;
+    private FileDto(String name, String path, int size) {
+        if (name == null || path == null) {
+            throw new InputNullParameterException();
+        }
+        if (size < 0 ) {
+            throw new MustBePositiveNumberException();
+        }
+        this.name = name;
+        this.path = path;
+        this.size = size;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getName() {
+        return name;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public int getSize() {
+        return size;
     }
 
     @Override
@@ -27,15 +45,16 @@ public class FileDto {
 
         FileDto fileDto = (FileDto) o;
 
-        if (fileName != null ? !fileName.equals(fileDto.fileName) : fileDto.fileName != null) return false;
-        return filePath != null ? filePath.equals(fileDto.filePath) : fileDto.filePath == null;
+        if (size != fileDto.size) return false;
+        if (!Objects.equals(name, fileDto.name)) return false;
+        return Objects.equals(path, fileDto.path);
     }
 
     @Override
     public int hashCode() {
-        int result = fileName != null ? fileName.hashCode() : 0;
-        result = 31 * result + (filePath != null ? filePath.hashCode() : 0);
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (path != null ? path.hashCode() : 0);
+        result = 31 * result + size;
         return result;
     }
-
 }
