@@ -25,7 +25,7 @@ public class FileTable {
         }
 
         for(FileDto fileDto: FILES) {
-            if(Objects.equals(fileDto.getFileName(),targetValue)) {
+            if(Objects.equals(fileDto.getName(),targetValue)) {
                 return fileDto;
             }
         }
@@ -39,7 +39,7 @@ public class FileTable {
         }
 
         for(FileDto fileDto: FILES) {
-            if(Objects.equals(fileDto.getFilePath(),targetValue)) {
+            if(Objects.equals(fileDto.getPath(),targetValue)) {
                 return fileDto;
             }
         }
