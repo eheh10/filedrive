@@ -1,7 +1,6 @@
 package com;
 
 import com.exception.InputNullParameterException;
-import com.exception.NoMoreHttpContentException;
 import com.releaser.NoResourceCloser;
 import com.releaser.ResourceCloser;
 
@@ -34,18 +33,10 @@ public class HttpMessageStream implements Closeable {
     }
 
     public String generate() throws IOException {
-        if (!hasMoreString()) {
-            throw new NoMoreHttpContentException();
-        }
-
         return stream.generate();
     }
 
     public String generateLine() throws IOException {
-        if (!hasMoreString()) {
-            throw new NoMoreHttpContentException();
-        }
-
         return stream.generateLine();
     }
 
