@@ -1,6 +1,6 @@
 package com;
 
-import com.exception.EmptyRequestException;
+import com.exception.InputNullParameterException;
 import com.request.HttpRequestMethod;
 import com.request.HttpRequestPath;
 import com.request.HttpRequestProcessor;
@@ -9,16 +9,28 @@ import com.request.handler.HttpRequestHandlers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 public class Bootstrap {
     private static final Logger LOG = LoggerFactory.getLogger(Bootstrap.class);
 
+    private final PreProcessorComposite preProcessorComposite;
     private final HttpRequestHandlers handlers = new HttpRequestHandlers();
-    private final PropertyFinder finder = new PropertyFinder();
+    private final HttpPropertyFinder finder = new HttpPropertyFinder();
+
+    public Bootstrap(PreProcessorComposite preProcessorComposite) {
+        if (preProcessorComposite == null) {
+            throw new InputNullParameterException();
+        }
+        this.preProcessorComposite = preProcessorComposite;
+    }
 
     public void registerHandler(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
         handlers.register(path, method, handler);
@@ -28,48 +40,50 @@ public class Bootstrap {
         try {
             ServerSocket serverSocket = new ServerSocket(7777);
 
-            int headersLimit = Integer.parseInt(finder.find(PropertyKey.HTTP_REQUEST_HEADERS_LENGTH_LIMIT));
-            int bodyLimit = Integer.parseInt(finder.find(PropertyKey.HTTP_REQUEST_HEADERS_LENGTH_LIMIT));
-
-            Socket socket = null;
+            int headersLimit = getHttpRequestLengthLimit(HttpPropertyKey.HTTP_REQUEST_HEADERS_LENGTH_LIMIT);
+            int bodyLimit = getHttpRequestLengthLimit(HttpPropertyKey.HTTP_REQUEST_BODY_LENGTH_LIMIT);
 
             while (true) {
-                try {
-                    HttpLengthLimiter requestHeadersLengthLimit = new HttpLengthLimiter(headersLimit);
-                    HttpLengthLimiter requestBodyLengthLimit = new HttpLengthLimiter(bodyLimit);
+                Socket socket = serverSocket.accept();
+                HttpRequestLengthLimiters requestLengthLimiters = HttpRequestLengthLimiters.from(headersLimit,bodyLimit);
+                RetryOption retryOption = RetryOption.builder().retryCount(10).waitTime(Duration.ofMillis(10)).build();
 
-                    socket = serverSocket.accept();
+                try (
+                        StringStream isGenerator = StringStream.of(socket.getInputStream());
+                        RetryHttpRequestStream requestStream = new RetryHttpRequestStream(HttpMessageStream.of(isGenerator),retryOption);
 
-                    OutputStream os = socket.getOutputStream();
-                    BufferedOutputStream bos = new BufferedOutputStream(os, 8192);
+                        HttpRequestProcessor processor = HttpRequestProcessor.from(requestStream, handlers);
+                        HttpMessageStreams responseMsg = processor.process(preProcessorComposite, requestLengthLimiters);
 
-                    HttpRequestProcessor processor = new HttpRequestProcessor();
+                        OutputStreamWriter responseSender = getResponseSender(socket.getOutputStream())
+                        ) {
 
-                    try (StringStream isGenerator = StringStream.of(socket.getInputStream());
-                         HttpMessageStream generator = HttpMessageStream.of(isGenerator);
-                         HttpMessageStreams responseMsg = processor.process(generator, handlers, requestHeadersLengthLimit, requestBodyLengthLimit);
-                         OutputStreamWriter bsw = new OutputStreamWriter(bos, StandardCharsets.UTF_8)) {
-
-                        while (responseMsg.hasMoreString()) {
-                            String line = responseMsg.generate();
-                            LOG.debug(line);
-                            bsw.write(line);
-                        }
-                        bsw.flush();
-                    } catch (EmptyRequestException e) {
-                        continue;
+                    LOG.debug("<HTTP Response Message>");
+                    while (responseMsg.hasMoreString()) {
+                        String line = responseMsg.generate();
+                        responseSender.write(line);
+                        LOG.debug(line);
                     }
-                }catch (IOException e) {
-                    e.printStackTrace();
-                }finally {
-                    if (socket == null) {
-                        continue;
+
+                    responseSender.flush();
+                    LOG.debug("<--HTTP Response Message End-->");
+                } finally {
+                    if (socket!=null) {
+                        socket.close();
                     }
-                    socket.close();
                 }
             }
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private OutputStreamWriter getResponseSender(OutputStream os) {
+        BufferedOutputStream bos = new BufferedOutputStream(os, 8192);
+        return new OutputStreamWriter(bos, StandardCharsets.UTF_8);
+    }
+
+    private int getHttpRequestLengthLimit(HttpPropertyKey httPropertyKey) {
+        return Integer.parseInt(finder.find(httPropertyKey));
     }
 }
