@@ -17,6 +17,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class Bootstrap {
     private static final Logger LOG = LoggerFactory.getLogger(Bootstrap.class);
@@ -40,38 +42,41 @@ public class Bootstrap {
         try {
             ServerSocket serverSocket = new ServerSocket(7777);
 
-            int headersLimit = getHttpRequestLengthLimit(HttpPropertyKey.HTTP_REQUEST_HEADERS_LENGTH_LIMIT);
-            int bodyLimit = getHttpRequestLengthLimit(HttpPropertyKey.HTTP_REQUEST_BODY_LENGTH_LIMIT);
+            int headersLimit = finder.httpRequestHeadersLengthLimit();
+            int bodyLimit = finder.httpRequestBodyLengthLimit();
+            int threadPoolCount = finder.httpRequestProcessThreadPoolCount();
+
+            Executor executor = Executors.newFixedThreadPool(threadPoolCount);
 
             while (true) {
                 Socket socket = serverSocket.accept();
                 HttpRequestLengthLimiters requestLengthLimiters = HttpRequestLengthLimiters.from(headersLimit,bodyLimit);
                 RetryOption retryOption = RetryOption.builder().retryCount(10).waitTime(Duration.ofMillis(10)).build();
 
-                try (
-                        StringStream isGenerator = StringStream.of(socket.getInputStream());
-                        RetryHttpRequestStream requestStream = new RetryHttpRequestStream(HttpMessageStream.of(isGenerator),retryOption);
+                executor.execute(() -> {
+                    try (
+                            StringStream isGenerator = StringStream.of(socket.getInputStream());
+                            RetryHttpRequestStream requestStream = new RetryHttpRequestStream(HttpMessageStream.of(isGenerator),retryOption);
 
-                        HttpRequestProcessor processor = HttpRequestProcessor.from(requestStream, handlers);
-                        HttpMessageStreams responseMsg = processor.process(preProcessorComposite, requestLengthLimiters);
+                            HttpRequestProcessor processor = HttpRequestProcessor.from(requestStream, handlers);
+                            HttpMessageStreams responseMsg = processor.process(preProcessorComposite, requestLengthLimiters);
 
-                        OutputStreamWriter responseSender = getResponseSender(socket.getOutputStream())
-                        ) {
+                            OutputStreamWriter responseSender = getResponseSender(socket.getOutputStream())
+                    ) {
 
-                    LOG.debug("<HTTP Response Message>");
-                    while (responseMsg.hasMoreString()) {
-                        String line = responseMsg.generate();
-                        responseSender.write(line);
-                        LOG.debug(line);
+                        LOG.debug("<HTTP Response Message>");
+                        while (responseMsg.hasMoreString()) {
+                            String line = responseMsg.generate();
+                            responseSender.write(line);
+                            LOG.debug(line);
+                        }
+
+                        responseSender.flush();
+                        LOG.debug("<--HTTP Response Message End-->");
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-
-                    responseSender.flush();
-                    LOG.debug("<--HTTP Response Message End-->");
-                } finally {
-                    if (socket!=null) {
-                        socket.close();
-                    }
-                }
+                });
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -83,7 +88,4 @@ public class Bootstrap {
         return new OutputStreamWriter(bos, StandardCharsets.UTF_8);
     }
 
-    private int getHttpRequestLengthLimit(HttpPropertyKey httPropertyKey) {
-        return Integer.parseInt(finder.find(httPropertyKey));
-    }
 }
