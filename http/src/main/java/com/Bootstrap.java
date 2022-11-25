@@ -23,15 +23,15 @@ import java.util.concurrent.Executors;
 public class Bootstrap {
     private static final Logger LOG = LoggerFactory.getLogger(Bootstrap.class);
 
-    private final PreProcessorComposite preProcessorComposite;
+    private final PreProcessor preProcessor;
     private final HttpRequestHandlers handlers = new HttpRequestHandlers();
     private final HttpPropertyFinder finder = new HttpPropertyFinder();
 
-    public Bootstrap(PreProcessorComposite preProcessorComposite) {
-        if (preProcessorComposite == null) {
+    public Bootstrap(PreProcessor preProcessor) {
+        if (preProcessor == null) {
             throw new InputNullParameterException();
         }
-        this.preProcessorComposite = preProcessorComposite;
+        this.preProcessor = preProcessor;
     }
 
     public void registerHandler(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
@@ -58,8 +58,8 @@ public class Bootstrap {
                             StringStream isGenerator = StringStream.of(socket.getInputStream());
                             RetryHttpRequestStream requestStream = new RetryHttpRequestStream(HttpMessageStream.of(isGenerator),retryOption);
 
-                            HttpRequestProcessor processor = HttpRequestProcessor.from(requestStream, handlers);
-                            HttpMessageStreams responseMsg = processor.process(preProcessorComposite, requestLengthLimiters);
+                            HttpRequestProcessor processor = HttpRequestProcessor.from(requestStream,handlers,preProcessor,requestLengthLimiters);
+                            HttpMessageStreams responseMsg = processor.process();
 
                             OutputStreamWriter responseSender = getResponseSender(socket.getOutputStream())
                     ) {
