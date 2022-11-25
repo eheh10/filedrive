@@ -3,14 +3,14 @@ package com.request.handler;
 import com.*;
 import com.dto.FileDto;
 import com.dto.UserDto;
-import com.exception.InputNullParameterException;
-import com.exception.NotAllowedFileExtensionException;
-import com.exception.NotFoundHttpHeadersPropertyException;
+import com.exception.*;
 import com.header.HttpHeaderField;
 import com.header.HttpHeaders;
 import com.request.HttpRequestPath;
-import com.table.FileTable;
-import com.table.UserTable;
+import com.response.HttpResponseStatus;
+import com.table.SessionStorage;
+import com.table.UserFiles;
+import com.table.Users;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -21,119 +21,118 @@ import java.util.Objects;
 
 public class HttpRequestFileUploader implements HttpRequestHandler {
     private static final Path DIRECTORY_PATH = Paths.get("src","main","resources","uploaded-file");
-    private final PropertyFinder finder = new PropertyFinder();
+    private static final DbPropertyFinder PROPERTY_FINDER = new DbPropertyFinder();
+    private final HttpPropertyFinder finder = new HttpPropertyFinder();
     private final SessionStorage sessionStorage = new SessionStorage();
-    private final UserTable userTable = new UserTable();
-    private final FileTable fileTable = new FileTable();
+    private final Users users = new Users();
+    private final UserFiles userFiles = new UserFiles();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStream bodyStream) throws IOException {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
 
-        System.out.println("====");
-
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
         String sessionId = searchSessionId(cookie);
 
-        if(sessionId == null) {
-            return createRedirectionResponse(HttpResponseStatus.CODE_304);
-        }
+        int userNum = sessionStorage.getUserNum(sessionId);
+        UserDto userDto = users.find_BY_NUM(userNum);
 
-        if (!sessionStorage.validSession(sessionId)) {
-            return createRedirectionResponse(HttpResponseStatus.CODE_401);
-        }
-
-        Cookies cookies = sessionStorage.getCookie(sessionId);
-        String cookieId = cookies.searchValue("userId");
-        String cookiePwd = cookies.searchValue("userPwd");
-
-        UserDto userDto = UserDto.builder()
-                .id(cookieId)
-                .pwd(cookiePwd)
-                .build();
-
-        if (userTable.IsUnregisteredUser(userDto)) {
-            return createRedirectionResponse(HttpResponseStatus.CODE_401);
-        }
-
-        if (!Files.isDirectory(DIRECTORY_PATH)) {
-            Files.createDirectory(DIRECTORY_PATH);
-        }
-
-        HttpHeaderField contentType = httpHeaders.findProperty("Content-Type");
-        String fileBoundary = parsingBoundary(contentType);
-        String lastBoundary = fileBoundary+"--";
-
-        BufferedWriter bw = null;
-        boolean writeFileBodyMode = false;
-
-        String filename = "";
-        int fileSize = 0;
-
-        while (bodyStream.hasMoreString()) {
-            String line = bodyStream.generateLine();
-
-            if (Objects.equals(line,lastBoundary)) {
-                FileDto fileDto = FileDto.builder()
-                        .name(filename)
-                        .path(DIRECTORY_PATH.resolve(filename).toString())
-                        .size(fileSize)
-                        .build();
-                fileTable.insert(fileDto);
-                break;
+        try {
+            if (!Files.isDirectory(DIRECTORY_PATH)) {
+                Files.createDirectory(DIRECTORY_PATH);
             }
 
-            if (Objects.equals(line,fileBoundary)) {
-                FileDto fileDto = FileDto.builder()
-                        .name(filename)
-                        .path(DIRECTORY_PATH.resolve(filename).toString())
-                        .size(fileSize)
-                        .build();
-                fileTable.insert(fileDto);
-                fileSize = 0;
-                writeFileBodyMode = false;
+            HttpHeaderField contentType = httpHeaders.findProperty("Content-Type");
+            String fileBoundary = parsingBoundary(contentType);
+            String lastBoundary = fileBoundary+"--";
+
+            BufferedWriter bw = null;
+            boolean writeFileBodyMode = false;
+
+            String filename = "";
+            int fileSize = 0;
+
+            try {
+                while (bodyStream.hasMoreString()) {
+                    String line = bodyStream.generateLine();
+                    requestLengthLimiters.accumulateBodyLength(line.length());
+
+                    if (Objects.equals(line, lastBoundary)) {
+                        insertFile(userDto, filename, fileSize);
+                        break;
+                    }
+
+                    if (Objects.equals(line, fileBoundary)) {
+                        if (fileSize > 0) {
+                            insertFile(userDto, filename, fileSize);
+                            fileSize = 0;
+                            writeFileBodyMode = false;
+                        }
+                        continue;
+                    }
+
+                    if (writeFileBodyMode) {
+                        fileSize += line.length();
+                        bw.write(line);
+                        continue;
+                    }
+
+                    if (bw != null) {
+                        bw.flush();
+                        bw.close();
+                    }
+
+                    filename = parsingFilename(line, finder);
+
+                    bw = generateNewFileWriter(filename);
+                    if (bw == null) {
+                        return createRedirectionResponse(HttpResponseStatus.CODE_500);
+                    }
+
+                    passContentDisposition(bodyStream);
+
+                    writeFileBodyMode = true;
+                }
+            } catch (StorageCapacityExceededException e) {
+                return createRedirectionResponse(HttpResponseStatus.CODE_400);
             }
 
-            if (writeFileBodyMode) {
-                fileSize += line.length();
-                bw.write(line);
-                continue;
-            }
-
-            if (bw != null) {
-                bw.flush();
-                bw.close();
-            }
-
-            String contentDisposition = bodyStream.generateLine();
-            filename = parsingFilename(contentDisposition,finder);
-
-            bw = generateNewFileWriter(filename);
-
-            passContentDisposition(bodyStream);
-
-            writeFileBodyMode = true;
+            bw.flush();
+            bw.close();
+        } catch (IOException e) {
+            return createRedirectionResponse(HttpResponseStatus.CODE_500);
         }
-
-        bw.flush();
-        bw.close();
 
         StringBuilder response = new StringBuilder();
 
         response.append("HTTP/1.1 ")
-                .append(HttpResponseStatus.CODE_200.code()).append(" ")
-                .append(HttpResponseStatus.CODE_200.message()).append("\n")
-                .append("Content-Type: text/html;charset=UTF-8\n");
+                .append(HttpResponseStatus.CODE_303.code()).append(" ")
+                .append(HttpResponseStatus.CODE_303.message()).append("\n")
+                .append("Location: http://localhost:7777/page/upload\n");
 
-        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
-        StringStream responseStream = StringStream.of(responseIs);
-
-        return HttpMessageStreams.of(responseStream);
+        return HttpMessageStreams.of(response.toString());
     }
 
-    private String parsingFilename(String contentDisposition, PropertyFinder finder) {
+    private void insertFile(UserDto userDto, String filename, int fileSize) {
+        int usedCapacity = userDto.getUsageCapacity();
+
+        if (usedCapacity > PROPERTY_FINDER.getStorageCapacity()) {
+            throw new StorageCapacityExceededException();
+        }
+
+        FileDto fileDto = FileDto.builder()
+                .name(filename)
+                .path(DIRECTORY_PATH.resolve(filename).toString())
+                .size(fileSize)
+                .build();
+
+        userFiles.insert(userDto, fileDto);
+        users.useStorageCapacity(userDto, fileDto);
+    }
+
+    private String parsingFilename(String contentDisposition, HttpPropertyFinder finder) {
         String filenameWithQuotes = contentDisposition.split("filename=")[1];
         String filename = filenameWithQuotes.substring(1,filenameWithQuotes.length()-1);
 
@@ -145,16 +144,21 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         return filename;
     }
 
-    private BufferedWriter generateNewFileWriter(String filename) throws FileNotFoundException {
+    private BufferedWriter generateNewFileWriter(String filename) {
         Path filePath = DIRECTORY_PATH.resolve(filename);
-        OutputStream os = new FileOutputStream(filePath.toString());
+        OutputStream os = null;
+        try {
+            os = new FileOutputStream(filePath.toString());
+        } catch (FileNotFoundException e) {
+            return null;
+        }
         BufferedOutputStream bos = new BufferedOutputStream(os,8192);
         OutputStreamWriter osw = new OutputStreamWriter(bos, StandardCharsets.UTF_8);
 
         return new BufferedWriter(osw,8192);
     }
 
-    private void passContentDisposition(HttpMessageStream generator) throws IOException {
+    private void passContentDisposition(RetryHttpRequestStream generator) {
         while(generator.hasMoreString()) {
             String content = generator.generateLine();
             if (Objects.equals(content,"")) {
@@ -183,8 +187,8 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         return boundary.toString();
     }
 
-    private boolean isNotAllowedExtension(PropertyFinder finder, String targetExtension) {
-        for(String extension : finder.find(PropertyKey.NOT_ALLOWED_EXTENSION).split(",")) {
+    private boolean isNotAllowedExtension(HttpPropertyFinder finder, String targetExtension) {
+        for(String extension : finder.notAllowedFileExtension()) {
             if (Objects.equals(extension,targetExtension)) {
                 return true;
             }
@@ -200,7 +204,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
                 continue;
             }
 
-            if (Objects.equals(value.substring(0,delIdx),SessionStorage.SESSION_ID_NAME)) {
+            if (Objects.equals(value.substring(0,delIdx), SessionStorage.SESSION_FIELD_NAME)) {
                 return value.substring(delIdx+1);
             }
         }
