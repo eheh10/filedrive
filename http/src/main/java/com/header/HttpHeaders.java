@@ -1,13 +1,12 @@
 package com.header;
 
-import com.HttpLengthLimiter;
-import com.HttpMessageStream;
+import com.HttpRequestLengthLimiters;
+import com.RetryHttpRequestStream;
 import com.exception.InputNullParameterException;
 import com.exception.NotFoundHttpHeadersPropertyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +14,6 @@ import java.util.Objects;
 
 public class HttpHeaders {
     private static final Logger LOG = LoggerFactory.getLogger(HttpHeaders.class);
-
     private final Map<String, HttpHeaderField> values;
 
     private HttpHeaders(Map<String, HttpHeaderField> values) {
@@ -32,8 +30,8 @@ public class HttpHeaders {
      * 2. 누적값 계산
      * 3. 예외 발생
     * */
-    public static HttpHeaders parse(HttpMessageStream generator, HttpLengthLimiter limitLength) throws IOException {
-        if (generator == null || limitLength == null) {
+    public static HttpHeaders parse(RetryHttpRequestStream requestStream, HttpRequestLengthLimiters lengthLimiters) {
+        if (requestStream == null || lengthLimiters == null) {
             throw new InputNullParameterException();
         }
 
@@ -41,8 +39,8 @@ public class HttpHeaders {
 
         String line = "";
 
-        while(!(line=generator.generateLine()).isEmpty()) {
-            limitLength.accumulate(line.length());
+        while(requestStream.hasMoreString() && !((line=requestStream.generateLine()).isEmpty())) {
+            lengthLimiters.accumulateHeadersLength(line.length());
 
             HttpHeaderField httpHeaderField = HttpHeaderField.of(line);
 
@@ -50,11 +48,6 @@ public class HttpHeaders {
         }
 
         return new HttpHeaders(Collections.unmodifiableMap(fields));
-    }
-
-    public static HttpHeaders parse(HttpMessageStream generator) throws IOException {
-        HttpLengthLimiter lengthLimit = new HttpLengthLimiter(8192);
-        return parse(generator, lengthLimit);
     }
 
     public static HttpHeaders empty() {
