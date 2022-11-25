@@ -29,45 +29,50 @@ public class StringStream implements Closeable{
         return new StringStream(br);
     }
 
-    public boolean hasMoreString() throws IOException {
-        int retry = 100;
-        int tryCount = 0;
-
-        do {
-            if (br.ready()) {
-                return true;
-            }
-            tryCount++;
-
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }while(tryCount < retry);
-
-        return false;
+    public static StringStream empty() {
+        InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
+        return StringStream.of(is);
     }
 
-    public String generate() throws IOException {
+    public boolean hasMoreString() {
+        try {
+            return br.ready();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String generate() {
         if (!hasMoreString()) {
             throw new NoMoreInputException();
         }
 
-        int len = br.read(buffer);
-        return new String(buffer,0,len);
+        try {
+            int len = br.read(buffer);
+            return new String(buffer,0,len);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public String generateLine() throws IOException {
+    public String generateLine() {
         if (!hasMoreString()) {
             throw new NoMoreInputException();
         }
 
-        return br.readLine();
+        try {
+            return br.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void close() throws IOException {
-        br.close();
+    public void close() {
+        try {
+            br.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
