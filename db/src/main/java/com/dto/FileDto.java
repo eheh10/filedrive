@@ -10,20 +10,27 @@ import java.util.Objects;
 @Builder
 @ToString
 public class FileDto {
+    private final int num;
     private final String name;
     private final String path;
     private final int size;
 
-    private FileDto(String name, String path, int size) {
+    private FileDto(int num, String name, String path, int size) {
         if (name == null || path == null) {
             throw new InputNullParameterException();
         }
+
         if (size < 0 ) {
             throw new MustBePositiveNumberException();
         }
+        this.num = num;
         this.name = name;
         this.path = path;
         this.size = size;
+    }
+
+    public int getNum() {
+        return num;
     }
 
     public String getName() {
