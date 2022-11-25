@@ -3,11 +3,11 @@ package com.main;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import com.Bootstrap;
-import com.PreProcessorComposite;
+import com.http.Bootstrap;
+import com.http.PreProcessorComposite;
 import com.preprocessor.LoginPreProcessor;
-import com.request.HttpRequestMethod;
-import com.request.HttpRequestPath;
+import com.http.request.HttpRequestMethod;
+import com.http.request.HttpRequestPath;
 import com.request.handler.*;
 import org.slf4j.LoggerFactory;
 

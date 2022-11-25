@@ -1,7 +1,7 @@
 package com.request;
 
-import com.dto.FileDto;
-import com.exception.InputNullParameterException;
+import com.db.dto.FileDto;
+import com.http.exception.InputNullParameterException;
 
 import java.util.Set;
 

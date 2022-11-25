@@ -1,11 +1,12 @@
 package com.request.handler;
 
-import com.*;
-import com.exception.InputNullParameterException;
-import com.header.HttpHeaders;
+import com.http.*;
+import com.http.exception.InputNullParameterException;
+import com.http.header.HttpHeaders;
+import com.http.request.handler.HttpRequestHandler;
 import com.request.HttpRequestPagePath;
-import com.request.HttpRequestPath;
-import com.response.HttpResponseStatus;
+import com.http.request.HttpRequestPath;
+import com.http.response.HttpResponseStatus;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;

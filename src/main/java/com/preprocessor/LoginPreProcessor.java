@@ -1,13 +1,13 @@
 package com.preprocessor;
 
-import com.PreProcessor;
-import com.table.SessionStorage;
-import com.exception.InputNullParameterException;
-import com.exception.InvalidSessionException;
-import com.exception.RequiredLoginException;
-import com.header.HttpHeaderField;
-import com.header.HttpHeaders;
-import com.request.HttpRequestPath;
+import com.http.PreProcessor;
+import com.db.table.SessionStorage;
+import com.http.exception.InputNullParameterException;
+import com.db.exception.InvalidSessionException;
+import com.http.exception.RequiredLoginException;
+import com.http.header.HttpHeaderField;
+import com.http.header.HttpHeaders;
+import com.http.request.HttpRequestPath;
 
 import java.util.Collections;
 import java.util.HashSet;

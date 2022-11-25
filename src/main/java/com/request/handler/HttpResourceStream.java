@@ -1,10 +1,11 @@
 package com.request.handler;
 
-import com.*;
-import com.exception.InputNullParameterException;
-import com.header.HttpHeaders;
-import com.request.HttpRequestPath;
-import com.response.HttpResponseStatus;
+import com.http.*;
+import com.http.exception.InputNullParameterException;
+import com.http.header.HttpHeaders;
+import com.http.request.HttpRequestPath;
+import com.http.request.handler.HttpRequestHandler;
+import com.http.response.HttpResponseStatus;
 
 public class HttpResourceStream implements HttpRequestHandler {
     private final ResourceFinder resourceFinder = new ResourceFinder();
