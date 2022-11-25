@@ -2,29 +2,48 @@ package com.request;
 
 import com.*;
 import com.exception.EmptyRequestException;
+import com.exception.InputNullParameterException;
 import com.header.HttpHeaders;
 import com.releaser.FileResourceCloser;
 import com.releaser.ResourceCloser;
 import com.request.handler.HttpRequestHandler;
 import com.request.handler.HttpRequestHandlers;
+import com.response.HttpResponseStatus;
 import com.template.FileTemplateReplacer;
+import com.template.TemplateFileStream;
 import com.template.TemplateNodes;
 import com.template.TemplateText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class HttpRequestProcessor {
+public class HttpRequestProcessor implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(HttpRequestProcessor.class);
+    private final RetryHttpRequestStream requestStream;
+    private final HttpRequestHandlers handlers;
+    private final PreProcessor preprocessor;
+    private final HttpRequestLengthLimiters requestLengthLimiters;
 
-    public HttpMessageStreams process(HttpMessageStream requestGenerator, HttpRequestHandlers handlers, HttpLengthLimiter requestHeadersLengthLimit, HttpLengthLimiter requestBodyLengthLimit) throws IOException {
+    private HttpRequestProcessor(RetryHttpRequestStream requestStream, HttpRequestHandlers handlers, PreProcessor preprocessor, HttpRequestLengthLimiters requestLengthLimiters) {
+        if (requestStream == null || handlers == null || preprocessor == null || requestLengthLimiters == null) {
+            throw new InputNullParameterException();
+        }
+
+        this.requestStream = requestStream;
+        this.handlers = handlers;
+        this.preprocessor = preprocessor;
+        this.requestLengthLimiters = requestLengthLimiters;
+    }
+
+    public static HttpRequestProcessor from(RetryHttpRequestStream requestStream, HttpRequestHandlers handlers, PreProcessor preprocessor, HttpRequestLengthLimiters requestLengthLimiters) {
+        return new HttpRequestProcessor(requestStream,handlers, preprocessor, requestLengthLimiters);
+    }
+
+    public HttpMessageStreams process() {
         try {
             /**
              * 1. request 받기: 로직 모듈화 필요
@@ -34,12 +53,14 @@ public class HttpRequestProcessor {
                     - method 는 enum 으로 처리하여 메서드에 해당하는 처리클래스와 바인딩 (각 메서드 처리 클래스 필요)
                     - GET 인 경우 values 가공 필요 (Values 클래스화 필요)
             **/
-            if (!requestGenerator.hasMoreString()) {
+            if (!requestStream.hasMoreString()) {
                 throw new EmptyRequestException();
             }
 
-            String startLineText = requestGenerator.generateLine();
-            LOG.debug("request startLine: " + startLineText);
+            LOG.debug("<HTTP Request Start Line>");
+            String startLineText = requestStream.generateLine();
+            LOG.debug(startLineText);
+            LOG.debug("<--HTTP Request Start Line-->");
 
             Optional<HttpRequestStartLine> startLineParser = Optional.of(HttpRequestStartLine.parse(startLineText));
             HttpRequestStartLine httpRequestStartLine = startLineParser.get();
@@ -51,8 +72,10 @@ public class HttpRequestProcessor {
                     - HTTP Header 에 길이 제한 스펙은 없지만 자체적으로 8192로 길이 제한
                     - 8192보다 긴 경우 431 Request header too large 응답
             **/
-            HttpHeaders httpHeaders = HttpHeaders.parse(requestGenerator,requestHeadersLengthLimit);
-//            httpHeaders.display();
+            LOG.debug("<HTTP Request Headers>");
+            HttpHeaders httpHeaders = HttpHeaders.parse(requestStream,requestLengthLimiters);
+            httpHeaders.display();
+            LOG.debug("<--HTTP Request Headers-->");
 
             /**
                 1-3. Body 가공
@@ -75,8 +98,16 @@ public class HttpRequestProcessor {
             HttpRequestPath path = httpRequestStartLine.getPath();
             HttpRequestMethod method = httpRequestStartLine.getMethod();
 
+            try {
+                preprocessor.process(path, httpHeaders);
+                LOG.debug("Preprocess Complete");
+            } catch (Exception e) {
+                HttpResponseStatus status = HttpResponseStatus.httpResponseStatusOf(e);
+                return createHttpErrorResponse(status);
+            }
+
             HttpRequestHandler httpRequestHandler = handlers.find(path, method);
-            HttpMessageStreams responseMsg = httpRequestHandler.handle(path, httpHeaders, requestGenerator);
+            HttpMessageStreams responseMsg = httpRequestHandler.handle(path, httpHeaders, requestStream, requestLengthLimiters);
 
             return responseMsg;
 
@@ -88,7 +119,7 @@ public class HttpRequestProcessor {
         }
     }
 
-    private HttpMessageStreams createHttpErrorResponse(HttpResponseStatus status) throws IOException {
+    private HttpMessageStreams createHttpErrorResponse(HttpResponseStatus status) {
         String startLine = createHttpResponseStartLine(status);
         InputStream startLineInput = new ByteArrayInputStream(startLine.getBytes(StandardCharsets.UTF_8));
         StringStream startLineGenerator = StringStream.of(startLineInput);
@@ -105,17 +136,20 @@ public class HttpRequestProcessor {
         try (FileTemplateReplacer replacer = FileTemplateReplacer.of(errorTemplateFile,replacedFile);
         ) {
             replacer.replace(templateNodes, TemplateText.ERROR_TEMPLATE);
+
+            ResourceCloser releaser = new FileResourceCloser(replacedFile.toFile());
+
+            InputStream bodyInput = new FileInputStream(replacedFile.toString());
+            StringStream bodyGenerator = StringStream.of(bodyInput);
+            HttpMessageStream responseBody = HttpMessageStream.of(bodyGenerator,releaser);
+
+            HttpMessageStreams responseMessage = responseStartLine.sequenceOf(responseBody);
+
+            return responseMessage;
+
+        } catch (IOException e) {
+            return createHttpErrorResponse(HttpResponseStatus.CODE_500);
         }
-
-        ResourceCloser releaser = new FileResourceCloser(replacedFile.toFile());
-
-        InputStream bodyInput = new FileInputStream(replacedFile.toString());
-        StringStream bodyGenerator = StringStream.of(bodyInput);
-        HttpMessageStream responseBody = HttpMessageStream.of(bodyGenerator,releaser);
-
-        HttpMessageStreams responseMessage = responseStartLine.sequenceOf(responseBody);
-
-        return responseMessage;
     }
 
     public String createHttpResponseStartLine(HttpResponseStatus status) {
@@ -126,6 +160,10 @@ public class HttpRequestProcessor {
         startLine.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg);
 
         return startLine.toString();
+    }
 
+    @Override
+    public void close() {
+        requestStream.close();
     }
 }
