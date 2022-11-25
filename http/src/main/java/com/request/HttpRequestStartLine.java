@@ -53,7 +53,7 @@ public class HttpRequestStartLine {
             throw new InvalidHttpRequestInputException("Invalid Path In Http Request StartLine");
         }
 
-        if (Objects.equals(method,"GET")) {
+        if (Objects.equals(method,HttpRequestMethod.GET)) {
             pathText = pathText.split("\\?")[0];
         }
 
