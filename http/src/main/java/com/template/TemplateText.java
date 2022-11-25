@@ -1,7 +1,8 @@
 package com.template;
 
 public enum TemplateText {
-    ERROR_TEMPLATE("{{","}}");
+    ERROR_TEMPLATE("{{","}}"),
+    FILE_LIST_TEMPLATE("{{","}}");
 
     private final String start;
     private final String end;
