@@ -1,8 +1,8 @@
-package com;
+package com.db;
 
-import com.exception.InputNullParameterException;
-import com.exception.NotFoundPropertyException;
-import com.exception.PropertyNotFoundException;
+import com.db.exception.InputNullParameterException;
+import com.db.exception.NotFoundPropertyException;
+import com.db.exception.PropertyNotFoundException;
 
 import java.io.FileInputStream;
 import java.io.IOException;

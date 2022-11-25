@@ -1,7 +1,7 @@
-package com;
+package com.db;
 
-import com.exception.ConnectionFailException;
-import com.exception.InputNullParameterException;
+import com.db.exception.ConnectionFailException;
+import com.db.exception.InputNullParameterException;
 
 import java.sql.*;
 

@@ -1,9 +1,9 @@
-package com.table;
+package com.db.table;
 
-import com.dto.FileDto;
-import com.exception.InputNullParameterException;
-import com.exception.InsertNullException;
-import com.exception.NoSearchResultException;
+import com.db.dto.FileDto;
+import com.db.exception.InputNullParameterException;
+import com.db.exception.InsertNullException;
+import com.db.exception.NoSearchResultException;
 
 import java.util.HashSet;
 import java.util.Objects;

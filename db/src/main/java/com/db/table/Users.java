@@ -1,9 +1,9 @@
-package com.table;
+package com.db.table;
 
-import com.DbConnector;
-import com.dto.FileDto;
-import com.dto.UserDto;
-import com.exception.InputNullParameterException;
+import com.db.DbConnector;
+import com.db.dto.FileDto;
+import com.db.dto.UserDto;
+import com.db.exception.InputNullParameterException;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

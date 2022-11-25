@@ -1,6 +1,6 @@
-package com;
+package com.db;
 
-import com.exception.InputNullParameterException;
+import com.db.exception.InputNullParameterException;
 
 public enum DbPropertyKey {
     STORAGE_CAPACITY("storage_capacity");

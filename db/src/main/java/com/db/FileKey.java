@@ -1,4 +1,4 @@
-package com;
+package com.db;
 
 import java.util.Objects;
 

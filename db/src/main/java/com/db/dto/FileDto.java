@@ -1,7 +1,7 @@
-package com.dto;
+package com.db.dto;
 
-import com.exception.InputNullParameterException;
-import com.exception.MustBePositiveNumberException;
+import com.db.exception.InputNullParameterException;
+import com.db.exception.MustBePositiveNumberException;
 import lombok.Builder;
 import lombok.ToString;
 

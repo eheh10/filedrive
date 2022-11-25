@@ -1,4 +1,4 @@
-package com.exception;
+package com.db.exception;
 
 public class AlreadyRegisteredException extends RuntimeException{
     public AlreadyRegisteredException() {
