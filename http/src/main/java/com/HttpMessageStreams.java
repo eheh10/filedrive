@@ -5,7 +5,6 @@ import com.exception.NoMoreHttpContentException;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
@@ -21,12 +20,22 @@ public class HttpMessageStreams implements Closeable{
         this.values = values;
     }
 
-    public static HttpMessageStreams of(StringStream stream) {
-        if (stream == null){
+    public static HttpMessageStreams of(String httpMessage) {
+        if (httpMessage == null){
             throw new InputNullParameterException();
         }
 
-        HttpMessageStream httpMessageStream = HttpMessageStream.of(stream);
+        InputStream inputStream = new ByteArrayInputStream(httpMessage.getBytes(StandardCharsets.UTF_8));
+        return HttpMessageStreams.of(inputStream);
+    }
+
+    public static HttpMessageStreams of(InputStream inputStream) {
+        StringStream stringStream = StringStream.of(inputStream);
+        return HttpMessageStreams.of(stringStream);
+    }
+
+    public static HttpMessageStreams of(StringStream stringStream) {
+        HttpMessageStream httpMessageStream = HttpMessageStream.of(stringStream);
         Queue<HttpMessageStream> values = new ArrayDeque<>();
         values.offer(httpMessageStream);
 
@@ -34,9 +43,7 @@ public class HttpMessageStreams implements Closeable{
     }
 
     public static HttpMessageStreams empty() {
-        InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
-        StringStream stream = StringStream.of(is);
-        return HttpMessageStreams.of(stream);
+        return HttpMessageStreams.of(StringStream.empty());
     }
 
     public HttpMessageStreams sequenceOf(HttpMessageStreams streams) {
@@ -63,7 +70,7 @@ public class HttpMessageStreams implements Closeable{
         return new HttpMessageStreams(values);
     }
 
-    public boolean hasMoreString() throws IOException {
+    public boolean hasMoreString() {
         if (values.isEmpty()) {
             return false;
         }
@@ -83,7 +90,7 @@ public class HttpMessageStreams implements Closeable{
         return true;
     }
 
-    public String generate() throws IOException {
+    public String generate() {
         if (!hasMoreString()) {
             throw new NoMoreHttpContentException();
         }
@@ -91,7 +98,7 @@ public class HttpMessageStreams implements Closeable{
         return values.peek().generate();
     }
 
-    public String generateLine() throws IOException {
+    public String generateLine() {
         if (!hasMoreString()) {
             throw new NoMoreHttpContentException();
         }
@@ -100,7 +107,7 @@ public class HttpMessageStreams implements Closeable{
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         while(!values.isEmpty()) {
             values.poll().close();
         }
