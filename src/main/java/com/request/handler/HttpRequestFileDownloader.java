@@ -1,64 +1,88 @@
 package com.request.handler;
 
-import com.HttpMessageStream;
-import com.HttpMessageStreams;
-import com.StringStream;
-import com.dto.FileDto;
+import com.*;
 import com.exception.InputNullParameterException;
 import com.exception.NotFoundHttpRequestFileException;
+import com.exception.NotFoundQueryStringValueException;
 import com.header.HttpHeaders;
 import com.request.HttpRequestPath;
-import com.table.FileTable;
+import com.response.HttpResponseStatus;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class HttpRequestFileDownloader implements HttpRequestHandler {
-    private final FileTable fileTable = new FileTable();
+    private static final Path DEFAULT_PATH = Paths.get("src","main","resources","uploaded-file");
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStream bodyStream) throws IOException {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
 
-        String fileName = "test1.txt";
+        StringBuilder queryString = new StringBuilder();
 
-        Path defaultPath = Paths.get("src","main","resources","uploaded-file");
-        Path targetPath = defaultPath.resolve(fileName);
+        while(bodyStream.hasMoreString()) {
+            queryString.append(bodyStream.generate());
+        }
+
+        String fileName = searchFileName(queryString.toString(), "fileName");
+        Path targetPath = DEFAULT_PATH.resolve(fileName);
+
         if (Files.notExists(targetPath)) {
             throw new NotFoundHttpRequestFileException();
         }
 
-        FileDto fileDto = FileDto.builder()
-                .name(fileName)
-                .path(targetPath.toString())
-                .build();
-
-        fileTable.insert(fileDto);
-
-        StringBuilder headers = new StringBuilder();
-        headers.append("Content-Type: application/octet-stream;charset=euc-kr\n")
+        StringBuilder response = new StringBuilder();
+        response.append("HTTP/1.1 ")
+                .append(HttpResponseStatus.CODE_200.code()).append(" ")
+                .append(HttpResponseStatus.CODE_200.message()).append("\n")
+                .append("Content-Type: application/octet-stream;charset=euc-kr\n")
                 .append("Content-Disposition: attachment; filename=\"")
                 .append(fileName)
                 .append("\"\n\n");
 
-        InputStream headerInput = new ByteArrayInputStream(headers.toString().getBytes(StandardCharsets.UTF_8));
-        StringStream headerGenerator = StringStream.of(headerInput);
-        HttpMessageStreams responseHeaders = HttpMessageStreams.of(headerGenerator);
+        HttpMessageStreams responseMsg = HttpMessageStreams.of(response.toString());
 
-        InputStream bodyInput = new FileInputStream(targetPath.toFile());
-        StringStream bodyGenerator = StringStream.of(bodyInput);
-        HttpMessageStream responseBody = HttpMessageStream.of(bodyGenerator);
+        try {
+            InputStream fileIs = new FileInputStream(targetPath.toFile());
+            HttpMessageStream responseBody = HttpMessageStream.of(fileIs);
 
-        HttpMessageStreams response = responseHeaders.sequenceOf(responseBody);
+            return responseMsg.sequenceOf(responseBody);
+        } catch (FileNotFoundException e) {
+            return createRedirectionResponse(HttpResponseStatus.CODE_500);
+        }
+    }
 
-        return response;
+    private String searchFileName(String query, String target) {
+        int startIdx = query.indexOf(target + "=");
+
+        if (startIdx == -1) {
+            throw new NotFoundQueryStringValueException();
+        }
+
+        return URLDecoder.decode(
+                query.substring(startIdx + target.length() + 1),
+                StandardCharsets.UTF_8);
+    }
+
+    private HttpMessageStreams createRedirectionResponse(HttpResponseStatus status) {
+        StringBuilder response = new StringBuilder();
+
+        response.append("HTTP/1.1 ")
+                .append(status.code()).append(" ")
+                .append(status.message()).append("\n");
+
+        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
+        StringStream responseStream = StringStream.of(responseIs);
+
+        return HttpMessageStreams.of(responseStream);
     }
 }
