@@ -1,4 +1,4 @@
-package com;
+package com.template;
 
 import com.exception.InputNullParameterException;
 import com.exception.NoMoreFileContentException;
@@ -27,20 +27,32 @@ public class TemplateFileStream {
         return new TemplateFileStream(isr);
     }
 
-    public boolean hasMoreFileContent() throws IOException {
-        return isr.ready();
+    public boolean hasMoreFileContent() {
+        try {
+            return isr.ready();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void close() throws IOException {
-        isr.close();
+    public void close() {
+        try {
+            isr.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public String generate() throws IOException {
+    public String generate() {
         if (!hasMoreFileContent()) {
             throw new NoMoreFileContentException();
         }
 
-        int len = isr.read(buffer);
-        return new String(buffer,0,len);
+        try {
+            int len = isr.read(buffer);
+            return new String(buffer,0,len);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
