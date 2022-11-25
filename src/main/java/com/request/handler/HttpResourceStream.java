@@ -4,18 +4,14 @@ import com.*;
 import com.exception.InputNullParameterException;
 import com.header.HttpHeaders;
 import com.request.HttpRequestPath;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import com.response.HttpResponseStatus;
 
 public class HttpResourceStream implements HttpRequestHandler {
     private final ResourceFinder resourceFinder = new ResourceFinder();
     private final HttpRequestPath defaultPath = HttpRequestPath.of("/images");
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStream bodyStream) throws IOException {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -29,10 +25,7 @@ public class HttpResourceStream implements HttpRequestHandler {
                 .append(HttpResponseStatus.CODE_200.message()).append("\n")
                 .append("Content-Type: ").append(requestFilePath.contentType()).append("\n\n");
 
-        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
-        StringStream responseStream = StringStream.of(responseIs);
-        HttpMessageStreams responseMsg = HttpMessageStreams.of(responseStream);
-
+        HttpMessageStreams responseMsg = HttpMessageStreams.of(response.toString());
         HttpMessageStream fileStream = resourceFinder.findGetRequestResource(requestFilePath);
 
         return responseMsg.sequenceOf(fileStream);
