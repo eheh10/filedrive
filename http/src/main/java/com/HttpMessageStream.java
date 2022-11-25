@@ -5,7 +5,7 @@ import com.releaser.NoResourceCloser;
 import com.releaser.ResourceCloser;
 
 import java.io.Closeable;
-import java.io.IOException;
+import java.io.InputStream;
 
 public class HttpMessageStream implements Closeable {
     private final StringStream stream;
@@ -20,28 +20,37 @@ public class HttpMessageStream implements Closeable {
         this.closer = closer;
     }
 
-    public static HttpMessageStream of(StringStream stream) {
-        return new HttpMessageStream(stream,new NoResourceCloser());
+    public static HttpMessageStream of(InputStream inputStream) {
+        return HttpMessageStream.of(inputStream,new NoResourceCloser());
     }
 
-    public static HttpMessageStream of(StringStream stream, ResourceCloser closer) {
-        return new HttpMessageStream(stream,closer);
+    public static HttpMessageStream of(StringStream stringStream) {
+        return new HttpMessageStream(stringStream,new NoResourceCloser());
     }
 
-    public boolean hasMoreString() throws IOException {
+    public static HttpMessageStream of(InputStream inputStream, ResourceCloser closer) {
+        StringStream stringStream = StringStream.of(inputStream);
+        return HttpMessageStream.of(stringStream,closer);
+    }
+
+    public static HttpMessageStream of(StringStream stringStream, ResourceCloser closer) {
+        return new HttpMessageStream(stringStream,closer);
+    }
+
+    public boolean hasMoreString() {
         return stream.hasMoreString();
     }
 
-    public String generate() throws IOException {
+    public String generate() {
         return stream.generate();
     }
 
-    public String generateLine() throws IOException {
+    public String generateLine() {
         return stream.generateLine();
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         closer.close();
     }
 }
