@@ -1,4 +1,4 @@
-package com;
+package com.response;
 
 import com.exception.*;
 
@@ -25,6 +25,10 @@ public enum HttpResponseStatus {
 
         if (clz.isInstance(InvalidHttpRequestInputException.class)) {
             return CODE_400;
+        }
+
+        if (clz.isInstance(RequiredLoginException.class)) {
+            return CODE_401;
         }
 
         if (clz.isInstance(NotFoundHttpPathException.class)) {
