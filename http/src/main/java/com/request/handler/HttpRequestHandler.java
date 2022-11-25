@@ -1,12 +1,11 @@
 package com.request.handler;
 
-import com.HttpMessageStream;
 import com.HttpMessageStreams;
+import com.HttpRequestLengthLimiters;
+import com.RetryHttpRequestStream;
 import com.header.HttpHeaders;
 import com.request.HttpRequestPath;
 
-import java.io.IOException;
-
 public interface HttpRequestHandler {
-    HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, HttpMessageStream bodyStream) throws IOException;
+    HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters);
 }
