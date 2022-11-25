@@ -47,8 +47,12 @@ public class HttpRequestPath {
         return new HttpRequestPath(value.resolve(httpRequestPath.value));
     }
 
-    public String contentType() throws IOException {
-        return Files.probeContentType(value);
+    public String contentType() {
+        try {
+            return Files.probeContentType(value);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean isResourcePath() {
