@@ -26,7 +26,7 @@ public class HttpRequestHandlers {
             throw new InputNullParameterException();
         }
 
-        path = convertPathIfResourceRequest(values,path,method);
+        path = convertPathIfResourceRequest(path,method);
 
         if (!values.containsKey(path) ) {
             throw new NotFoundHttpPathException();
@@ -40,8 +40,7 @@ public class HttpRequestHandlers {
 
         return values.get(path).get(method);
     }
-
-    private HttpRequestPath convertPathIfResourceRequest(Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values, HttpRequestPath path, HttpRequestMethod method) {
+    private HttpRequestPath convertPathIfResourceRequest(HttpRequestPath path, HttpRequestMethod method) {
         if (values.containsKey(path) && path.isResourcePath()) {
             throw new NotFoundHttpPathException();
         }
