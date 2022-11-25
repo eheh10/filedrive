@@ -1,18 +1,36 @@
 package com.dto;
 
-import lombok.AccessLevel;
+import com.exception.InputNullParameterException;
+import com.exception.MustBePositiveNumberException;
 import lombok.Builder;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.util.Objects;
-
 @Builder
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @ToString
 public class UserDto {
+    private final int num;
     private final String id;
     private final String pwd;
+    private final int usageCapacity;
+
+    private UserDto(int num, String id, String pwd, int usageCapacity) {
+        if (id == null || pwd == null) {
+            throw new InputNullParameterException();
+        }
+
+        if (usageCapacity < 0) {
+            throw new MustBePositiveNumberException();
+        }
+
+        this.num = num;
+        this.id = id;
+        this.pwd = pwd;
+        this.usageCapacity = usageCapacity;
+    }
+
+    public int getNum() {
+        return num;
+    }
 
     public String getId() {
         return id;
@@ -22,21 +40,7 @@ public class UserDto {
         return pwd;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        UserDto userDto = (UserDto) o;
-
-        if (!Objects.equals(id, userDto.id)) return false;
-        return Objects.equals(pwd, userDto.pwd);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + pwd.hashCode();
-        return result;
+    public int getUsageCapacity() {
+        return usageCapacity;
     }
 }
