@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.UUID;
 
 public class HttpRequestFileUploader implements HttpRequestHandler {
     private static final Path DIRECTORY_PATH = Paths.get("src","main","resources","uploaded-file");
@@ -129,6 +130,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         }
 
         FileDto fileDto = FileDto.builder()
+                .uid(UUID.randomUUID().toString())
                 .name(filename)
                 .path(Paths.get(userDto.getUid()).resolve(filename).toString())
                 .size(fileSize)

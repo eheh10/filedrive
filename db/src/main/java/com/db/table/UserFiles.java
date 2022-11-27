@@ -11,11 +11,10 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 public class UserFiles {
     private static final DbConnector CONNECTOR = DbConnector.getInstance();
-    private static final PreparedStatement INSERT_FILE = CONNECTOR.preparedSql("INSERT INTO files(uid,name,path,size,user_uid VALUES (?,?,?,?,?)");
+    private static final PreparedStatement INSERT_FILE = CONNECTOR.preparedSql("INSERT INTO files(uid,name,path,size,user_uid) VALUES (?,?,?,?,?)");
     private static final PreparedStatement SEARCH_FILES_BY_USER_NUM = CONNECTOR.preparedSql("SELECT * FROM files WHERE user_uid=?");
     private static final PreparedStatement SEARCH_FILE = CONNECTOR.preparedSql("SELECT * FROM files WHERE name=? and user_uid=?");
     private static ResultSet resultSet = null;
@@ -26,7 +25,7 @@ public class UserFiles {
         }
 
         try {
-            INSERT_FILE.setString(1, UUID.randomUUID().toString());
+            INSERT_FILE.setString(1, fileDto.getUid());
             INSERT_FILE.setString(2,fileDto.getName());
             INSERT_FILE.setString(3,fileDto.getPath());
             INSERT_FILE.setInt(4,fileDto.getSize());
