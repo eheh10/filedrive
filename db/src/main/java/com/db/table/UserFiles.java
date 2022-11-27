@@ -13,9 +13,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class UserFiles {
-    private static final DbConnector CONNECTOR = DbConnector.connection();
+    private static final DbConnector CONNECTOR = DbConnector.getInstance();
     private static final PreparedStatement INSERT_FILE = CONNECTOR.preparedSql("INSERT INTO files(name,path,size,user_num) VALUES (?,?,?,?)");
     private static final PreparedStatement SEARCH_FILES_BY_USER_NUM = CONNECTOR.preparedSql("SELECT * FROM files WHERE user_num=?");
+    private static final PreparedStatement SEARCH_FILE = CONNECTOR.preparedSql("SELECT * FROM files WHERE name=? and user_num=?");
     private static ResultSet resultSet = null;
 
     public void insert(UserDto userDto, FileDto fileDto) {
@@ -59,6 +60,31 @@ public class UserFiles {
             }
 
             return Collections.unmodifiableSet(files);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public FileDto findFile(String fileName, int userNum) {
+        if (fileName == null ) {
+            throw new InputNullParameterException();
+        }
+
+        try {
+            SEARCH_FILE.setString(1,fileName);
+            SEARCH_FILE.setInt(2,userNum);
+
+            resultSet = SEARCH_FILE.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+
+            return FileDto.builder()
+                    .num(resultSet.getInt("num"))
+                    .name(resultSet.getString("name"))
+                    .path(resultSet.getString("path"))
+                    .size(resultSet.getInt("size"))
+                    .build();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
