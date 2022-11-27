@@ -8,7 +8,6 @@ import com.db.exception.InputNullParameterException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
 
 public class Users {
     private static final DbConnector CONNECTOR = DbConnector.getInstance();
@@ -25,7 +24,7 @@ public class Users {
         }
 
         try {
-            REGISTER_USER.setString(1, UUID.randomUUID().toString());
+            REGISTER_USER.setString(1, userDto.getUid());
             REGISTER_USER.setString(2,userDto.getName());
             REGISTER_USER.setString(3,userDto.getPwd());
 

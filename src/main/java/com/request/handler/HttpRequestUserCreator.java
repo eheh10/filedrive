@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 public class HttpRequestUserCreator implements HttpRequestHandler {
     private static final Users USERS = new Users();
@@ -41,6 +42,7 @@ public class HttpRequestUserCreator implements HttpRequestHandler {
         }
 
         UserDto newUser = UserDto.builder()
+                .uid(UUID.randomUUID().toString())
                 .name(userIdValue)
                 .pwd(userPwdValue)
                 .usageCapacity(0)
