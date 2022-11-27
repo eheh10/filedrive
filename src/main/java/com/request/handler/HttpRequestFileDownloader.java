@@ -1,26 +1,30 @@
 package com.request.handler;
 
+import com.db.dto.FileDto;
+import com.db.table.SessionStorage;
+import com.db.table.UserFiles;
 import com.http.*;
 import com.http.exception.InputNullParameterException;
+import com.http.exception.NotFoundHttpHeadersPropertyException;
 import com.http.exception.NotFoundHttpRequestFileException;
 import com.http.exception.NotFoundQueryStringValueException;
+import com.http.header.HttpHeaderField;
 import com.http.header.HttpHeaders;
 import com.http.request.HttpRequestPath;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public class HttpRequestFileDownloader implements HttpRequestHandler {
     private static final Path DEFAULT_PATH = Paths.get("src","main","resources","uploaded-file");
+    private final SessionStorage sessionStorage = new SessionStorage();
+    private final UserFiles userFiles = new UserFiles();
 
     @Override
     public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
@@ -34,10 +38,17 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
             queryString.append(bodyStream.generate());
         }
 
-        String fileName = searchFileName(queryString.toString(), "fileName");
-        Path targetPath = DEFAULT_PATH.resolve(fileName);
+        HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
+        String sessionId = searchSessionId(cookie);
 
-        if (Files.notExists(targetPath)) {
+        int userNum = sessionStorage.getUserNum(sessionId);
+
+        String fileName = searchFileName(queryString.toString(), "fileName");
+        FileDto foundFile = userFiles.findFile(fileName,userNum);
+        String targetPath = foundFile.getPath();
+        File targetFile = DEFAULT_PATH.resolve(targetPath).toFile();
+
+        if (!targetFile.exists()) {
             throw new NotFoundHttpRequestFileException();
         }
 
@@ -53,7 +64,7 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
         HttpMessageStreams responseMsg = HttpMessageStreams.of(response.toString());
 
         try {
-            InputStream fileIs = new FileInputStream(targetPath.toFile());
+            InputStream fileIs = new FileInputStream(targetFile);
             HttpMessageStream responseBody = HttpMessageStream.of(fileIs);
 
             return responseMsg.sequenceOf(responseBody);
@@ -72,6 +83,20 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
         return URLDecoder.decode(
                 query.substring(startIdx + target.length() + 1),
                 StandardCharsets.UTF_8);
+    }
+
+    private String searchSessionId(HttpHeaderField cookie) {
+        for(String value:cookie.getValues()) {
+            int delIdx = value.indexOf('=');
+            if (delIdx == -1) {
+                continue;
+            }
+
+            if (Objects.equals(value.substring(0,delIdx), SessionStorage.SESSION_FIELD_NAME)) {
+                return value.substring(delIdx+1);
+            }
+        }
+        throw new NotFoundHttpHeadersPropertyException();
     }
 
     private HttpMessageStreams createRedirectionResponse(HttpResponseStatus status) {
