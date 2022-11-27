@@ -37,7 +37,7 @@ public class HttpRequestUserFinder implements HttpRequestHandler {
         String userIdValue = searchValue(queryString.toString(), "id");
         String userPwdValue = searchValue(queryString.toString(), "password");
 
-        UserDto loginUser = users.find_BY_ID_PWD(userIdValue,userPwdValue);
+        UserDto loginUser = users.searchByNamePwd(userIdValue,userPwdValue);
         if (loginUser == null) {
             throw new InvalidHttpRequestInputException();
         }

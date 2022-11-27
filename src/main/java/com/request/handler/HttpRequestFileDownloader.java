@@ -41,10 +41,10 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
         String sessionId = searchSessionId(cookie);
 
-        int userNum = sessionStorage.getUserNum(sessionId);
+        String userUid = sessionStorage.getUserUid(sessionId);
 
         String fileName = searchFileName(queryString.toString(), "fileName");
-        FileDto foundFile = userFiles.findFile(fileName,userNum);
+        FileDto foundFile = userFiles.findFile(fileName,userUid);
         String targetPath = foundFile.getPath();
         File targetFile = DEFAULT_PATH.resolve(targetPath).toFile();
 

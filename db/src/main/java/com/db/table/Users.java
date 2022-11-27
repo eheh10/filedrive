@@ -8,14 +8,15 @@ import com.db.exception.InputNullParameterException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 
 public class Users {
-    private static final DbConnector CONNECTOR = DbConnector.connection();
-    private static final PreparedStatement REGISTER_USER = CONNECTOR.preparedSql("INSERT INTO users(id,password) VALUES (?,?)");
-    private static final PreparedStatement FIND_ID = CONNECTOR.preparedSql("SELECT id FROM users WHERE id=?");
-    private static final PreparedStatement FIND_USER_BY_NUM = CONNECTOR.preparedSql("SELECT * FROM users WHERE num=?");
-    private static final PreparedStatement FIND_USER_BY_ID_PWD = CONNECTOR.preparedSql("SELECT * FROM users WHERE id=? and password=?");
-    private static final PreparedStatement UPDATE_CAPACITY = CONNECTOR.preparedSql("UPDATE users SET usage_capacity=? WHERE id=? and password=?");
+    private static final DbConnector CONNECTOR = DbConnector.getInstance();
+    private static final PreparedStatement REGISTER_USER = CONNECTOR.preparedSql("INSERT INTO users(uid,name,password) VALUES (?,?,?)");
+    private static final PreparedStatement SEARCH_NAME = CONNECTOR.preparedSql("SELECT name FROM users WHERE name=?");
+    private static final PreparedStatement SEARCH_USER_BY_UID = CONNECTOR.preparedSql("SELECT * FROM users WHERE uid=?");
+    private static final PreparedStatement SEARCH_USER_BY_NAME_PWD = CONNECTOR.preparedSql("SELECT * FROM users WHERE name=? and password=?");
+    private static final PreparedStatement UPDATE_CAPACITY = CONNECTOR.preparedSql("UPDATE users SET usage_capacity=? WHERE uid=?");
     private static ResultSet resultSet = null;
 
     public void insert(UserDto userDto) {
@@ -24,8 +25,9 @@ public class Users {
         }
 
         try {
-            REGISTER_USER.setString(1,userDto.getId());
-            REGISTER_USER.setString(2,userDto.getPwd());
+            REGISTER_USER.setString(1, UUID.randomUUID().toString());
+            REGISTER_USER.setString(2,userDto.getName());
+            REGISTER_USER.setString(3,userDto.getPwd());
 
             REGISTER_USER.executeUpdate();
         } catch (SQLException e) {
@@ -33,15 +35,15 @@ public class Users {
         }
     }
 
-    public boolean alreadyRegisteredId(String id) {
-        if (id == null) {
+    public boolean isAlreadyRegisteredName(String name) {
+        if (name == null) {
             throw new InputNullParameterException();
         }
 
         try {
-            FIND_ID.setString(1,id);
+            SEARCH_NAME.setString(1,name);
 
-            resultSet = FIND_ID.executeQuery();
+            resultSet = SEARCH_NAME.executeQuery();
 
             return resultSet.next();
         } catch (SQLException e) {
@@ -49,24 +51,24 @@ public class Users {
         }
     }
 
-    public UserDto find_BY_NUM(int num) {
+    public UserDto searchByUid(String uid) {
         try {
-            FIND_USER_BY_NUM.setInt(1,num);
+            SEARCH_USER_BY_UID.setString(1,uid);
 
-            FIND_USER_BY_NUM.executeQuery();
+            SEARCH_USER_BY_UID.executeQuery();
 
-            resultSet = FIND_USER_BY_ID_PWD.executeQuery();
+            resultSet = SEARCH_USER_BY_UID.executeQuery();
             if (!resultSet.next()) {
                 return null;
             }
 
-            String id = resultSet.getString("id");
+            String name = resultSet.getString("name");
             String pwd = resultSet.getString("password");
             int usageCapacity = resultSet.getInt("usage_capacity");
 
             UserDto foundUser = UserDto.builder()
-                    .num(num)
-                    .id(id)
+                    .uid(uid)
+                    .name(name)
                     .pwd(pwd)
                     .usageCapacity(usageCapacity)
                     .build();
@@ -77,27 +79,27 @@ public class Users {
         }
     }
 
-    public UserDto find_BY_ID_PWD(String id, String pwd) {
-        if (id == null || pwd == null) {
+    public UserDto searchByNamePwd(String name, String pwd) {
+        if (name == null || pwd == null) {
             throw new InputNullParameterException();
         }
 
         try {
-            FIND_USER_BY_ID_PWD.setString(1,id);
-            FIND_USER_BY_ID_PWD.setString(2,pwd);
+            SEARCH_USER_BY_NAME_PWD.setString(1,name);
+            SEARCH_USER_BY_NAME_PWD.setString(2,pwd);
 
-            resultSet = FIND_USER_BY_ID_PWD.executeQuery();
+            resultSet = SEARCH_USER_BY_NAME_PWD.executeQuery();
 
             if (!resultSet.next()) {
                 return null;
             }
 
-            int num = resultSet.getInt("num");
+            String uid = resultSet.getString("uid");
             int usageCapacity = resultSet.getInt("usage_capacity");
 
             UserDto foundUser = UserDto.builder()
-                    .num(num)
-                    .id(id)
+                    .uid(uid)
+                    .name(name)
                     .pwd(pwd)
                     .usageCapacity(usageCapacity)
                     .build();
@@ -113,15 +115,12 @@ public class Users {
             throw new InputNullParameterException();
         }
 
-        String id = userDto.getId();
-        String pwd = userDto.getPwd();
         int usedCapacity = userDto.getUsageCapacity();
         int sumCapacity = usedCapacity + fileDto.getSize();
 
         try {
             UPDATE_CAPACITY.setInt(1,sumCapacity);
-            UPDATE_CAPACITY.setString(2,id);
-            UPDATE_CAPACITY.setString(3,pwd);
+            UPDATE_CAPACITY.setString(2,userDto.getUid());
 
             UPDATE_CAPACITY.executeUpdate();
         } catch (SQLException e) {

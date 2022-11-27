@@ -11,9 +11,9 @@ import java.util.UUID;
 
 public class SessionStorage {
     public static final String SESSION_FIELD_NAME = "sessionId";
-    private static final DbConnector CONNECTOR = DbConnector.connection();
+    private static final DbConnector CONNECTOR = DbConnector.getInstance();
     private static final PreparedStatement INSERT_SESSION = CONNECTOR.preparedSql("INSERT INTO session_storage VALUES (?,?)");
-    private static final PreparedStatement SEARCH_SESSION = CONNECTOR.preparedSql("SELECT user_num FROM session_storage WHERE id=?");
+    private static final PreparedStatement SEARCH_SESSION = CONNECTOR.preparedSql("SELECT user_uid FROM session_storage WHERE uid=?");
     private static ResultSet resultSet = null;
 
     public String createSession(UserDto userDto) {
@@ -21,19 +21,18 @@ public class SessionStorage {
             throw new InputNullParameterException();
         }
 
-        String sessionId = UUID.randomUUID().toString();
-        int userNum = userDto.getNum();
+        String sessionUId = UUID.randomUUID().toString();
 
         try {
-            INSERT_SESSION.setString(1,sessionId);
-            INSERT_SESSION.setInt(2,userNum);
+            INSERT_SESSION.setString(1,sessionUId);
+            INSERT_SESSION.setString(2,userDto.getUid());
 
             INSERT_SESSION.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 
-        return sessionId;
+        return sessionUId;
     }
 
     public boolean isUnregisteredSession(String sessionId) {
@@ -51,7 +50,7 @@ public class SessionStorage {
         }
     }
 
-    public Integer getUserNum(String sessionId) {
+    public String getUserUid(String sessionId) {
         if (sessionId == null) {
             throw new InputNullParameterException();
         }
@@ -64,9 +63,7 @@ public class SessionStorage {
                 return null;
             }
 
-            int userNum = resultSet.getInt("user_num");
-
-            return userNum;
+            return resultSet.getString("user_uid");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

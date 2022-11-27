@@ -8,13 +8,13 @@ import lombok.ToString;
 @Builder
 @ToString
 public class UserDto {
-    private final int num;
-    private final String id;
+    private final String uid;
+    private final String name;
     private final String pwd;
     private final int usageCapacity;
 
-    private UserDto(int num, String id, String pwd, int usageCapacity) {
-        if (id == null || pwd == null) {
+    private UserDto(String uid, String name, String pwd, int usageCapacity) {
+        if (uid == null || name == null || pwd == null) {
             throw new InputNullParameterException();
         }
 
@@ -22,18 +22,18 @@ public class UserDto {
             throw new MustBePositiveNumberException();
         }
 
-        this.num = num;
-        this.id = id;
+        this.uid = uid;
+        this.name = name;
         this.pwd = pwd;
         this.usageCapacity = usageCapacity;
     }
 
-    public int getNum() {
-        return num;
+    public String getUid() {
+        return uid;
     }
 
-    public String getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
     public String getPwd() {

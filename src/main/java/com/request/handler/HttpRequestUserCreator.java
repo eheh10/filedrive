@@ -36,12 +36,12 @@ public class HttpRequestUserCreator implements HttpRequestHandler {
         String userIdValue = searchValue(queryString.toString(), "id");
         String userPwdValue = searchValue(queryString.toString(), "password");
 
-        if (USERS.alreadyRegisteredId(userIdValue)) {
+        if (USERS.isAlreadyRegisteredName(userIdValue)) {
             return createRedirectionResponse(HttpResponseStatus.CODE_400);
         }
 
         UserDto newUser = UserDto.builder()
-                .id(userIdValue)
+                .name(userIdValue)
                 .pwd(userPwdValue)
                 .usageCapacity(0)
                 .build();

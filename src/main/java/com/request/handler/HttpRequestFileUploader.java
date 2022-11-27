@@ -41,10 +41,10 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
         String sessionId = searchSessionId(cookie);
 
-        int userNum = sessionStorage.getUserNum(sessionId);
-        UserDto userDto = users.find_BY_NUM(userNum);
+        String userUid = sessionStorage.getUserUid(sessionId);
+        UserDto userDto = users.searchByUid(userUid);
 
-        Path savePath = DIRECTORY_PATH.resolve(String.valueOf(userNum));
+        Path savePath = DIRECTORY_PATH.resolve(userUid);
         try {
             if (!savePath.toFile().exists() || !savePath.toFile().isDirectory()) {
                 Files.createDirectory(savePath);
@@ -130,7 +130,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
 
         FileDto fileDto = FileDto.builder()
                 .name(filename)
-                .path(Paths.get(String.valueOf(userDto.getNum())).resolve(filename).toString())
+                .path(Paths.get(userDto.getUid()).resolve(filename).toString())
                 .size(fileSize)
                 .build();
 

@@ -11,12 +11,13 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class UserFiles {
     private static final DbConnector CONNECTOR = DbConnector.getInstance();
-    private static final PreparedStatement INSERT_FILE = CONNECTOR.preparedSql("INSERT INTO files(name,path,size,user_num) VALUES (?,?,?,?)");
-    private static final PreparedStatement SEARCH_FILES_BY_USER_NUM = CONNECTOR.preparedSql("SELECT * FROM files WHERE user_num=?");
-    private static final PreparedStatement SEARCH_FILE = CONNECTOR.preparedSql("SELECT * FROM files WHERE name=? and user_num=?");
+    private static final PreparedStatement INSERT_FILE = CONNECTOR.preparedSql("INSERT INTO files(uid,name,path,size,user_uid VALUES (?,?,?,?,?)");
+    private static final PreparedStatement SEARCH_FILES_BY_USER_NUM = CONNECTOR.preparedSql("SELECT * FROM files WHERE user_uid=?");
+    private static final PreparedStatement SEARCH_FILE = CONNECTOR.preparedSql("SELECT * FROM files WHERE name=? and user_uid=?");
     private static ResultSet resultSet = null;
 
     public void insert(UserDto userDto, FileDto fileDto) {
@@ -25,10 +26,11 @@ public class UserFiles {
         }
 
         try {
-            INSERT_FILE.setString(1,fileDto.getName());
-            INSERT_FILE.setString(2,fileDto.getPath());
-            INSERT_FILE.setInt(3,fileDto.getSize());
-            INSERT_FILE.setInt(4,userDto.getNum());
+            INSERT_FILE.setString(1, UUID.randomUUID().toString());
+            INSERT_FILE.setString(2,fileDto.getName());
+            INSERT_FILE.setString(3,fileDto.getPath());
+            INSERT_FILE.setInt(4,fileDto.getSize());
+            INSERT_FILE.setString(5,userDto.getUid());
 
             INSERT_FILE.executeUpdate();
         } catch (SQLException e) {
@@ -36,22 +38,22 @@ public class UserFiles {
         }
     }
 
-    public Set<FileDto> filesOf(int userNum) {
+    public Set<FileDto> filesOf(String userUid) {
         Set<FileDto> files = new HashSet<>();
 
         try {
-            SEARCH_FILES_BY_USER_NUM.setInt(1,userNum);
+            SEARCH_FILES_BY_USER_NUM.setString(1,userUid);
 
             resultSet = SEARCH_FILES_BY_USER_NUM.executeQuery();
 
             while (resultSet.next()) {
-                int num = resultSet.getInt("num");
+                String uid = resultSet.getString("uid");
                 String name = resultSet.getString("name");
                 String path = resultSet.getString("path");
                 int size = resultSet.getInt("size");
 
                 files.add(FileDto.builder()
-                        .num(num)
+                        .uid(uid)
                         .name(name)
                         .path(path)
                         .size(size)
@@ -65,14 +67,14 @@ public class UserFiles {
         }
     }
 
-    public FileDto findFile(String fileName, int userNum) {
-        if (fileName == null ) {
+    public FileDto findFile(String fileName, String userUid) {
+        if (fileName == null || userUid == null) {
             throw new InputNullParameterException();
         }
 
         try {
             SEARCH_FILE.setString(1,fileName);
-            SEARCH_FILE.setInt(2,userNum);
+            SEARCH_FILE.setString(2,userUid);
 
             resultSet = SEARCH_FILE.executeQuery();
             if (!resultSet.next()) {
@@ -80,7 +82,7 @@ public class UserFiles {
             }
 
             return FileDto.builder()
-                    .num(resultSet.getInt("num"))
+                    .uid(resultSet.getString("uid"))
                     .name(resultSet.getString("name"))
                     .path(resultSet.getString("path"))
                     .size(resultSet.getInt("size"))
