@@ -1,6 +1,8 @@
 package com.request.handler;
 
+import com.db.dto.FileDownloadDto;
 import com.db.dto.FileDto;
+import com.db.table.FileDownloads;
 import com.db.table.SessionStorage;
 import com.db.table.UserFiles;
 import com.http.*;
@@ -19,12 +21,15 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.Objects;
+import java.util.UUID;
 
 public class HttpRequestFileDownloader implements HttpRequestHandler {
     private static final Path DEFAULT_PATH = Paths.get("src","main","resources","uploaded-file");
-    private final SessionStorage sessionStorage = new SessionStorage();
-    private final UserFiles userFiles = new UserFiles();
+    private static final SessionStorage SESSION_STORAGE = new SessionStorage();
+    private static final UserFiles USER_FILES = new UserFiles();
+    private static final FileDownloads FILE_DOWNLOADS = new FileDownloads();
 
     @Override
     public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
@@ -41,16 +46,32 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
         String sessionId = searchSessionId(cookie);
 
-        String userUid = sessionStorage.getUserUid(sessionId);
+        String userUid = SESSION_STORAGE.getUserUid(sessionId);
 
         String fileName = searchFileName(queryString.toString(), "fileName");
-        FileDto foundFile = userFiles.findFile(fileName,userUid);
+        FileDto foundFile = USER_FILES.searchFile(fileName,userUid);
         String targetPath = foundFile.getPath();
         File targetFile = DEFAULT_PATH.resolve(targetPath).toFile();
 
         if (!targetFile.exists()) {
             throw new NotFoundHttpRequestFileException();
         }
+
+        LocalDate today = LocalDate.now();
+        FileDownloadDto todayDownload = FILE_DOWNLOADS.searchDownload(userUid,today);
+
+        if (todayDownload == null) {
+            todayDownload = FileDownloadDto.builder()
+                    .uid(UUID.randomUUID().toString())
+                    .userUid(userUid)
+                    .downloadDate(today)
+                    .count(0)
+                    .build();
+
+            FILE_DOWNLOADS.insert(todayDownload);
+        }
+
+        FILE_DOWNLOADS.countDownload(todayDownload);
 
         StringBuilder response = new StringBuilder();
         response.append("HTTP/1.1 ")
