@@ -44,9 +44,10 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         int userNum = sessionStorage.getUserNum(sessionId);
         UserDto userDto = users.find_BY_NUM(userNum);
 
+        Path savePath = DIRECTORY_PATH.resolve(String.valueOf(userNum));
         try {
-            if (!Files.isDirectory(DIRECTORY_PATH)) {
-                Files.createDirectory(DIRECTORY_PATH);
+            if (!savePath.toFile().exists() || !savePath.toFile().isDirectory()) {
+                Files.createDirectory(savePath);
             }
 
             HttpHeaderField contentType = httpHeaders.findProperty("Content-Type");
@@ -91,7 +92,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
 
                     filename = parsingFilename(line, finder);
 
-                    bw = generateNewFileWriter(filename);
+                    bw = generateNewFileWriter(savePath.resolve(filename));
                     if (bw == null) {
                         return createRedirectionResponse(HttpResponseStatus.CODE_500);
                     }
@@ -129,7 +130,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
 
         FileDto fileDto = FileDto.builder()
                 .name(filename)
-                .path(DIRECTORY_PATH.resolve(filename).toString())
+                .path(Paths.get(String.valueOf(userDto.getNum())).resolve(filename).toString())
                 .size(fileSize)
                 .build();
 
@@ -149,11 +150,10 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         return filename;
     }
 
-    private BufferedWriter generateNewFileWriter(String filename) {
-        Path filePath = DIRECTORY_PATH.resolve(filename);
+    private BufferedWriter generateNewFileWriter(Path filePath) {
         OutputStream os = null;
         try {
-            os = new FileOutputStream(filePath.toString());
+            os = new FileOutputStream(filePath.toFile());
         } catch (FileNotFoundException e) {
             return null;
         }
