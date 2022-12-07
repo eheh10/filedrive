@@ -20,6 +20,7 @@ subprojects {
         implementation 'ch.qos.logback:logback-classic:1.2.3'
         implementation 'org.projectlombok:lombok:1.18.22'
         implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.31'
+        implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0'
 
         compileOnly 'org.projectlombok:lombok:1.18.24'
         annotationProcessor 'org.projectlombok:lombok:1.18.24'
@@ -37,8 +38,10 @@ subprojects {
 dependencies {
     implementation project(":http")
     implementation project(":db")
+    implementation project(":api")
     implementation 'ch.qos.logback:logback-classic:1.2.3'
     implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.31'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
