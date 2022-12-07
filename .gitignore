@@ -30,3 +30,4 @@ gradle-app.setting
 out
 *.properties
 /src/main/resources/uploaded-file/
+/logs/
