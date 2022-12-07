@@ -29,6 +29,18 @@ public class DbPropertyFinder {
         return value.getProperty(key.value());
     }
 
+    public String getDbConnectionUrl() {
+        return find(DbPropertyKey.DB_URL);
+    }
+
+    public String getDbUser() {
+        return find(DbPropertyKey.DB_USER);
+    }
+
+    public String getDbPwd() {
+        return find(DbPropertyKey.DB_PASSWORD);
+    }
+
     public int getStorageCapacity() {
         String storageCapacity = find(DbPropertyKey.STORAGE_CAPACITY);
 
