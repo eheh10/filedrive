@@ -61,16 +61,18 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
 
         List<File> downloadFiles = searchFiles(bodyQueryString.toString(),FILE_FILED_NAME,userUid);
 
-        if (downloadFiles.size() == 0) {
+        int numberOfFiles = downloadFiles.size();
+
+        if (numberOfFiles == 0) {
             throw new InvalidHttpRequestInputException();
         }
 
-        boolean isZipFile = downloadFiles.size() > 1;
+        boolean isZipFile = numberOfFiles > 1;
 
         File responseFile = isZipFile? zippingFiles(downloadFiles) : downloadFiles.get(0);
 
         try {
-            recordDownload(userUid,downloadFiles.size());
+            recordDownload(userUid,numberOfFiles);
         } catch (DownloadCountLimitExceededException e) {
             StringBuilder response = new StringBuilder();
 
