@@ -51,7 +51,7 @@ public enum HttpResponseStatus {
         }
 
         exception.printStackTrace();
-        throw new RuntimeException();
+        return CODE_500;
     }
 
     public String code() {
