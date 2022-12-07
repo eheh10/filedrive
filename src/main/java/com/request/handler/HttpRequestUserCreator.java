@@ -9,6 +9,7 @@ import com.http.exception.InputNullParameterException;
 import com.http.exception.NotFoundQueryStringValueException;
 import com.http.header.HttpHeaders;
 import com.http.request.HttpRequestPath;
+import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
 import com.db.table.Users;
@@ -23,19 +24,19 @@ public class HttpRequestUserCreator implements HttpRequestHandler {
     private static final Users USERS = new Users();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
 
-        StringBuilder queryString = new StringBuilder();
+        StringBuilder bodyQueryString = new StringBuilder();
 
         while(bodyStream.hasMoreString()) {
-            queryString.append(bodyStream.generate());
+            bodyQueryString.append(bodyStream.generate());
         }
 
-        String userIdValue = searchValue(queryString.toString(), "id");
-        String userPwdValue = searchValue(queryString.toString(), "password");
+        String userIdValue = searchValue(bodyQueryString.toString(), "id");
+        String userPwdValue = searchValue(bodyQueryString.toString(), "password");
 
         if (USERS.isAlreadyRegisteredName(userIdValue)) {
             return createRedirectionResponse(HttpResponseStatus.CODE_400);
