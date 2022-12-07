@@ -2,9 +2,13 @@ package com.request.handler;
 
 import com.db.dto.FileDownloadDto;
 import com.db.dto.FileDto;
+import com.db.exception.VersionUpdatedException;
 import com.db.table.FileDownloads;
 import com.db.table.SessionStorage;
 import com.db.table.UserFiles;
+import com.exception.DownloadCountLimitExceededException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.http.*;
 import com.http.exception.InputNullParameterException;
 import com.http.exception.NotFoundHttpHeadersPropertyException;
@@ -13,8 +17,10 @@ import com.http.exception.NotFoundQueryStringValueException;
 import com.http.header.HttpHeaderField;
 import com.http.header.HttpHeaders;
 import com.http.request.HttpRequestPath;
+import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
+import com.property.PropertyFinder;
 
 import java.io.*;
 import java.net.URLDecoder;
@@ -22,25 +28,28 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
 public class HttpRequestFileDownloader implements HttpRequestHandler {
     private static final Path DEFAULT_PATH = Paths.get("src","main","resources","uploaded-file");
+    private static final PropertyFinder PROPERTY_FINDER = new PropertyFinder();
     private static final SessionStorage SESSION_STORAGE = new SessionStorage();
     private static final UserFiles USER_FILES = new UserFiles();
     private static final FileDownloads FILE_DOWNLOADS = new FileDownloads();
+    private static final JsonMapper JSON_MAPPER = new JsonMapper();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
 
-        StringBuilder queryString = new StringBuilder();
+        StringBuilder bodyQueryString = new StringBuilder();
 
         while(bodyStream.hasMoreString()) {
-            queryString.append(bodyStream.generate());
+            bodyQueryString.append(bodyStream.generate());
         }
 
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
@@ -48,7 +57,7 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
 
         String userUid = SESSION_STORAGE.getUserUid(sessionId);
 
-        String fileName = searchFileName(queryString.toString(), "fileName");
+        String fileName = searchFileName(bodyQueryString.toString(), "fileName");
         FileDto foundFile = USER_FILES.searchFile(fileName,userUid);
         String targetPath = foundFile.getPath();
         File targetFile = DEFAULT_PATH.resolve(targetPath).toFile();
@@ -57,21 +66,27 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
             throw new NotFoundHttpRequestFileException();
         }
 
-        LocalDate today = LocalDate.now();
-        FileDownloadDto todayDownload = FILE_DOWNLOADS.searchDownload(userUid,today);
+        try {
+            recordDownload(userUid);
+        } catch (DownloadCountLimitExceededException e) {
+            StringBuilder response = new StringBuilder();
 
-        if (todayDownload == null) {
-            todayDownload = FileDownloadDto.builder()
-                    .uid(UUID.randomUUID().toString())
-                    .userUid(userUid)
-                    .downloadDate(today)
-                    .count(0)
-                    .build();
+            response.append("HTTP/1.1 ")
+                    .append(HttpResponseStatus.CODE_200.code()).append(" ")
+                    .append(HttpResponseStatus.CODE_200.message()).append("\n")
+                    .append("Content-Type: application/json;charset=utf-8\n\n");
 
-            FILE_DOWNLOADS.insert(todayDownload);
+            Map responseBody = Map.of(
+                    "statusCode",400,
+                    "message","일일 다운로드 횟수 초과"
+            );
+
+            String responseJson = convertJson(responseBody);
+            response.append(responseJson);
+
+            HttpMessageStreams responseMsg = HttpMessageStreams.of(response.toString());
+            return responseMsg;
         }
-
-        FILE_DOWNLOADS.countDownload(todayDownload);
 
         StringBuilder response = new StringBuilder();
         response.append("HTTP/1.1 ")
@@ -91,6 +106,51 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
             return responseMsg.sequenceOf(responseBody);
         } catch (FileNotFoundException e) {
             return createRedirectionResponse(HttpResponseStatus.CODE_500);
+        }
+    }
+
+    private String convertJson(Map mapValue) {
+        try {
+            return JSON_MAPPER.writeValueAsString(mapValue);
+        } catch (JsonProcessingException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private void recordDownload(String userUid) {
+        LocalDate today = LocalDate.now();
+        FileDownloadDto todayDownload = FILE_DOWNLOADS.searchDownload(userUid,today);
+
+        if (todayDownload == null) {
+            todayDownload = FileDownloadDto.builder()
+                    .uid(UUID.randomUUID().toString())
+                    .userUid(userUid)
+                    .downloadDate(today)
+                    .count(0)
+                    .version(1)
+                    .build();
+
+            FILE_DOWNLOADS.insert(todayDownload);
+        }
+
+        checkDownloadLimit(todayDownload);
+
+        int retry = 3;
+        while (retry-- > 0){
+            try {
+                FILE_DOWNLOADS.countDownload(todayDownload);
+                break;
+            } catch (VersionUpdatedException e) {
+                todayDownload = FILE_DOWNLOADS.searchDownload(userUid, today);
+                checkDownloadLimit(todayDownload);
+                continue;
+            }
+        }
+    }
+
+    private void checkDownloadLimit(FileDownloadDto todayDownload) {
+        if (todayDownload.getCount() + 1 > PROPERTY_FINDER.fileDownloadCountLimit()) {
+            throw new DownloadCountLimitExceededException();
         }
     }
 
