@@ -1,6 +1,7 @@
 package com.db.table;
 
 import com.db.DbConnector;
+import com.db.Sha256Encryption;
 import com.db.dto.FileDto;
 import com.db.dto.UserDto;
 import com.db.exception.InputNullParameterException;
@@ -11,11 +12,13 @@ import java.sql.SQLException;
 
 public class Users {
     private static final DbConnector CONNECTOR = DbConnector.getInstance();
-    private static final PreparedStatement REGISTER_USER = CONNECTOR.preparedSql("INSERT INTO users(uid,name,password) VALUES (?,?,?)");
+    private static final PreparedStatement REGISTER_USER = CONNECTOR.preparedSql("INSERT INTO users(uid,name,password,google_uid) VALUES (?,?,?,?)");
     private static final PreparedStatement SEARCH_NAME = CONNECTOR.preparedSql("SELECT name FROM users WHERE name=?");
     private static final PreparedStatement SEARCH_USER_BY_UID = CONNECTOR.preparedSql("SELECT * FROM users WHERE uid=?");
     private static final PreparedStatement SEARCH_USER_BY_NAME_PWD = CONNECTOR.preparedSql("SELECT * FROM users WHERE name=? and password=?");
+    private static final PreparedStatement SEARCH_USER_BY_GOOGLE_UID = CONNECTOR.preparedSql("SELECT * FROM users WHERE google_uid=?");
     private static final PreparedStatement UPDATE_CAPACITY = CONNECTOR.preparedSql("UPDATE users SET usage_capacity=? WHERE uid=?");
+    private static final Sha256Encryption ENCRYPTION = Sha256Encryption.getInstance();
     private static ResultSet resultSet = null;
 
     public void insert(UserDto userDto) {
@@ -23,10 +26,17 @@ public class Users {
             throw new InputNullParameterException();
         }
 
+        String cryptogramPwd = userDto.getPwd();
+
+        if (cryptogramPwd != null) {
+            cryptogramPwd = ENCRYPTION.encrypt(userDto.getPwd());
+        };
+
         try {
-            REGISTER_USER.setString(1, userDto.getUid());
+            REGISTER_USER.setString(1,userDto.getUid());
             REGISTER_USER.setString(2,userDto.getName());
-            REGISTER_USER.setString(3,userDto.getPwd());
+            REGISTER_USER.setString(3,cryptogramPwd);
+            REGISTER_USER.setString(4, userDto.getGoogleUid());
 
             REGISTER_USER.executeUpdate();
         } catch (SQLException e) {
@@ -64,12 +74,14 @@ public class Users {
             String name = resultSet.getString("name");
             String pwd = resultSet.getString("password");
             int usageCapacity = resultSet.getInt("usage_capacity");
+            String googleUid = resultSet.getString("google_uid");
 
             UserDto foundUser = UserDto.builder()
                     .uid(uid)
                     .name(name)
                     .pwd(pwd)
                     .usageCapacity(usageCapacity)
+                    .googleUid(googleUid)
                     .build();
 
             return foundUser;
@@ -83,9 +95,11 @@ public class Users {
             throw new InputNullParameterException();
         }
 
+        String cryptogramPwd = ENCRYPTION.encrypt(pwd);
+
         try {
             SEARCH_USER_BY_NAME_PWD.setString(1,name);
-            SEARCH_USER_BY_NAME_PWD.setString(2,pwd);
+            SEARCH_USER_BY_NAME_PWD.setString(2,cryptogramPwd);
 
             resultSet = SEARCH_USER_BY_NAME_PWD.executeQuery();
 
@@ -94,13 +108,16 @@ public class Users {
             }
 
             String uid = resultSet.getString("uid");
+            String password = resultSet.getString("password");
             int usageCapacity = resultSet.getInt("usage_capacity");
+            String googleUid = resultSet.getString("google_uid");
 
             UserDto foundUser = UserDto.builder()
                     .uid(uid)
                     .name(name)
-                    .pwd(pwd)
+                    .pwd(password)
                     .usageCapacity(usageCapacity)
+                    .googleUid(googleUid)
                     .build();
 
             return foundUser;
@@ -122,6 +139,36 @@ public class Users {
             UPDATE_CAPACITY.setString(2,userDto.getUid());
 
             UPDATE_CAPACITY.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public UserDto searchByGoogleUid(String googleUid) {
+        try {
+            SEARCH_USER_BY_GOOGLE_UID.setString(1,googleUid);
+
+            SEARCH_USER_BY_GOOGLE_UID.executeQuery();
+
+            resultSet = SEARCH_USER_BY_GOOGLE_UID.executeQuery();
+            if (!resultSet.next()) {
+                return null;
+            }
+
+            String uid = resultSet.getString("uid");
+            String name = resultSet.getString("name");
+            String pwd = resultSet.getString("password");
+            int usageCapacity = resultSet.getInt("usage_capacity");
+
+            UserDto foundUser = UserDto.builder()
+                    .uid(uid)
+                    .name(name)
+                    .pwd(pwd)
+                    .usageCapacity(usageCapacity)
+                    .googleUid(googleUid)
+                    .build();
+
+            return foundUser;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
