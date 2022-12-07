@@ -5,7 +5,8 @@ import com.http.HttpRequestLengthLimiters;
 import com.http.RetryHttpRequestStream;
 import com.http.header.HttpHeaders;
 import com.http.request.HttpRequestPath;
+import com.http.request.HttpRequestQueryString;
 
 public interface HttpRequestHandler {
-    HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters);
+    HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters);
 }

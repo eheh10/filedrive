@@ -3,6 +3,7 @@ package com.request.handler;
 import com.http.*;
 import com.http.exception.InputNullParameterException;
 import com.http.header.HttpHeaders;
+import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.request.HttpRequestPagePath;
 import com.http.request.HttpRequestPath;
@@ -17,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 public class HttpRequestPageStream implements HttpRequestHandler {
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
