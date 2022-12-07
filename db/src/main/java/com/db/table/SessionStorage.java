@@ -14,6 +14,7 @@ public class SessionStorage {
     private static final DbConnector CONNECTOR = DbConnector.getInstance();
     private static final PreparedStatement INSERT_SESSION = CONNECTOR.preparedSql("INSERT INTO session_storage VALUES (?,?)");
     private static final PreparedStatement SEARCH_SESSION = CONNECTOR.preparedSql("SELECT user_uid FROM session_storage WHERE uid=?");
+    private static final PreparedStatement DELETE_SESSION = CONNECTOR.preparedSql("DELETE FROM session_storage WHERE uid=?");
     private static ResultSet resultSet = null;
 
     public String createSession(UserDto userDto) {
@@ -64,6 +65,20 @@ public class SessionStorage {
             }
 
             return resultSet.getString("user_uid");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void expireSession(String sessionId) {
+        if (sessionId == null) {
+            throw new InputNullParameterException();
+        }
+
+        try {
+            DELETE_SESSION.setString(1,sessionId);
+
+            DELETE_SESSION.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
