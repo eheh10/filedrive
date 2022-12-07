@@ -8,6 +8,7 @@ import com.http.header.HttpHeaderField;
 import com.http.header.HttpHeaders;
 import com.http.releaser.FileResourceCloser;
 import com.http.releaser.ResourceCloser;
+import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.request.FileDownloadHtmlGenerator;
 import com.request.HttpRequestPagePath;
@@ -30,11 +31,11 @@ import java.util.Objects;
 import java.util.Set;
 
 public class FileDownloadPageStream implements HttpRequestHandler {
-    private final SessionStorage sessionStorage = new SessionStorage();
-    private final UserFiles userFiles = new UserFiles();
+    private static final SessionStorage SESSION_STORAGE = new SessionStorage();
+    private static final UserFiles USER_FILES = new UserFiles();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -43,8 +44,8 @@ public class FileDownloadPageStream implements HttpRequestHandler {
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
         String sessionId = searchSessionId(cookie);
 
-        String userUid = sessionStorage.getUserUid(sessionId);
-        Set<FileDto> files = userFiles.filesOf(userUid);
+        String userUid = SESSION_STORAGE.getUserUid(sessionId);
+        Set<FileDto> files = USER_FILES.filesOf(userUid);
 
         // 파일 리스트 html 가공
         FileDownloadHtmlGenerator htmlGenerator = FileDownloadHtmlGenerator.of(files);
