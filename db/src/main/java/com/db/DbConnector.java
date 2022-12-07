@@ -8,10 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class DbConnector {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/filedrive";
-    private static final String DB_USER = "filedrive_user";
-    private static final String DB_PASSWORD = "filedrive";
-
+    private static final DbPropertyFinder property = new DbPropertyFinder();
     private static final DbConnector INSTANCE = new DbConnector(createConnection());
 
     private final Connection connection;
@@ -25,7 +22,11 @@ public class DbConnector {
 
     private static Connection createConnection() {
         try {
-            return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            return DriverManager.getConnection(
+                    property.getDbConnectionUrl(),
+                    property.getDbUser(),
+                    property.getDbPwd()
+            );
         } catch (SQLException e) {
             throw new ConnectionFailException(e.getStackTrace().toString());
         }
