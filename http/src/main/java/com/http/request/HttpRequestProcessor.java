@@ -97,6 +97,7 @@ public class HttpRequestProcessor implements Closeable {
 
             HttpRequestPath path = httpRequestStartLine.getPath();
             HttpRequestMethod method = httpRequestStartLine.getMethod();
+            HttpRequestQueryString queryString = httpRequestStartLine.getQueryString();
 
             try {
                 preprocessor.process(path, httpHeaders);
@@ -107,12 +108,12 @@ public class HttpRequestProcessor implements Closeable {
             }
 
             HttpRequestHandler httpRequestHandler = handlers.find(path, method);
-            HttpMessageStreams responseMsg = httpRequestHandler.handle(path, httpHeaders, requestStream, requestLengthLimiters);
+            HttpMessageStreams responseMsg = httpRequestHandler.handle(path, httpHeaders, requestStream, queryString, requestLengthLimiters);
 
             return responseMsg;
 
         } catch (EmptyRequestException e) {
-            throw new EmptyRequestException();
+            throw new EmptyRequestException(e);
         } catch (Exception e) {
             HttpResponseStatus status = HttpResponseStatus.httpResponseStatusOf(e);
             return createHttpErrorResponse(status);
