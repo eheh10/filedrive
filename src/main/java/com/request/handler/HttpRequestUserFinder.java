@@ -9,6 +9,7 @@ import com.http.exception.InvalidHttpRequestInputException;
 import com.http.exception.NotFoundQueryStringValueException;
 import com.http.header.HttpHeaders;
 import com.http.request.HttpRequestPath;
+import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
 import com.db.table.SessionStorage;
@@ -18,31 +19,32 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
 public class HttpRequestUserFinder implements HttpRequestHandler {
-    private final Users users = new Users();
-    private final SessionStorage sessionStorage = new SessionStorage();
+    private static final Users USERS = new Users();
+    private static final SessionStorage SESSION_STORAGE = new SessionStorage();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
 
-        StringBuilder response = new StringBuilder();
-        StringBuilder queryString = new StringBuilder();
+        StringBuilder bodyQueryString = new StringBuilder();
 
         while(bodyStream.hasMoreString()) {
-            queryString.append(bodyStream.generate());
+            bodyQueryString.append(bodyStream.generate());
         }
 
-        String userIdValue = searchValue(queryString.toString(), "id");
-        String userPwdValue = searchValue(queryString.toString(), "password");
+        String userIdValue = searchValue(bodyQueryString.toString(), "id");
+        String userPwdValue = searchValue(bodyQueryString.toString(), "password");
 
-        UserDto loginUser = users.searchByNamePwd(userIdValue,userPwdValue);
+        UserDto loginUser = USERS.searchByNamePwd(userIdValue,userPwdValue);
         if (loginUser == null) {
             throw new InvalidHttpRequestInputException();
         }
 
-        String sessionId = sessionStorage.createSession(loginUser);
+        String sessionId = SESSION_STORAGE.createSession(loginUser);
+
+        StringBuilder response = new StringBuilder();
 
         response.append("HTTP/1.1 ")
                 .append(HttpResponseStatus.CODE_303.code()).append(" ")
