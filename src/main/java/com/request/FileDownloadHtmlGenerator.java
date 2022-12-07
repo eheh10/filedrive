@@ -28,12 +28,9 @@ public class FileDownloadHtmlGenerator {
         for(FileDto fileDto:files) {
             String fileName = fileDto.getName();
 
-            html.append("<form action=\"http://localhost:7777/download\" method=\"post\">")
-                    .append("<p>")
-                    .append("<input type=\"text\" name=\"fileName\" value=\"").append(fileName).append("\" readonly>")
-                    .append("<input type=\"submit\" value=\"").append("다운로드\">")
-                    .append("</p>\n")
-                    .append("</form>");
+            html.append("<p>")
+                    .append("<input type=\"checkbox\" name=\"fileName\" value=\"").append(fileName).append("\">").append(fileName)
+                    .append("</p>\n");
         }
 
         return html.toString();
