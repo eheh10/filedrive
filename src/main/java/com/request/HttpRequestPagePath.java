@@ -1,25 +1,39 @@
 package com.request;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.*;
 
 public enum HttpRequestPagePath {
-    MAIN(Paths.get("src","main","resources","main.html").toString()),
-    SIGN_UP(Paths.get("src","main","resources","signUp.html").toString()),
-    LOGIN(Paths.get("src","main","resources","login.html").toString()),
-    UPLOAD(Paths.get("src","main","resources","upload.html").toString()),
-    DOWNLOAD(Paths.get("src","main","resources","download.html").toString());
+    MAIN("main"),
+    SIGN_UP("signUp"),
+    LOGIN("login"),
+    UPLOAD("upload"),
+    DOWNLOAD("download");
 
-    private final String resourcePath;
-    HttpRequestPagePath(String resourcePath) {
-        this.resourcePath = resourcePath;
+    private static final Path DEFAULT_PATH = Paths.get("src","main","resources");
+    private static final Map<String, HttpRequestPagePath> pagePaths = createPagePaths();
+
+    private final String pageName;
+
+    HttpRequestPagePath(String pageName) {
+        this.pageName = pageName;
     }
 
-    public static HttpRequestPagePath of(String targetPage) {
-        targetPage = targetPage.toUpperCase();
-        return HttpRequestPagePath.valueOf(targetPage);
+    private static Map<String, HttpRequestPagePath> createPagePaths() {
+        Map<String, HttpRequestPagePath> values = new HashMap<>();
+
+        for (HttpRequestPagePath pagePath : HttpRequestPagePath.values()) {
+            values.put(pagePath.pageName,pagePath);
+        }
+        return Collections.unmodifiableMap(values);
+    }
+
+    public static HttpRequestPagePath of(String targetPageName) {
+        return pagePaths.get(targetPageName);
     }
 
     public String path() {
-        return resourcePath;
+        return DEFAULT_PATH.resolve(pageName+".html").toString();
     }
 }
