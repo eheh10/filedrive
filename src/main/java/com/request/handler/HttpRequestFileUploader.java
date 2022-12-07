@@ -11,6 +11,7 @@ import com.http.exception.NotFoundHttpHeadersPropertyException;
 import com.http.header.HttpHeaderField;
 import com.http.header.HttpHeaders;
 import com.http.request.HttpRequestPath;
+import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
 import com.db.table.SessionStorage;
@@ -26,15 +27,15 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class HttpRequestFileUploader implements HttpRequestHandler {
-    private static final Path DIRECTORY_PATH = Paths.get("src","main","resources","uploaded-file");
+    private static final Path DIRECTORY_PATH = Paths.get("src","main","resources","uploaded-file"); //property
     private static final DbPropertyFinder PROPERTY_FINDER = new DbPropertyFinder();
-    private final HttpPropertyFinder finder = new HttpPropertyFinder();
-    private final SessionStorage sessionStorage = new SessionStorage();
-    private final Users users = new Users();
-    private final UserFiles userFiles = new UserFiles();
+    private static final HttpPropertyFinder FINDER = new HttpPropertyFinder();
+    private static final SessionStorage SESSION_STORAGE = new SessionStorage();
+    private static final Users USERS = new Users();
+    private static final UserFiles USER_FILES = new UserFiles();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -42,8 +43,8 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
         String sessionId = searchSessionId(cookie);
 
-        String userUid = sessionStorage.getUserUid(sessionId);
-        UserDto userDto = users.searchByUid(userUid);
+        String userUid = SESSION_STORAGE.getUserUid(sessionId);
+        UserDto userDto = USERS.searchByUid(userUid);
 
         Path savePath = DIRECTORY_PATH.resolve(userUid);
         try {
@@ -91,7 +92,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
                         bw.close();
                     }
 
-                    filename = parsingFilename(line, finder);
+                    filename = parsingFilename(line, FINDER);
 
                     bw = generateNewFileWriter(savePath.resolve(filename));
                     if (bw == null) {
@@ -136,8 +137,8 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
                 .size(fileSize)
                 .build();
 
-        userFiles.insert(userDto, fileDto);
-        users.useStorageCapacity(userDto, fileDto);
+        USER_FILES.insert(userDto, fileDto);
+        USERS.useStorageCapacity(userDto, fileDto);
     }
 
     private String parsingFilename(String contentDisposition, HttpPropertyFinder finder) {
