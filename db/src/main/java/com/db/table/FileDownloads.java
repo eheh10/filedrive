@@ -42,7 +42,7 @@ public class FileDownloads {
         }
     }
 
-    public void countDownload(FileDownloadDto fileDownloadDto) {
+    public void countDownload(FileDownloadDto fileDownloadDto, int numberOfFiles) {
         if (fileDownloadDto == null) {
             throw new InputNullParameterException();
         }
@@ -50,7 +50,7 @@ public class FileDownloads {
         try {
             int dbVersion = getDownloadVersion(fileDownloadDto.getUid());
 
-            UPDATE_COUNT.setInt(1, fileDownloadDto.getCount()+1);
+            UPDATE_COUNT.setInt(1, fileDownloadDto.getCount()+numberOfFiles);
             UPDATE_COUNT.setInt(2, fileDownloadDto.getVersion()+1);
             UPDATE_COUNT.setString(3, fileDownloadDto.getUid());
 
