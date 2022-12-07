@@ -14,13 +14,14 @@ public class FileDownloadDto {
     private final String userUid;
     private final LocalDate downloadDate;
     private final int count;
+    private final int version;
 
-    private FileDownloadDto(String uid, String userUid, LocalDate downloadDate, int count) {
+    private FileDownloadDto(String uid, String userUid, LocalDate downloadDate, int count, int version) {
         if (uid==null || userUid ==null || downloadDate ==null) {
             throw new InputNullParameterException();
         }
 
-        if (count < 0) {
+        if (count < 0 || version < 0) {
             throw new MustBePositiveNumberException();
         }
 
@@ -28,6 +29,7 @@ public class FileDownloadDto {
         this.userUid = userUid;
         this.downloadDate = downloadDate;
         this.count = count;
+        this.version = version;
     }
 
     public String getUid() {
@@ -44,5 +46,9 @@ public class FileDownloadDto {
 
     public int getCount() {
         return count;
+    }
+
+    public int getVersion() {
+        return version;
     }
 }
