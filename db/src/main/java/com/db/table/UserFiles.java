@@ -4,6 +4,7 @@ import com.db.DbConnector;
 import com.db.dto.FileDto;
 import com.db.dto.UserDto;
 import com.db.exception.InputNullParameterException;
+import com.db.exception.MustBePositiveNumberException;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,6 +23,10 @@ public class UserFiles {
     public void insert(UserDto userDto, FileDto fileDto) {
         if (userDto == null || fileDto == null) {
             throw new InputNullParameterException();
+        }
+
+        if (fileDto.getSize() < 0) {
+            throw new MustBePositiveNumberException();
         }
 
         try {
@@ -66,7 +71,7 @@ public class UserFiles {
         }
     }
 
-    public FileDto findFile(String fileName, String userUid) {
+    public FileDto searchFile(String fileName, String userUid) {
         if (fileName == null || userUid == null) {
             throw new InputNullParameterException();
         }
