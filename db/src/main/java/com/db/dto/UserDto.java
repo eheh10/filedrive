@@ -12,9 +12,10 @@ public class UserDto {
     private final String name;
     private final String pwd;
     private final int usageCapacity;
+    private final String googleUid;
 
-    private UserDto(String uid, String name, String pwd, int usageCapacity) {
-        if (uid == null || name == null || pwd == null) {
+    private UserDto(String uid, String name, String pwd, int usageCapacity, String googleUid) {
+        if (uid == null || name == null ) {
             throw new InputNullParameterException();
         }
 
@@ -26,6 +27,7 @@ public class UserDto {
         this.name = name;
         this.pwd = pwd;
         this.usageCapacity = usageCapacity;
+        this.googleUid = googleUid;
     }
 
     public String getUid() {
@@ -42,5 +44,9 @@ public class UserDto {
 
     public int getUsageCapacity() {
         return usageCapacity;
+    }
+
+    public String getGoogleUid() {
+        return googleUid;
     }
 }
