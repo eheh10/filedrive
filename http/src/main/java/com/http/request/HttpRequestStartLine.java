@@ -12,22 +12,27 @@ public class HttpRequestStartLine {
     private final HttpRequestMethod method;
     private final HttpRequestPath path;
     private final String version;
+    private final HttpRequestQueryString queryString;
 
 
-    private HttpRequestStartLine(HttpRequestMethod method, HttpRequestPath path, String version) {
+    private HttpRequestStartLine(HttpRequestMethod method, HttpRequestPath path, String version, HttpRequestQueryString queryString) {
         if (method==null) {
             throw new InputNullParameterException("StarLineParser.HttpRequestMethod is null");
         }
         if (path==null) {
-            throw new InputNullParameterException("StarLineParser.path is null");
+            throw new InputNullParameterException("StarLineParser.HttpRequestPath is null");
         }
         if (version==null) {
             throw new InputNullParameterException("StarLineParser.version is null");
+        }
+        if (queryString==null) {
+            throw new InputNullParameterException("StarLineParser.HttpRequestQueryString is null");
         }
 
         this.method = method;
         this.path = path;
         this.version = version;
+        this.queryString = queryString;
     }
 
     public static HttpRequestStartLine parse(String startLine) {
@@ -48,13 +53,20 @@ public class HttpRequestStartLine {
         }
 
         String pathText = tokenizer.nextToken();
+        HttpRequestQueryString queryString = HttpRequestQueryString.empty();
 
         if(!Objects.equals(pathText.charAt(0),'/')) {
             throw new InvalidHttpRequestInputException("Invalid Path In Http Request StartLine");
         }
 
         if (Objects.equals(method,HttpRequestMethod.GET)) {
-            pathText = pathText.split("\\?")[0];
+            String[] elements = pathText.split("\\?");
+
+            pathText = elements[0];
+
+            if (elements.length == 2) {
+                queryString = HttpRequestQueryString.of(elements[1]);
+            }
         }
 
         HttpRequestPath path = HttpRequestPath.of(pathText);
@@ -65,7 +77,7 @@ public class HttpRequestStartLine {
             throw new InvalidHttpRequestInputException("Invalid Version In Http Request StartLine");
         }
 
-        return new HttpRequestStartLine(method,path,version);
+        return new HttpRequestStartLine(method,path,version, queryString);
     }
 
     public HttpRequestMethod getMethod() {
@@ -78,5 +90,9 @@ public class HttpRequestStartLine {
 
     public String getVersion() {
         return version;
+    }
+
+    public HttpRequestQueryString getQueryString() {
+        return queryString;
     }
 }
