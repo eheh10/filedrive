@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-public class HttpMessageStreams implements Closeable{
+public class HttpMessageStreams implements Closeable {
     private final Queue<HttpMessageStream> values;
 
     private HttpMessageStreams(Queue<HttpMessageStream> values) {
@@ -30,12 +30,12 @@ public class HttpMessageStreams implements Closeable{
     }
 
     public static HttpMessageStreams of(InputStream inputStream) {
-        StringStream stringStream = StringStream.of(inputStream);
-        return HttpMessageStreams.of(stringStream);
+        ResourceStream resourceStream = ResourceStream.of(inputStream);
+        return HttpMessageStreams.of(resourceStream);
     }
 
-    public static HttpMessageStreams of(StringStream stringStream) {
-        HttpMessageStream httpMessageStream = HttpMessageStream.of(stringStream);
+    public static HttpMessageStreams of(ResourceStream resourceStream) {
+        HttpMessageStream httpMessageStream = HttpMessageStream.of(resourceStream);
         Queue<HttpMessageStream> values = new ArrayDeque<>();
         values.offer(httpMessageStream);
 
@@ -43,7 +43,7 @@ public class HttpMessageStreams implements Closeable{
     }
 
     public static HttpMessageStreams empty() {
-        return HttpMessageStreams.of(StringStream.empty());
+        return HttpMessageStreams.of(ResourceStream.empty());
     }
 
     public HttpMessageStreams sequenceOf(HttpMessageStreams streams) {
@@ -90,12 +90,20 @@ public class HttpMessageStreams implements Closeable{
         return true;
     }
 
-    public String generate() {
+    public byte[] generateByte() {
         if (!hasMoreString()) {
             throw new NoMoreHttpContentException();
         }
 
-        return values.peek().generate();
+        return values.peek().generateByte();
+    }
+
+    public String generateString() {
+        if (!hasMoreString()) {
+            throw new NoMoreHttpContentException();
+        }
+
+        return values.peek().generateString();
     }
 
     public String generateLine() {
