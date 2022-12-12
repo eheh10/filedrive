@@ -7,7 +7,7 @@ import com.api.property.ApiPropertyFinder;
 import com.db.dto.UserDto;
 import com.db.table.SessionStorage;
 import com.db.table.Users;
-import com.http.HttpMessageStreams;
+import com.http.HttpMessageStream;
 import com.http.HttpRequestLengthLimiters;
 import com.http.RetryHttpRequestStream;
 import com.http.exception.InputNullParameterException;
@@ -17,6 +17,7 @@ import com.http.request.HttpRequestPath;
 import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
+import com.http.response.HttpResponseStream;
 
 public class OauthUserFinder implements HttpRequestHandler {
     private static final Users USERS = new Users();
@@ -26,7 +27,7 @@ public class OauthUserFinder implements HttpRequestHandler {
 
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -49,17 +50,18 @@ public class OauthUserFinder implements HttpRequestHandler {
 
         String sessionId = SESSION_STORAGE.createSession(loginUser);
 
-        StringBuilder response = new StringBuilder();
+        StringBuilder headers = new StringBuilder();
+        headers.append("Location: http://localhost:7777/page/upload\n")
+                .append("Set-Cookie: ").append(SessionStorage.SESSION_FIELD_NAME).append("=").append(sessionId)
+                .append("Set-Cookie: ").append("access_token").append("=").append(tokenDto.getAccessToken())
+                .append("access_token=").append(tokenDto.getAccessToken());
+        HttpMessageStream responseHeaders = HttpMessageStream.of(headers.toString());
 
-        response.append("HTTP/1.1 ")
-                .append(HttpResponseStatus.CODE_303.code()).append(" ")
-                .append(HttpResponseStatus.CODE_303.message()).append("\n")
-                .append("Location: http://localhost:7777/page/upload\n")
-                .append("Set-Cookie: ").append(SessionStorage.SESSION_FIELD_NAME).append("=").append(sessionId).append(";")
-                .append("access_token=").append(tokenDto.getAccessToken())
-                .append("\n");
-
-        return HttpMessageStreams.of(response.toString());
+        return HttpResponseStream.from(
+                HttpResponseStatus.CODE_200,
+                responseHeaders,
+                HttpMessageStream.empty()
+        );
     }
 
 }
