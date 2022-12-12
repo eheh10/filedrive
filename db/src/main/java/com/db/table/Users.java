@@ -1,10 +1,12 @@
 package com.db.table;
 
 import com.db.DbConnector;
+import com.db.ManualCommitDbConnector;
 import com.db.Sha256Encryption;
 import com.db.dto.FileDto;
 import com.db.dto.UserDto;
 import com.db.exception.InputNullParameterException;
+import com.db.exception.VersionUpdatedException;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,12 +14,13 @@ import java.sql.SQLException;
 
 public class Users {
     private static final DbConnector CONNECTOR = DbConnector.getInstance();
+    private static final ManualCommitDbConnector MANUAL_CONNECTOR = ManualCommitDbConnector.getInstance();
     private static final PreparedStatement REGISTER_USER = CONNECTOR.preparedSql("INSERT INTO users(uid,name,password,google_uid) VALUES (?,?,?,?)");
     private static final PreparedStatement SEARCH_NAME = CONNECTOR.preparedSql("SELECT name FROM users WHERE name=?");
     private static final PreparedStatement SEARCH_USER_BY_UID = CONNECTOR.preparedSql("SELECT * FROM users WHERE uid=?");
     private static final PreparedStatement SEARCH_USER_BY_NAME_PWD = CONNECTOR.preparedSql("SELECT * FROM users WHERE name=? and password=?");
     private static final PreparedStatement SEARCH_USER_BY_GOOGLE_UID = CONNECTOR.preparedSql("SELECT * FROM users WHERE google_uid=?");
-    private static final PreparedStatement UPDATE_CAPACITY = CONNECTOR.preparedSql("UPDATE users SET usage_capacity=? WHERE uid=?");
+    private static final PreparedStatement UPDATE_CAPACITY = MANUAL_CONNECTOR.preparedSql("UPDATE users SET usage_capacity=?,version=? WHERE uid=? and version=?");
     private static final Sha256Encryption ENCRYPTION = Sha256Encryption.getInstance();
     private static ResultSet resultSet = null;
 
@@ -75,6 +78,7 @@ public class Users {
             String pwd = resultSet.getString("password");
             int usageCapacity = resultSet.getInt("usage_capacity");
             String googleUid = resultSet.getString("google_uid");
+            int version = resultSet.getInt("version");
 
             UserDto foundUser = UserDto.builder()
                     .uid(uid)
@@ -82,6 +86,7 @@ public class Users {
                     .pwd(pwd)
                     .usageCapacity(usageCapacity)
                     .googleUid(googleUid)
+                    .version(version)
                     .build();
 
             return foundUser;
@@ -111,6 +116,7 @@ public class Users {
             String password = resultSet.getString("password");
             int usageCapacity = resultSet.getInt("usage_capacity");
             String googleUid = resultSet.getString("google_uid");
+            int version = resultSet.getInt("version");
 
             UserDto foundUser = UserDto.builder()
                     .uid(uid)
@@ -118,6 +124,7 @@ public class Users {
                     .pwd(password)
                     .usageCapacity(usageCapacity)
                     .googleUid(googleUid)
+                    .version(version)
                     .build();
 
             return foundUser;
@@ -136,9 +143,17 @@ public class Users {
 
         try {
             UPDATE_CAPACITY.setInt(1,sumCapacity);
-            UPDATE_CAPACITY.setString(2,userDto.getUid());
+            UPDATE_CAPACITY.setInt(2,userDto.getVersion()+1);
+            UPDATE_CAPACITY.setString(3,userDto.getUid());
+            UPDATE_CAPACITY.setInt(4,userDto.getVersion());
 
-            UPDATE_CAPACITY.executeUpdate();
+            int rows = UPDATE_CAPACITY.executeUpdate();
+            if (rows == 0) {
+                MANUAL_CONNECTOR.rollback();
+                throw new VersionUpdatedException();
+            }
+
+            MANUAL_CONNECTOR.commit();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -159,6 +174,7 @@ public class Users {
             String name = resultSet.getString("name");
             String pwd = resultSet.getString("password");
             int usageCapacity = resultSet.getInt("usage_capacity");
+            int version = resultSet.getInt("version");
 
             UserDto foundUser = UserDto.builder()
                     .uid(uid)
@@ -166,6 +182,7 @@ public class Users {
                     .pwd(pwd)
                     .usageCapacity(usageCapacity)
                     .googleUid(googleUid)
+                    .version(version)
                     .build();
 
             return foundUser;
