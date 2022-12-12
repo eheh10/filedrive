@@ -6,6 +6,7 @@ import com.db.dto.UserDto;
 import com.db.exception.*;
 import com.http.*;
 import com.http.exception.InputNullParameterException;
+import com.http.exception.InvalidHttpRequestInputException;
 import com.http.exception.NotAllowedFileExtensionException;
 import com.http.exception.NotFoundHttpHeadersPropertyException;
 import com.http.header.HttpHeaderField;
@@ -17,6 +18,7 @@ import com.http.response.HttpResponseStatus;
 import com.db.table.SessionStorage;
 import com.db.table.UserFiles;
 import com.db.table.Users;
+import com.http.response.HttpResponseStream;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -35,7 +37,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
     private static final UserFiles USER_FILES = new UserFiles();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -96,7 +98,7 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
 
                     bw = generateNewFileWriter(savePath.resolve(filename));
                     if (bw == null) {
-                        return createRedirectionResponse(HttpResponseStatus.CODE_500);
+                        throw new RuntimeException();
                     }
 
                     passContentDisposition(bodyStream);
@@ -104,23 +106,22 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
                     writeFileBodyMode = true;
                 }
             } catch (StorageCapacityExceededException e) {
-                return createRedirectionResponse(HttpResponseStatus.CODE_400);
+                throw new InvalidHttpRequestInputException();
             }
 
             bw.flush();
             bw.close();
         } catch (IOException e) {
-            return createRedirectionResponse(HttpResponseStatus.CODE_500);
+            throw new RuntimeException();
         }
 
-        StringBuilder response = new StringBuilder();
+        HttpMessageStream responseHeaders = HttpMessageStream.of("Location: http://localhost:7777/page/upload");
 
-        response.append("HTTP/1.1 ")
-                .append(HttpResponseStatus.CODE_303.code()).append(" ")
-                .append(HttpResponseStatus.CODE_303.message()).append("\n")
-                .append("Location: http://localhost:7777/page/upload\n");
-
-        return HttpMessageStreams.of(response.toString());
+        return HttpResponseStream.from(
+                HttpResponseStatus.CODE_303,
+                responseHeaders,
+                HttpMessageStream.empty()
+        );
     }
 
     private void insertFile(UserDto userDto, String filename, int fileSize) {
@@ -219,16 +220,4 @@ public class HttpRequestFileUploader implements HttpRequestHandler {
         throw new NotFoundHttpHeadersPropertyException();
     }
 
-    private HttpMessageStreams createRedirectionResponse(HttpResponseStatus status) {
-        StringBuilder response = new StringBuilder();
-
-        response.append("HTTP/1.1 ")
-                .append(status.code()).append(" ")
-                .append(status.message()).append("\n");
-
-        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
-        StringStream responseStream = StringStream.of(responseIs);
-
-        return HttpMessageStreams.of(responseStream);
-    }
 }
