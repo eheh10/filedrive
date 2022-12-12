@@ -7,7 +7,6 @@ import java.io.Closeable;
 public class RetryHttpRequestStream implements Closeable {
     private final HttpMessageStream httpMessageStream;
     private final RetryOption retryOption;
-    private int count = 0;
 
     public RetryHttpRequestStream(HttpMessageStream httpMessageStream, RetryOption retryOption) {
         if (httpMessageStream == null || retryOption == null) {
@@ -19,6 +18,8 @@ public class RetryHttpRequestStream implements Closeable {
     }
 
     public boolean hasMoreString() {
+        int count = 0;
+
         do {
             if (httpMessageStream.hasMoreString()) {
                 return true;
@@ -26,13 +27,13 @@ public class RetryHttpRequestStream implements Closeable {
 
             retryOption.waitTime();
             count++;
-        }while(retryOption.canRetry(count));
+        }while(retryOption.getMaxRetryCount() >= count);
 
         return false;
     }
 
     public String generate() {
-        return httpMessageStream.generate();
+        return httpMessageStream.generateString();
     }
 
     public String generateLine() {
