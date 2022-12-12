@@ -9,6 +9,7 @@ import com.http.releaser.ResourceCloser;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.request.handler.HttpRequestHandlers;
 import com.http.response.HttpResponseStatus;
+import com.http.response.HttpResponseStream;
 import com.http.template.FileTemplateReplacer;
 import com.http.template.TemplateFileStream;
 import com.http.template.TemplateNodes;
@@ -16,8 +17,10 @@ import com.http.template.TemplateText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.Closeable;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -43,7 +46,7 @@ public class HttpRequestProcessor implements Closeable {
         return new HttpRequestProcessor(requestStream,handlers, preprocessor, requestLengthLimiters);
     }
 
-    public HttpMessageStreams process() {
+    public HttpResponseStream process() {
         try {
             /**
              * 1. request 받기: 로직 모듈화 필요
@@ -58,7 +61,7 @@ public class HttpRequestProcessor implements Closeable {
             }
 
             LOG.debug("<HTTP Request Start Line>");
-            String startLineText = requestStream.generateLine();
+            String startLineText = requestStream.generateLine(); // -> 500 응답
             LOG.debug(startLineText);
             LOG.debug("<--HTTP Request Start Line-->");
 
@@ -108,7 +111,7 @@ public class HttpRequestProcessor implements Closeable {
             }
 
             HttpRequestHandler httpRequestHandler = handlers.find(path, method);
-            HttpMessageStreams responseMsg = httpRequestHandler.handle(path, httpHeaders, requestStream, queryString, requestLengthLimiters);
+            HttpResponseStream responseMsg = httpRequestHandler.handle(path, httpHeaders, requestStream, queryString, requestLengthLimiters);
 
             return responseMsg;
 
@@ -120,12 +123,7 @@ public class HttpRequestProcessor implements Closeable {
         }
     }
 
-    private HttpMessageStreams createHttpErrorResponse(HttpResponseStatus status) {
-        String startLine = createHttpResponseStartLine(status);
-        InputStream startLineInput = new ByteArrayInputStream(startLine.getBytes(StandardCharsets.UTF_8));
-        StringStream startLineGenerator = StringStream.of(startLineInput);
-        HttpMessageStreams responseStartLine = HttpMessageStreams.of(startLineGenerator);
-
+    private HttpResponseStream createHttpErrorResponse(HttpResponseStatus status) {
         TemplateNodes templateNodes = new TemplateNodes();
         templateNodes.register("statusCode",status.code());
         templateNodes.register("statusMsg",status.message());
@@ -134,6 +132,8 @@ public class HttpRequestProcessor implements Closeable {
         TemplateFileStream errorTemplateFile = resourceFinder.findTemplate("error.html");
         Path replacedFile = Path.of("src","main","resources", "errorBody.html");
 
+        HttpMessageStream responseHeaders = HttpMessageStream.of("Content-Type: text/html;charset=UTF-8");
+
         try (FileTemplateReplacer replacer = FileTemplateReplacer.of(errorTemplateFile,replacedFile);
         ) {
             replacer.replace(templateNodes, TemplateText.ERROR_TEMPLATE);
@@ -141,26 +141,16 @@ public class HttpRequestProcessor implements Closeable {
             ResourceCloser releaser = new FileResourceCloser(replacedFile.toFile());
 
             InputStream bodyInput = new FileInputStream(replacedFile.toString());
-            StringStream bodyGenerator = StringStream.of(bodyInput);
-            HttpMessageStream responseBody = HttpMessageStream.of(bodyGenerator,releaser);
+            HttpMessageStream responseBody = HttpMessageStream.of(bodyInput,releaser);
 
-            HttpMessageStreams responseMessage = responseStartLine.sequenceOf(responseBody);
-
-            return responseMessage;
-
+            return HttpResponseStream.from(
+                    status,
+                    responseHeaders,
+                    responseBody
+            );
         } catch (IOException e) {
             return createHttpErrorResponse(HttpResponseStatus.CODE_500);
         }
-    }
-
-    public String createHttpResponseStartLine(HttpResponseStatus status) {
-        StringBuilder startLine = new StringBuilder();
-        String statusCode = status.code();
-        String statusMsg = status.message();
-
-        startLine.append("HTTP/1.1 ").append(statusCode).append(" ").append(statusMsg);
-
-        return startLine.toString();
     }
 
     @Override
