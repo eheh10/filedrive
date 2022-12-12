@@ -6,7 +6,7 @@ import com.api.dto.UserInfoDto;
 import com.api.property.ApiPropertyFinder;
 import com.db.dto.UserDto;
 import com.db.table.Users;
-import com.http.HttpMessageStreams;
+import com.http.HttpMessageStream;
 import com.http.HttpRequestLengthLimiters;
 import com.http.RetryHttpRequestStream;
 import com.http.exception.InputNullParameterException;
@@ -16,6 +16,7 @@ import com.http.request.HttpRequestPath;
 import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
+import com.http.response.HttpResponseStream;
 
 import java.util.UUID;
 
@@ -25,7 +26,7 @@ public class OauthUserCreator implements HttpRequestHandler {
     private final GoogleApiRequest googleApiRequest = new GoogleApiRequest();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -56,14 +57,13 @@ public class OauthUserCreator implements HttpRequestHandler {
 
         USERS.insert(newUser);
 
-        StringBuilder response = new StringBuilder();
+        HttpMessageStream responseHeaders = HttpMessageStream.of("Location: http://localhost:7777/page/login");
 
-        response.append("HTTP/1.1 ")
-                .append(HttpResponseStatus.CODE_303.code()).append(" ")
-                .append(HttpResponseStatus.CODE_303.message()).append("\n")
-                .append("Location: http://localhost:7777/page/login\n");
-
-        return HttpMessageStreams.of(response.toString());
+        return HttpResponseStream.from(
+                HttpResponseStatus.CODE_303,
+                responseHeaders,
+                HttpMessageStream.empty()
+        );
     }
 
 }
