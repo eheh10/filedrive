@@ -68,7 +68,6 @@ public class HttpHeaders {
 
     public void display() {
         for(Map.Entry<String, HttpHeaderField> entry:values.entrySet()) {
-            LOG.debug(entry.getKey()+": ");
             LOG.debug(entry.getValue().toString());
         }
     }
