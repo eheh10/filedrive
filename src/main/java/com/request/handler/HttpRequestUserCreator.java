@@ -1,21 +1,20 @@
 package com.request.handler;
 
-import com.http.HttpMessageStreams;
+import com.db.dto.UserDto;
+import com.db.table.Users;
+import com.http.HttpMessageStream;
 import com.http.HttpRequestLengthLimiters;
 import com.http.RetryHttpRequestStream;
-import com.http.StringStream;
-import com.db.dto.UserDto;
 import com.http.exception.InputNullParameterException;
+import com.http.exception.InvalidHttpRequestInputException;
 import com.http.exception.NotFoundQueryStringValueException;
 import com.http.header.HttpHeaders;
 import com.http.request.HttpRequestPath;
 import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
-import com.db.table.Users;
+import com.http.response.HttpResponseStream;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -24,7 +23,7 @@ public class HttpRequestUserCreator implements HttpRequestHandler {
     private static final Users USERS = new Users();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -39,7 +38,7 @@ public class HttpRequestUserCreator implements HttpRequestHandler {
         String userPwdValue = searchValue(bodyQueryString.toString(), "password");
 
         if (USERS.isAlreadyRegisteredName(userIdValue)) {
-            return createRedirectionResponse(HttpResponseStatus.CODE_400);
+            throw new InvalidHttpRequestInputException();
         }
 
         UserDto newUser = UserDto.builder()
@@ -51,14 +50,13 @@ public class HttpRequestUserCreator implements HttpRequestHandler {
 
         USERS.insert(newUser);
 
-        StringBuilder response = new StringBuilder();
+        HttpMessageStream responseHeaders = HttpMessageStream.of("Location: http://localhost:7777/page/login");
 
-        response.append("HTTP/1.1 ")
-                .append(HttpResponseStatus.CODE_303.code()).append(" ")
-                .append(HttpResponseStatus.CODE_303.message()).append("\n")
-                .append("Location: http://localhost:7777/page/login\n");
-
-        return HttpMessageStreams.of(response.toString());
+        return HttpResponseStream.from(
+                HttpResponseStatus.CODE_303,
+                responseHeaders,
+                HttpMessageStream.empty()
+        );
     }
 
     private String searchValue(String query, String target) {
@@ -79,18 +77,5 @@ public class HttpRequestUserCreator implements HttpRequestHandler {
         return URLDecoder.decode(
                 query.substring(startIdx + target.length() + 1),
                 StandardCharsets.UTF_8);
-    }
-
-    private HttpMessageStreams createRedirectionResponse(HttpResponseStatus status) {
-        StringBuilder response = new StringBuilder();
-
-        response.append("HTTP/1.1 ")
-                .append(status.code()).append(" ")
-                .append(status.message()).append("\n");
-
-        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
-        StringStream responseStream = StringStream.of(responseIs);
-
-        return HttpMessageStreams.of(responseStream);
     }
 }
