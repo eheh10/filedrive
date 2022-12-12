@@ -5,19 +5,26 @@ import com.http.exception.NoMoreInputException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
-public class StringStream implements Closeable{
+public class ResourceStream implements Closeable{
+    private final InputStream is;
     private final BufferedReader br;
-    private final char[] buffer = new char[8192];
+    private final byte[] byteBuffer = new byte[8192];
+    private final char[] charBuffer = new char[8192];
 
-    public StringStream(BufferedReader br) {
-        if (br == null) {
-            throw new InputNullParameterException();
+    public ResourceStream(InputStream is, BufferedReader br) {
+        if (is == null || br == null) {
+            throw new InputNullParameterException(
+                    "InputStream: "+ is +"\n" +
+                    "BufferedReader:"+br
+            );
         }
+        this.is = is;
         this.br = br;
     }
 
-    public static StringStream of(InputStream is ) {
+    public static ResourceStream of(InputStream is ) {
         if (is == null){
             throw new InputNullParameterException();
         }
@@ -26,12 +33,12 @@ public class StringStream implements Closeable{
         InputStreamReader isr = new InputStreamReader(bis, StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(isr,8192);
 
-        return new StringStream(br);
+        return new ResourceStream(is,br);
     }
 
-    public static StringStream empty() {
+    public static ResourceStream empty() {
         InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
-        return StringStream.of(is);
+        return ResourceStream.of(is);
     }
 
     public boolean hasMoreString() {
@@ -42,14 +49,27 @@ public class StringStream implements Closeable{
         }
     }
 
-    public String generate() {
+    public byte[] generateByte() {
         if (!hasMoreString()) {
             throw new NoMoreInputException();
         }
 
         try {
-            int len = br.read(buffer);
-            return new String(buffer,0,len);
+            int len = is.read(byteBuffer);
+            return Arrays.copyOf(byteBuffer,len);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String generateString() {
+        if (!hasMoreString()) {
+            throw new NoMoreInputException();
+        }
+
+        try {
+            int len = br.read(charBuffer);
+            return new String(charBuffer,0,len);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
