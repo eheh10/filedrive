@@ -35,7 +35,7 @@ public class ResourceFinder {
                 throw new NotFoundResourceException();
             }
 
-            StringStream fileStream = StringStream.of(resource.openStream());
+            ResourceStream fileStream = ResourceStream.of(resource.openStream());
             HttpMessageStream fileStreams = HttpMessageStream.of(fileStream);
 
             return fileStreams;
