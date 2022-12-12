@@ -8,27 +8,29 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class DbConnector {
-    private static final DbPropertyFinder property = new DbPropertyFinder();
+    private static final DbPropertyFinder PROPERTY = new DbPropertyFinder();
     private static final DbConnector INSTANCE = new DbConnector(createConnection());
-
     private final Connection connection;
 
     private DbConnector(Connection connection) {
         if (connection == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException("Connection: " + connection);
         }
+
         this.connection = connection;
     }
 
-    private static Connection createConnection() {
+    public static Connection createConnection() {
         try {
-            return DriverManager.getConnection(
-                    property.getDbConnectionUrl(),
-                    property.getDbUser(),
-                    property.getDbPwd()
+            Connection connection = DriverManager.getConnection(
+                    PROPERTY.getDbConnectionUrl(),
+                    PROPERTY.getDbUser(),
+                    PROPERTY.getDbPwd()
             );
+
+            return connection;
         } catch (SQLException e) {
-            throw new ConnectionFailException(e.getStackTrace().toString());
+            throw new RuntimeException(e);
         }
     }
 
