@@ -1,31 +1,32 @@
 package com.request.handler;
 
 import com.db.dto.FileDto;
-import com.http.*;
-import com.http.exception.InputNullParameterException;
 import com.db.exception.InvalidSessionException;
+import com.db.table.SessionStorage;
+import com.db.table.UserFiles;
+import com.http.HttpMessageStream;
+import com.http.HttpRequestLengthLimiters;
+import com.http.RetryHttpRequestStream;
+import com.http.exception.InputNullParameterException;
 import com.http.header.HttpHeaderField;
 import com.http.header.HttpHeaders;
 import com.http.releaser.FileResourceCloser;
 import com.http.releaser.ResourceCloser;
+import com.http.request.HttpRequestPath;
 import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
-import com.request.FileDownloadHtmlGenerator;
-import com.request.HttpRequestPagePath;
-import com.http.request.HttpRequestPath;
 import com.http.response.HttpResponseStatus;
-import com.db.table.SessionStorage;
-import com.db.table.UserFiles;
+import com.http.response.HttpResponseStream;
 import com.http.template.FileTemplateReplacer;
 import com.http.template.TemplateFileStream;
 import com.http.template.TemplateNodes;
 import com.http.template.TemplateText;
+import com.request.FileDownloadHtmlGenerator;
+import com.request.HttpRequestPagePath;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Set;
@@ -35,7 +36,7 @@ public class FileDownloadPageStream implements HttpRequestHandler {
     private static final UserFiles USER_FILES = new UserFiles();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -71,17 +72,10 @@ public class FileDownloadPageStream implements HttpRequestHandler {
         }
 
         // http response message 가공
-        StringBuilder response = new StringBuilder();
-
-        response.append("HTTP/1.1 ")
-                .append(HttpResponseStatus.CODE_200.code()).append(" ")
-                .append(HttpResponseStatus.CODE_200.message()).append("\n")
-                .append("Content-Type: text/html;charset=UTF-8\n\n");
-
-        HttpMessageStreams responseMsg = HttpMessageStreams.of(response.toString());
+        String headers = "Content-Type: text/html;charset=UTF-8";
+        HttpMessageStream responseHeaders = HttpMessageStream.of(headers);
 
         ResourceCloser releaser = new FileResourceCloser(replacedFile.toFile());
-
         InputStream bodyInput = null;
         try {
             bodyInput = new FileInputStream(replacedFile.toFile());
@@ -91,7 +85,11 @@ public class FileDownloadPageStream implements HttpRequestHandler {
 
         HttpMessageStream pageHtml = HttpMessageStream.of(bodyInput, releaser);
 
-        return responseMsg.sequenceOf(pageHtml);
+        return HttpResponseStream.from(
+                HttpResponseStatus.CODE_200,
+                responseHeaders,
+                pageHtml
+        );
     }
 
     private String searchSessionId(HttpHeaderField cookie) {
@@ -106,18 +104,5 @@ public class FileDownloadPageStream implements HttpRequestHandler {
             }
         }
         throw new InvalidSessionException();
-    }
-
-    private HttpMessageStreams createRedirectionResponse(HttpResponseStatus status) {
-        StringBuilder response = new StringBuilder();
-
-        response.append("HTTP/1.1 ")
-                .append(status.code()).append(" ")
-                .append(status.message()).append("\n");
-
-        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
-        StringStream responseStream = StringStream.of(responseIs);
-
-        return HttpMessageStreams.of(responseStream);
     }
 }
