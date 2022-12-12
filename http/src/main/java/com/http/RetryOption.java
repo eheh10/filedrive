@@ -10,15 +10,15 @@ public class RetryOption {
     private static final int DEFAULT_RETRY_COUNT = 100;
     private static final Duration DEFAULT_WAIT_TIME = Duration.ofMillis(25);
     private final Duration waitTime;
-    private int retryCount;
+    private final int maxRetryCount;
 
     @Builder
-    private RetryOption(int retryCount, Duration waitTime) {
+    private RetryOption(int maxRetryCount, Duration waitTime) {
         if (waitTime == null) {
             throw new InputNullParameterException();
         }
 
-        this.retryCount = retryCount;
+        this.maxRetryCount = maxRetryCount;
         this.waitTime = waitTime;
     }
 
@@ -34,7 +34,7 @@ public class RetryOption {
         }
     }
 
-    public boolean canRetry(int tryCount) {
-        return retryCount >= tryCount;
+    public int getMaxRetryCount() {
+        return maxRetryCount;
     }
 }
