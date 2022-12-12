@@ -5,7 +5,8 @@ import com.db.exception.MustBePositiveNumberException;
 import lombok.Builder;
 import lombok.ToString;
 
-@Builder
+
+
 @ToString
 public class UserDto {
     private final String uid;
@@ -13,14 +14,22 @@ public class UserDto {
     private final String pwd;
     private final int usageCapacity;
     private final String googleUid;
+    private final int version;
 
-    private UserDto(String uid, String name, String pwd, int usageCapacity, String googleUid) {
+    @Builder
+    private UserDto(String uid, String name, String pwd, int usageCapacity, String googleUid, int version) {
         if (uid == null || name == null ) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "uid: "+uid+"" +
+                    "name: "+name+""
+            );
         }
 
-        if (usageCapacity < 0) {
-            throw new MustBePositiveNumberException();
+        if (usageCapacity < 0 || version < 0) {
+            throw new MustBePositiveNumberException(
+                    "usageCapacity: "+usageCapacity+"\n" +
+                    "version: "+version
+            );
         }
 
         this.uid = uid;
@@ -28,6 +37,7 @@ public class UserDto {
         this.pwd = pwd;
         this.usageCapacity = usageCapacity;
         this.googleUid = googleUid;
+        this.version = version;
     }
 
     public String getUid() {
@@ -48,5 +58,9 @@ public class UserDto {
 
     public String getGoogleUid() {
         return googleUid;
+    }
+
+    public int getVersion() {
+        return version;
     }
 }
