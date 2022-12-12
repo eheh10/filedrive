@@ -16,25 +16,29 @@ import com.http.exception.NotFoundHttpHeadersPropertyException;
 import com.http.exception.NotFoundHttpRequestFileException;
 import com.http.header.HttpHeaderField;
 import com.http.header.HttpHeaders;
+import com.http.releaser.FileResourceCloser;
+import com.http.releaser.ResourceCloser;
 import com.http.request.HttpRequestPath;
 import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
+import com.http.response.HttpResponseStream;
 import com.property.PropertyFinder;
 
 import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class HttpRequestFileDownloader implements HttpRequestHandler {
     private static final Path DEFAULT_PATH = Paths.get("src","main","resources","uploaded-file");
+    private static final Path TEMP_FILE_PATH = Paths.get("src","main","resources","tmp");
     private static final PropertyFinder PROPERTY_FINDER = new PropertyFinder();
     private static final SessionStorage SESSION_STORAGE = new SessionStorage();
     private static final UserFiles USER_FILES = new UserFiles();
@@ -43,7 +47,7 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
     private static final String FILE_FILED_NAME = "fileName";
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
@@ -59,7 +63,7 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
 
         String userUid = SESSION_STORAGE.getUserUid(sessionId);
 
-        List<File> downloadFiles = searchFiles(bodyQueryString.toString(),FILE_FILED_NAME,userUid);
+        List<String> downloadFiles = searchFilePaths(bodyQueryString.toString(),FILE_FILED_NAME,userUid);
 
         int numberOfFiles = downloadFiles.size();
 
@@ -69,60 +73,56 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
 
         boolean isZipFile = numberOfFiles > 1;
 
-        File responseFile = isZipFile? zippingFiles(downloadFiles) : downloadFiles.get(0);
+        String responseFilePath = isZipFile? zippingFiles(downloadFiles) : downloadFiles.get(0);
+        File responseFile = new File(responseFilePath);
 
         try {
             recordDownload(userUid,numberOfFiles);
         } catch (DownloadCountLimitExceededException e) {
-            StringBuilder response = new StringBuilder();
-
-            response.append("HTTP/1.1 ")
-                    .append(HttpResponseStatus.CODE_200.code()).append(" ")
-                    .append(HttpResponseStatus.CODE_200.message()).append("\n")
-                    .append("Content-Type: application/json;charset=utf-8\n\n");
+            HttpMessageStream responseHeaders = HttpMessageStream.of("Content-Type: application/json;charset=utf-8");
 
             Map responseBody = Map.of(
                     "statusCode",400,
                     "message","일일 다운로드 횟수 초과"
             );
 
-            String responseJson = convertJson(responseBody);
-            response.append(responseJson);
+            String json = convertJson(responseBody);
+            HttpMessageStream responseJson = HttpMessageStream.of(json);
 
-            HttpMessageStreams responseMsg = HttpMessageStreams.of(response.toString());
-            return responseMsg;
+            return HttpResponseStream.from(HttpResponseStatus.CODE_200,responseHeaders,responseJson);
         }
 
-        StringBuilder response = new StringBuilder();
-        response.append("HTTP/1.1 ")
-                .append(HttpResponseStatus.CODE_200.code()).append(" ")
-                .append(HttpResponseStatus.CODE_200.message()).append("\n");
+        String contentType = isZipFile ? "application/zip;charset=euc-kr" : "application/octet-stream;charset=euc-kr";
 
-        if (isZipFile) {
-            response.append("Content-Type: application/zip;charset=euc-kr\n");
-        } else {
-            response.append("Content-Type: application/octet-stream;charset=euc-kr\n");
-        }
+        StringBuilder headers = new StringBuilder();
+        headers.append("Content-Type: ").append(contentType).append("\n")
+                .append("Content-Disposition: attachment; filename=\"")
+                .append(responseFile.getName());
 
-        response.append("Content-Disposition: attachment; filename=\"")
-                .append(responseFile.getName())
-                .append("\"\n\n");
-
-        HttpMessageStreams responseMsg = HttpMessageStreams.of(response.toString());
+        HttpMessageStream responseHeaders = HttpMessageStream.of(headers.toString());
 
         try {
-            InputStream fileIs = new FileInputStream(responseFile);
-            InputStream responseIs = isZipFile? fileIs: new ZipInputStream(fileIs);
-            HttpMessageStream responseBody = HttpMessageStream.of(responseIs);
 
-            return responseMsg.sequenceOf(responseBody);
+            InputStream responseIs = new FileInputStream(responseFile);
+            ResourceCloser resourceCloser = new FileResourceCloser(responseFile);
+            HttpMessageStream responseBody = HttpMessageStream.of(responseIs,resourceCloser);
+
+            return HttpResponseStream.from(
+                    HttpResponseStatus.CODE_200,
+                    responseHeaders,
+                    responseBody
+            );
         } catch (FileNotFoundException e) {
-            return createRedirectionResponse(HttpResponseStatus.CODE_500);
+            return  HttpResponseStream.from(
+                    HttpResponseStatus.CODE_500,
+                    HttpMessageStream.empty(),
+                    HttpMessageStream.empty()
+            );
         }
     }
 
-    private List<File> searchFiles(String queryString, String fieldName, String userUid) {
-        List<File> downloadFiles = new ArrayList<>();
+    private List<String> searchFilePaths(String queryString, String fieldName, String userUid) {
+        List<String> downloadFiles = new ArrayList<>();
 
         for(String field : queryString.split("&")) {
             int startIdx = field.indexOf(fieldName + "=");
@@ -136,55 +136,64 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
                     StandardCharsets.UTF_8);
 
             FileDto foundFile = USER_FILES.searchFile(fileName,userUid);
-            String targetPath = foundFile.getPath();
-            File targetFile = DEFAULT_PATH.resolve(targetPath).toFile();
+            Path targetPath = DEFAULT_PATH.resolve(foundFile.getPath());
 
-            if (!targetFile.exists()) {
+
+            if (!Files.exists(targetPath)) {
                 throw new NotFoundHttpRequestFileException();
             }
 
-            downloadFiles.add(targetFile);
+            downloadFiles.add(targetPath.toString());
         }
 
         return Collections.unmodifiableList(downloadFiles);
     }
 
-    private File zippingFiles(List<File> downloadFiles) {
-        File zipFile = new File(DEFAULT_PATH.toFile(), "files.zip");
+    private String zippingFiles(List<String> downloadFiles) {
+        File zipFile = new File(TEMP_FILE_PATH.toFile(), "files.zip");
 
         try {
-            OutputStream zipOs = new FileOutputStream(zipFile);
-            BufferedOutputStream zipBos = new BufferedOutputStream(zipOs,8192);
-            ZipOutputStream zipOut = new ZipOutputStream(zipBos,StandardCharsets.UTF_8);
+            if (Files.notExists(TEMP_FILE_PATH)) {
+                Files.createDirectories(TEMP_FILE_PATH);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-            InputStream fileIs;
-            BufferedInputStream fileBis;
+        try (
+                OutputStream zipOs = new FileOutputStream(zipFile);
+                BufferedOutputStream zipBos = new BufferedOutputStream(zipOs,8192);
+                ZipOutputStream zipOut = new ZipOutputStream(zipBos,StandardCharsets.UTF_8);
+        ){
+
             byte[] buffer = new byte[8192];
             int len = -1;
 
-            for (File file : downloadFiles) {
+            for (String filePath : downloadFiles) {
+                File file = new File(filePath);
                 ZipEntry ze = new ZipEntry(file.getName());
                 zipOut.putNextEntry(ze);
 
-                fileIs = new FileInputStream(file);
-                fileBis = new BufferedInputStream(fileIs,8192);
+                try (
+                        InputStream fileIs = new FileInputStream(file);
+                        BufferedInputStream fileBis = new BufferedInputStream(fileIs,8192);
+                ) {
+                    while ((len = fileBis.read(buffer)) != -1) {
+                        zipOut.write(buffer, 0, len);
+                        zipOut.flush();
+                    }
 
-                while ((len = fileBis.read(buffer)) != -1) {
-                    zipOut.write(buffer, 0, len);
+                    zipOut.closeEntry();
                 }
 
-                zipOut.closeEntry();
-                fileBis.close();
             }
-            zipOut.flush();
-            zipOut.close();
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        return zipFile;
+        return zipFile.getPath();
     }
 
     private String convertJson(Map mapValue) {
@@ -244,18 +253,5 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
             }
         }
         throw new NotFoundHttpHeadersPropertyException();
-    }
-
-    private HttpMessageStreams createRedirectionResponse(HttpResponseStatus status) {
-        StringBuilder response = new StringBuilder();
-
-        response.append("HTTP/1.1 ")
-                .append(status.code()).append(" ")
-                .append(status.message()).append("\n");
-
-        InputStream responseIs = new ByteArrayInputStream(response.toString().getBytes(StandardCharsets.UTF_8));
-        StringStream responseStream = StringStream.of(responseIs);
-
-        return HttpMessageStreams.of(responseStream);
     }
 }
