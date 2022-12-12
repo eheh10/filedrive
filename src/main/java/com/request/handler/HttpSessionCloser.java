@@ -2,7 +2,7 @@ package com.request.handler;
 
 import com.db.exception.InvalidSessionException;
 import com.db.table.SessionStorage;
-import com.http.HttpMessageStreams;
+import com.http.HttpMessageStream;
 import com.http.HttpRequestLengthLimiters;
 import com.http.RetryHttpRequestStream;
 import com.http.exception.InputNullParameterException;
@@ -12,6 +12,7 @@ import com.http.request.HttpRequestPath;
 import com.http.request.HttpRequestQueryString;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.response.HttpResponseStatus;
+import com.http.response.HttpResponseStream;
 
 import java.util.Objects;
 
@@ -19,24 +20,23 @@ public class HttpSessionCloser implements HttpRequestHandler {
     private static final SessionStorage SESSION_STORAGE = new SessionStorage();
 
     @Override
-    public HttpMessageStreams handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
+    public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
         if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
             throw new InputNullParameterException();
         }
-
-        StringBuilder response = new StringBuilder();
 
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");
         String sessionId = searchSessionId(cookie);
 
         SESSION_STORAGE.expireSession(sessionId);
 
-        response.append("HTTP/1.1 ")
-                .append(HttpResponseStatus.CODE_303.code()).append(" ")
-                .append(HttpResponseStatus.CODE_303.message()).append("\n")
-                .append("Location: http://localhost:7777/page/login\n");
+        HttpMessageStream responseHeaders = HttpMessageStream.of("Location: http://localhost:7777/page/login");
 
-        return HttpMessageStreams.of(response.toString());
+        return HttpResponseStream.from(
+                HttpResponseStatus.CODE_303,
+                responseHeaders,
+                HttpMessageStream.empty()
+        );
     }
 
     private String searchSessionId(HttpHeaderField cookie) {
