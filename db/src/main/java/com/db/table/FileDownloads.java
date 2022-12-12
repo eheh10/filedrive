@@ -1,7 +1,7 @@
 package com.db.table;
 
 import com.db.DbConnector;
-import com.db.DbManualConnector;
+import com.db.ManualCommitDbConnector;
 import com.db.dto.FileDownloadDto;
 import com.db.exception.InputNullParameterException;
 import com.db.exception.VersionUpdatedException;
@@ -15,11 +15,10 @@ import java.time.format.DateTimeFormatter;
 
 public class FileDownloads {
     private static final DbConnector CONNECTOR = DbConnector.getInstance();
-    private static final DbManualConnector MANUAL_CONNECTOR = DbManualConnector.getInstance();
+    private static final ManualCommitDbConnector MANUAL_CONNECTOR = ManualCommitDbConnector.getInstance();
     private static final PreparedStatement INSERT_DOWNLOAD = CONNECTOR.preparedSql("INSERT INTO downloads(uid,user_uid,download_date,count) VALUES (?,?,?,?)");
-    private static final PreparedStatement UPDATE_COUNT = MANUAL_CONNECTOR.preparedSql("UPDATE downloads SET count=?,version=? WHERE uid=?");
+    private static final PreparedStatement UPDATE_COUNT = MANUAL_CONNECTOR.preparedSql("UPDATE downloads SET count=?,version=? WHERE uid=? and version=?");
     private static final PreparedStatement SEARCH_DOWNLOAD = CONNECTOR.preparedSql("SELECT * FROM downloads WHERE user_uid=? and download_date=?");
-    private static final PreparedStatement SEARCH_VERSION = CONNECTOR.preparedSql("SELECT version FROM downloads WHERE uid=?");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_DATE;
     private static ResultSet resultSet = null;
 
@@ -48,35 +47,19 @@ public class FileDownloads {
         }
 
         try {
-            int dbVersion = getDownloadVersion(fileDownloadDto.getUid());
-
             UPDATE_COUNT.setInt(1, fileDownloadDto.getCount()+numberOfFiles);
             UPDATE_COUNT.setInt(2, fileDownloadDto.getVersion()+1);
             UPDATE_COUNT.setString(3, fileDownloadDto.getUid());
+            UPDATE_COUNT.setInt(4, fileDownloadDto.getVersion());
 
-            UPDATE_COUNT.executeUpdate();
+            int rows = UPDATE_COUNT.executeUpdate();
 
-            if (fileDownloadDto.getVersion() != dbVersion) {
+            if (rows == 0) {
                 MANUAL_CONNECTOR.rollback();
                 throw new VersionUpdatedException();
             }
 
             MANUAL_CONNECTOR.commit();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Integer getDownloadVersion(String fileUid) {
-        try {
-            SEARCH_VERSION.setString(1, fileUid);
-
-            resultSet = SEARCH_VERSION.executeQuery();
-            if (!resultSet.next()) {
-                return null;
-            }
-
-            return resultSet.getInt("version");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
