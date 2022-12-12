@@ -1,21 +1,21 @@
 package com.http;
 
+import com.http.exception.EmptyRequestException;
 import com.http.exception.InputNullParameterException;
 import com.http.request.HttpRequestMethod;
 import com.http.request.HttpRequestPath;
 import com.http.request.HttpRequestProcessor;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.request.handler.HttpRequestHandlers;
+import com.http.response.HttpResponseStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -51,30 +51,31 @@ public class Bootstrap {
             while (true) {
                 Socket socket = serverSocket.accept();
                 HttpRequestLengthLimiters requestLengthLimiters = HttpRequestLengthLimiters.from(headersLimit,bodyLimit);
-                RetryOption retryOption = RetryOption.builder().retryCount(10).waitTime(Duration.ofMillis(10)).build();
+                RetryOption retryOption = RetryOption.builder().maxRetryCount(50).waitTime(Duration.ofMillis(50)).build();
 
                 executor.execute(() -> {
                     try (
-                            StringStream isGenerator = StringStream.of(socket.getInputStream());
+                            ResourceStream isGenerator = ResourceStream.of(socket.getInputStream());
                             RetryHttpRequestStream requestStream = new RetryHttpRequestStream(HttpMessageStream.of(isGenerator),retryOption);
 
                             HttpRequestProcessor processor = HttpRequestProcessor.from(requestStream,handlers,preProcessor,requestLengthLimiters);
-                            HttpMessageStreams responseMsg = processor.process();
+                            HttpResponseStream responseMsg = processor.process();
 
-                            OutputStreamWriter responseSender = getResponseSender(socket.getOutputStream())
+                            BufferedOutputStream responseSender = new BufferedOutputStream(socket.getOutputStream())
                     ) {
-
                         LOG.debug("<HTTP Response Message>");
-                        while (responseMsg.hasMoreString()) {
-                            String line = responseMsg.generate();
-                            responseSender.write(line);
-                            LOG.debug(line);
+                        while (responseMsg.hasMoreMessage()) {
+                            byte[] msg = responseMsg.generate();
+                            responseSender.write(msg);
+                            LOG.debug(new String(msg,StandardCharsets.UTF_8));
                         }
 
                         responseSender.flush();
                         LOG.debug("<--HTTP Response Message End-->");
                     } catch (IOException e) {
                         e.printStackTrace();
+                    } catch (EmptyRequestException e) {
+                        return;
                     }
                 });
             }
