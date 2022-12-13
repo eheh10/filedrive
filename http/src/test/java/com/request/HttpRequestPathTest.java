@@ -1,6 +1,7 @@
 package com.request;
 
-import com.exception.NullException;
+import com.http.exception.InputNullParameterException;
+import com.http.request.HttpRequestPath;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,10 +40,10 @@ class HttpRequestPathTest {
     @Test
     @DisplayName("null 로 생성시 에러 테스트")
     void testNullConstructor() {
-        Assertions.assertThatThrownBy(()-> new HttpRequestPath(null))
-                .isInstanceOf(NullException.class);
+        Assertions.assertThatThrownBy(()-> HttpRequestPath.of(null))
+                .isInstanceOf(InputNullParameterException.class);
 
         Assertions.assertThatThrownBy(()-> HttpRequestPath.of(null))
-                .isInstanceOf(NullException.class);
+                .isInstanceOf(InputNullParameterException.class);
     }
 }

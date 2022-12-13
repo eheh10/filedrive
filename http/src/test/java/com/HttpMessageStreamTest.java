@@ -1,7 +1,9 @@
 package com;
 
-import com.exception.InputNullParameterException;
-import com.releaser.ResourceCloser;
+import com.http.HttpMessageStream;
+import com.http.ResourceStream;
+import com.http.exception.InputNullParameterException;
+import com.http.releaser.ResourceCloser;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,10 +41,10 @@ class HttpMessageStreamTest {
         String expected = "TestResourceCloser.close() is called";
         String str = "Hello";
         InputStream is = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
-        StringStream stringStream = StringStream.of(is);
+        ResourceStream resourceStream = ResourceStream.of(is);
 
         ResourceCloser closer = new TestResourceCloser();
-        HttpMessageStream stream = HttpMessageStream.of(stringStream,closer);
+        HttpMessageStream stream = HttpMessageStream.of(resourceStream,closer);
 
         //when
         stream.close();
@@ -55,9 +57,9 @@ class HttpMessageStreamTest {
     @Test
     @DisplayName("null 로 인스턴스 생성시 에러 발생 테스트")
     void testConstructWithNull() {
-        Assertions.assertThatThrownBy(()-> HttpMessageStream.of(null))
+        Assertions.assertThatThrownBy(()-> HttpMessageStream.of((InputStream) null))
                 .isInstanceOf(InputNullParameterException.class);
-        Assertions.assertThatThrownBy(()-> HttpMessageStream.of(null,null))
+        Assertions.assertThatThrownBy(()-> HttpMessageStream.of((InputStream) null,null))
                 .isInstanceOf(InputNullParameterException.class);
     }
 

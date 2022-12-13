@@ -1,8 +1,9 @@
 package com.template;
 
 
-import com.exception.NotFoundTemplateException;
-import com.exception.NullException;
+import com.http.exception.NotFoundTemplateException;
+import com.http.exception.InputNullParameterException;
+import com.http.template.TemplateNodes;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,10 +57,10 @@ class TemplateNodesTest {
 
         Assertions.assertThatThrownBy(()->
                 nodes.register(null,"hello")
-        ).isInstanceOf(NullException.class);
+        ).isInstanceOf(InputNullParameterException.class);
         Assertions.assertThatThrownBy(()->
                 nodes.register("world",null)
-        ).isInstanceOf(NullException.class);
+        ).isInstanceOf(InputNullParameterException.class);
     }
 
     @Test
@@ -71,7 +72,7 @@ class TemplateNodesTest {
 
         Assertions.assertThatThrownBy(()->
                 nodes.replace(null)
-        ).isInstanceOf(NullException.class);
+        ).isInstanceOf(InputNullParameterException.class);
     }
 
     @Test
