@@ -11,11 +11,12 @@ import com.http.response.HttpResponseStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -51,12 +52,11 @@ public class Bootstrap {
             while (true) {
                 Socket socket = serverSocket.accept();
                 HttpRequestLengthLimiters requestLengthLimiters = HttpRequestLengthLimiters.from(headersLimit,bodyLimit);
-                RetryOption retryOption = RetryOption.builder().maxRetryCount(50).waitTime(Duration.ofMillis(50)).build();
+                RetryOption retryOption = getRetryOption(50,50);
 
                 executor.execute(() -> {
                     try (
-                            ResourceStream isGenerator = ResourceStream.of(socket.getInputStream());
-                            RetryHttpRequestStream requestStream = new RetryHttpRequestStream(HttpMessageStream.of(isGenerator),retryOption);
+                            RetryHttpRequestStream requestStream = createRetryHttpRequestStream(socket.getInputStream(), retryOption);
 
                             HttpRequestProcessor processor = HttpRequestProcessor.from(requestStream,handlers,preProcessor,requestLengthLimiters);
                             HttpResponseStream responseMsg = processor.process();
@@ -84,9 +84,12 @@ public class Bootstrap {
         }
     }
 
-    private OutputStreamWriter getResponseSender(OutputStream os) {
-        BufferedOutputStream bos = new BufferedOutputStream(os, 8192);
-        return new OutputStreamWriter(bos, StandardCharsets.UTF_8);
+    private RetryHttpRequestStream createRetryHttpRequestStream(InputStream is, RetryOption retryOption) {
+        return new RetryHttpRequestStream(HttpMessageStream.of(is),retryOption);
+    }
+
+    private RetryOption getRetryOption(int macRetryCount, int milliSeconds) {
+        return RetryOption.builder().maxRetryCount(macRetryCount).waitTime(Duration.ofMillis(milliSeconds)).build();
     }
 
 }
