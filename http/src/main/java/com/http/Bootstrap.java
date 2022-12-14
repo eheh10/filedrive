@@ -2,10 +2,7 @@ package com.http;
 
 import com.http.exception.EmptyRequestException;
 import com.http.exception.InputNullParameterException;
-import com.http.request.HttpRequestMethod;
-import com.http.request.HttpRequestPath;
 import com.http.request.HttpRequestProcessor;
-import com.http.request.handler.HttpRequestHandler;
 import com.http.request.handler.HttpRequestHandlers;
 import com.http.response.HttpResponseStream;
 import org.slf4j.Logger;
@@ -25,14 +22,18 @@ public class Bootstrap {
     private static final Logger LOG = LoggerFactory.getLogger(Bootstrap.class);
 
     private final PreProcessor preProcessor;
-    private final HttpRequestHandlers handlers = new HttpRequestHandlers();
+    private final HttpRequestHandlers handlers;
     private final HttpPropertyFinder finder = new HttpPropertyFinder();
 
-    public Bootstrap(PreProcessor preProcessor) {
-        if (preProcessor == null) {
-            throw new InputNullParameterException();
+    public Bootstrap(PreProcessor preProcessor, HttpRequestHandlers handlers) {
+        if (preProcessor == null || handlers == null) {
+            throw new InputNullParameterException(
+                    "preProcessor: "+preProcessor+"\n" +
+                            "handlers: "+handlers
+            );
         }
         this.preProcessor = preProcessor;
+        this.handlers = handlers;
     }
 
     public void registerHandler(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
