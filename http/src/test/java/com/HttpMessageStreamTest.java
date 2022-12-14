@@ -3,7 +3,7 @@ package com;
 import com.http.HttpMessageStream;
 import com.http.ResourceStream;
 import com.http.exception.InputNullParameterException;
-import com.http.releaser.ResourceCloser;
+import com.http.closer.ResourceCloser;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

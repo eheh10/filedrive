@@ -1,4 +1,4 @@
-package com.http.releaser;
+package com.http.closer;
 
 import com.http.exception.InputNullParameterException;
 

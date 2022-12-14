@@ -1,8 +1,8 @@
 package com.http;
 
 import com.http.exception.InputNullParameterException;
-import com.http.releaser.NoResourceCloser;
-import com.http.releaser.ResourceCloser;
+import com.http.closer.NoResourceCloser;
+import com.http.closer.ResourceCloser;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
