@@ -4,8 +4,8 @@ import com.http.*;
 import com.http.exception.EmptyRequestException;
 import com.http.exception.InputNullParameterException;
 import com.http.header.HttpHeaders;
-import com.http.releaser.FileResourceCloser;
-import com.http.releaser.ResourceCloser;
+import com.http.closer.FileResourceCloser;
+import com.http.closer.ResourceCloser;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.request.handler.HttpRequestHandlers;
 import com.http.response.HttpResponseStatus;
@@ -26,6 +26,7 @@ import java.util.Optional;
 
 public class HttpRequestProcessor implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(HttpRequestProcessor.class);
+    private static final ResourceFinder RESOURCE_FINDER = new ResourceFinder();
     private final RetryHttpRequestStream requestStream;
     private final HttpRequestHandlers handlers;
     private final PreProcessor preprocessor;
@@ -56,17 +57,12 @@ public class HttpRequestProcessor implements Closeable {
                     - method 는 enum 으로 처리하여 메서드에 해당하는 처리클래스와 바인딩 (각 메서드 처리 클래스 필요)
                     - GET 인 경우 values 가공 필요 (Values 클래스화 필요)
             **/
-            if (!requestStream.hasMoreString()) {
-                throw new EmptyRequestException();
-            }
-
             LOG.debug("<HTTP Request Start Line>");
-            String startLineText = requestStream.generateLine(); // -> 500 응답
+            String startLineText = requestStream.generateLine();
             LOG.debug(startLineText);
             LOG.debug("<--HTTP Request Start Line-->");
 
-            Optional<HttpRequestStartLine> startLineParser = Optional.of(HttpRequestStartLine.parse(startLineText));
-            HttpRequestStartLine httpRequestStartLine = startLineParser.get();
+            HttpRequestStartLine httpRequestStartLine = getStartLine(startLineText);
 
             /**
                 1-2. Header 가공
@@ -123,13 +119,17 @@ public class HttpRequestProcessor implements Closeable {
         }
     }
 
+    private HttpRequestStartLine getStartLine(String startLineText) {
+        Optional<HttpRequestStartLine> startLineParser = Optional.of(HttpRequestStartLine.parse(startLineText));
+        return startLineParser.get();
+    }
+
     private HttpResponseStream createHttpErrorResponse(HttpResponseStatus status) {
         TemplateNodes templateNodes = new TemplateNodes();
         templateNodes.register("statusCode",status.code());
         templateNodes.register("statusMsg",status.message());
 
-        ResourceFinder resourceFinder = new ResourceFinder();
-        TemplateFileStream errorTemplateFile = resourceFinder.findTemplate("error.html");
+        TemplateFileStream errorTemplateFile = RESOURCE_FINDER.findTemplate("error.html");
         Path replacedFile = Path.of("src","main","resources", "errorBody.html");
 
         HttpMessageStream responseHeaders = HttpMessageStream.of("Content-Type: text/html;charset=UTF-8");
