@@ -11,14 +11,29 @@ import java.util.Map;
 import java.util.Objects;
 
 public class HttpRequestHandlers {
-    private final Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values = new HashMap<>();
+    private final Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values;
 
-    public void register(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
+    private HttpRequestHandlers(Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values) {
+        if (values == null) {
+            throw new InputNullParameterException();
+        }
+        this.values = values;
+    }
+
+    public HttpRequestHandlers register(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
         if (path == null || method == null || handler == null) {
             throw new InputNullParameterException();
         }
 
+        Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values = new HashMap<>();
+        values.putAll(this.values);
         values.put(path,Map.of(method,handler));
+
+        return new HttpRequestHandlers(values);
+    }
+
+    public static HttpRequestHandlers empty() {
+        return new HttpRequestHandlers(Map.of());
     }
 
     public HttpRequestHandler find(HttpRequestPath path, HttpRequestMethod method) {
