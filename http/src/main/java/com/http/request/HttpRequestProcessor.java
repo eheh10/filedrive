@@ -1,11 +1,10 @@
 package com.http.request;
 
 import com.http.*;
-import com.http.exception.EmptyRequestException;
-import com.http.exception.InputNullParameterException;
-import com.http.header.HttpHeaders;
 import com.http.closer.FileResourceCloser;
 import com.http.closer.ResourceCloser;
+import com.http.exception.InputNullParameterException;
+import com.http.header.HttpHeaders;
 import com.http.request.handler.HttpRequestHandler;
 import com.http.request.handler.HttpRequestHandlers;
 import com.http.response.HttpResponseStatus;
@@ -17,16 +16,15 @@ import com.http.template.TemplateText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.Optional;
 
 public class HttpRequestProcessor implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(HttpRequestProcessor.class);
     private static final ResourceFinder RESOURCE_FINDER = new ResourceFinder();
+    private static final TemplateFileStream ERROR_TEMPLATE_FILE = RESOURCE_FINDER.findTemplate("error.html");
+    private static final File REPLACED_FILE = Path.of("src","main","resources", "errorBody.html").toFile();
     private final RetryHttpRequestStream requestStream;
     private final HttpRequestHandlers handlers;
     private final PreProcessor preprocessor;
@@ -115,9 +113,6 @@ public class HttpRequestProcessor implements Closeable {
             HttpResponseStream responseMsg = httpRequestHandler.handle(path, httpHeaders, requestStream, queryString, requestLengthLimiters);
 
             return responseMsg;
-
-        } catch (EmptyRequestException e) {
-            throw new EmptyRequestException(e);
         } catch (Exception e) {
             HttpResponseStatus status = HttpResponseStatus.httpResponseStatusOf(e);
             return createHttpErrorResponse(status);
@@ -134,18 +129,15 @@ public class HttpRequestProcessor implements Closeable {
         templateNodes.register("statusCode",status.code());
         templateNodes.register("statusMsg",status.message());
 
-        TemplateFileStream errorTemplateFile = RESOURCE_FINDER.findTemplate("error.html");
-        Path replacedFile = Path.of("src","main","resources", "errorBody.html");
-
         HttpMessageStream responseHeaders = HttpMessageStream.of("Content-Type: text/html;charset=UTF-8");
 
-        try (FileTemplateReplacer replacer = FileTemplateReplacer.of(errorTemplateFile,replacedFile);
+        try (FileTemplateReplacer replacer = FileTemplateReplacer.of(ERROR_TEMPLATE_FILE, REPLACED_FILE.toPath());
         ) {
             replacer.replace(templateNodes, TemplateText.ERROR_TEMPLATE);
 
-            ResourceCloser releaser = new FileResourceCloser(replacedFile.toFile());
+            ResourceCloser releaser = new FileResourceCloser(REPLACED_FILE);
 
-            InputStream bodyInput = new FileInputStream(replacedFile.toString());
+            InputStream bodyInput = new FileInputStream(REPLACED_FILE);
             HttpMessageStream responseBody = HttpMessageStream.of(bodyInput,releaser);
 
             return HttpResponseStream.from(
