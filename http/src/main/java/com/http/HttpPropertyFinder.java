@@ -9,11 +9,12 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class HttpPropertyFinder {
+    private static final String PROPERTY_FILE_PATH = Path.of("http","http.properties").toString();
     private final Properties value = new Properties();
 
     public HttpPropertyFinder() {
         try {
-            value.load(new FileInputStream(Path.of("http","http.properties").toFile()));
+            value.load(new FileInputStream(PROPERTY_FILE_PATH));
         } catch (IOException e) {
             throw new NotFoundResourceException("Not Found http.properties");
         }
