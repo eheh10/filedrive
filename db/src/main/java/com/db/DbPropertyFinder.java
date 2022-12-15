@@ -11,11 +11,28 @@ import java.util.Properties;
 
 
 public class DbPropertyFinder {
-    private final Properties value = new Properties();
+    private static final String PROPERTY_FILE_PATH = Path.of("db","db.properties").toString();
+    private static final DbPropertyFinder INSTANCE = new DbPropertyFinder(createProperties());
+    private final Properties value;
 
-    public DbPropertyFinder() {
+    private DbPropertyFinder(Properties value) {
+        if (value == null) {
+            throw new InputNullParameterException();
+        }
+
+        this.value = value;
+    }
+
+    public static DbPropertyFinder getInstance() {
+        return INSTANCE;
+    }
+
+    private static Properties createProperties() {
         try {
-            value.load(new FileInputStream(Path.of("db","db.properties").toString()));
+            Properties value = new Properties();
+            value.load(new FileInputStream(PROPERTY_FILE_PATH));
+
+            return value;
         } catch (IOException e) {
             throw new NotFoundPropertyException("db.properties Not Found");
         }

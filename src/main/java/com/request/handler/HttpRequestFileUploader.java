@@ -30,7 +30,7 @@ import java.util.UUID;
 
 public class HttpRequestFileUploader implements HttpRequestHandler {
     private static final Path DIRECTORY_PATH = Paths.get("src","main","resources","uploaded-file"); //property
-    private static final DbPropertyFinder PROPERTY_FINDER = new DbPropertyFinder();
+    private static final DbPropertyFinder PROPERTY_FINDER = DbPropertyFinder.getInstance();
     private static final HttpPropertyFinder FINDER = HttpPropertyFinder.getInstance();
     private static final SessionStorage SESSION_STORAGE = new SessionStorage();
     private static final Users USERS = new Users();

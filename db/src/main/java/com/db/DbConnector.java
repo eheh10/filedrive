@@ -8,7 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class DbConnector {
-    private static final DbPropertyFinder PROPERTY = new DbPropertyFinder();
+    private static final DbPropertyFinder PROPERTY = DbPropertyFinder.getInstance();
     private static final DbConnector INSTANCE = new DbConnector(createConnection());
     private final Connection connection;
 
