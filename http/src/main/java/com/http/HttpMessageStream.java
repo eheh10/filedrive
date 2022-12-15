@@ -15,7 +15,10 @@ public class HttpMessageStream implements Closeable {
 
     private HttpMessageStream(ResourceStream stream, ResourceCloser closer) {
         if (stream == null || closer == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "stream: "+stream+"\n"+
+                    "closer: "+closer+"\n"
+            );
         }
 
         this.stream = stream;

@@ -10,7 +10,10 @@ public class RetryHttpRequestStream implements Closeable {
 
     public RetryHttpRequestStream(HttpMessageStream httpMessageStream, RetryOption retryOption) {
         if (httpMessageStream == null || retryOption == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "httpMessageStream: "+httpMessageStream+"\n"+
+                    "retryOption: "+retryOption+"\n"
+            );
         }
 
         this.httpMessageStream = httpMessageStream;

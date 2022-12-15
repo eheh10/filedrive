@@ -22,7 +22,10 @@ public class UserFiles {
 
     public void insert(UserDto userDto, FileDto fileDto) {
         if (userDto == null || fileDto == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "userDto: "+userDto+"\n"+
+                    "fileDto: "+fileDto+"\n"
+            );
         }
 
         if (fileDto.getSize() < 0) {
@@ -73,7 +76,10 @@ public class UserFiles {
 
     public FileDto searchFile(String fileName, String userUid) {
         if (fileName == null || userUid == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "fileName: "+fileName+"\n"+
+                    "userUid: "+userUid+"\n"
+            );
         }
 
         try {

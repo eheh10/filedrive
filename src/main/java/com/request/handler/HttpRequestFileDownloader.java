@@ -48,8 +48,14 @@ public class HttpRequestFileDownloader implements HttpRequestHandler {
 
     @Override
     public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
-        if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
-            throw new InputNullParameterException();
+        if (httpRequestPath == null || httpHeaders == null || bodyStream == null || queryString == null || requestLengthLimiters == null) {
+            throw new InputNullParameterException(
+                    "httpRequestPath: "+httpRequestPath+"\n"+
+                            "httpHeaders: "+httpHeaders+"\n"+
+                            "bodyStream: "+bodyStream+"\n"+
+                            "queryString: "+queryString+"\n"+
+                            "requestLengthLimiters: "+requestLengthLimiters+"\n"
+            );
         }
 
         StringBuilder bodyQueryString = new StringBuilder();

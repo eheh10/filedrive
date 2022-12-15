@@ -67,7 +67,10 @@ public class FileDownloads {
 
     public FileDownloadDto searchDownload(String userUid, LocalDate downloadDate) {
         if (userUid == null || downloadDate == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "userUid: "+userUid+"\n"+
+                    "downloadDate: "+downloadDate+"\n"
+            );
         }
 
         Date formattedDate = Date.valueOf(downloadDate.format(DATE_FORMATTER));

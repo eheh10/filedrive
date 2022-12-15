@@ -22,7 +22,11 @@ public class HttpRequestHandlers {
 
     public HttpRequestHandlers register(HttpRequestPath path, HttpRequestMethod method, HttpRequestHandler handler) {
         if (path == null || method == null || handler == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "path: "+path+"\n"+
+                    "method: "+method+"\n"+
+                    "handler: "+handler+"\n"
+            );
         }
 
         Map<HttpRequestPath, Map<HttpRequestMethod, HttpRequestHandler>> values = new HashMap<>();
@@ -38,7 +42,10 @@ public class HttpRequestHandlers {
 
     public HttpRequestHandler find(HttpRequestPath path, HttpRequestMethod method) {
         if (path == null || method == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "path: "+path+"\n"+
+                    "method: "+method+"\n"
+            );
         }
 
         path = convertPathIfResourceRequest(path,method);

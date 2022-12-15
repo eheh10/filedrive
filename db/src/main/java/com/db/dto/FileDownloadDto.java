@@ -18,7 +18,11 @@ public class FileDownloadDto {
 
     private FileDownloadDto(String uid, String userUid, LocalDate downloadDate, int count, int version) {
         if (uid==null || userUid ==null || downloadDate ==null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "uid: "+uid+"\n"+
+                    "userUid: "+userUid+"\n"+
+                    "downloadDate: "+downloadDate+"\n"
+            );
         }
 
         if (count < 0 || version < 0) {

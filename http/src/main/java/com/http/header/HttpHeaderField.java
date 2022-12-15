@@ -11,7 +11,10 @@ public class HttpHeaderField {
 
     public HttpHeaderField(String name, List<String> values) {
         if (name == null || values == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "name: "+name+"\n"+
+                    "values: "+values
+            );
         }
         if (values.size() == 0) {
             throw new InvalidHttpRequestInputException();

@@ -32,7 +32,10 @@ public class HttpHeaders {
     * */
     public static HttpHeaders parse(RetryHttpRequestStream requestStream, HttpRequestLengthLimiters lengthLimiters) {
         if (requestStream == null || lengthLimiters == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "requestStream: "+requestStream+"\n"+
+                            "lengthLimiters: "+lengthLimiters
+            );
         }
 
         Map<String, HttpHeaderField> fields = new HashMap<>();

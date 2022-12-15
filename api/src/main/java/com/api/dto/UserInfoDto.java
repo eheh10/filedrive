@@ -12,7 +12,10 @@ public class UserInfoDto {
     @Builder
     public UserInfoDto(String snsUid, String snsEmail) {
         if (snsUid==null || snsEmail==null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "snsUid: "+snsUid+"\n"+
+                    "snsEmail: "+snsEmail+"\n"
+            );
         }
         this.snsUid = snsUid;
         this.snsEmail = snsEmail;

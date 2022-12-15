@@ -97,7 +97,10 @@ public class Users {
 
     public UserDto searchByNamePwd(String name, String pwd) {
         if (name == null || pwd == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "name: "+name+"\n"+
+                    "pwd: "+pwd+"\n"
+            );
         }
 
         String cryptogramPwd = ENCRYPTION.encrypt(pwd);
@@ -135,7 +138,10 @@ public class Users {
 
     public void useStorageCapacity(UserDto userDto, FileDto fileDto) {
         if (userDto == null || fileDto == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "userDto: "+userDto+"\n"+
+                    "fileDto: "+fileDto+"\n"
+            );
         }
 
         int usedCapacity = userDto.getUsageCapacity();

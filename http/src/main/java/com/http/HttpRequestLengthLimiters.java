@@ -9,7 +9,10 @@ public class HttpRequestLengthLimiters {
 
     private HttpRequestLengthLimiters(HttpLengthLimiter requestHeadersLengthLimit, HttpLengthLimiter requestBodyLengthLimit) {
         if (requestHeadersLengthLimit == null || requestBodyLengthLimit == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "requestHeadersLengthLimit: "+requestHeadersLengthLimit+"\n"+
+                    "requestBodyLengthLimit: "+requestBodyLengthLimit
+            );
         }
 
         this.requestHeadersLengthLimit = requestHeadersLengthLimit;

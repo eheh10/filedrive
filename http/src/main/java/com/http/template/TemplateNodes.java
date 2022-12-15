@@ -11,7 +11,10 @@ public class TemplateNodes {
 
     public void register(String templateTxt, String replaceTxt) {
         if (templateTxt == null || replaceTxt == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "templateTxt: "+templateTxt+"\n"+
+                    "replaceTxt: "+replaceTxt+"\n"
+            );
         }
 
         values.put(templateTxt, replaceTxt);

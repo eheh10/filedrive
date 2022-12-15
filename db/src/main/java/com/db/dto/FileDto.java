@@ -15,7 +15,11 @@ public class FileDto {
 
     private FileDto(String uid, String name, String path, int size) {
         if (uid == null || name == null || path == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "uid: "+uid+"\n"+
+                    "name: "+name+"\n"+
+                    "path: "+path+"\n"
+            );
         }
 
         if (size < 0 ) {

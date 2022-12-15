@@ -34,7 +34,12 @@ public class HttpRequestProcessor implements Closeable {
 
     private HttpRequestProcessor(RetryHttpRequestStream requestStream, HttpRequestHandlers handlers, PreProcessor preprocessor, HttpRequestLengthLimiters requestLengthLimiters) {
         if (requestStream == null || handlers == null || preprocessor == null || requestLengthLimiters == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "requestStream: "+requestStream+"\n"+
+                    "handlers: "+handlers+"\n"+
+                    "preprocessor: "+preprocessor+"\n"+
+                    "requestLengthLimiters: "+requestLengthLimiters+"\n"
+            );
         }
 
         this.requestStream = requestStream;

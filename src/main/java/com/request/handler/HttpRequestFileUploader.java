@@ -31,15 +31,21 @@ import java.util.UUID;
 public class HttpRequestFileUploader implements HttpRequestHandler {
     private static final Path DIRECTORY_PATH = Paths.get("src","main","resources","uploaded-file"); //property
     private static final DbPropertyFinder PROPERTY_FINDER = new DbPropertyFinder();
-    private static final HttpPropertyFinder FINDER = new HttpPropertyFinder();
+    private static final HttpPropertyFinder FINDER = HttpPropertyFinder.getInstance();
     private static final SessionStorage SESSION_STORAGE = new SessionStorage();
     private static final Users USERS = new Users();
     private static final UserFiles USER_FILES = new UserFiles();
 
     @Override
     public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {
-        if (httpRequestPath == null || httpHeaders == null || bodyStream == null) {
-            throw new InputNullParameterException();
+        if (httpRequestPath == null || httpHeaders == null || bodyStream == null || queryString == null || requestLengthLimiters == null) {
+            throw new InputNullParameterException(
+                    "httpRequestPath: "+httpRequestPath+"\n"+
+                            "httpHeaders: "+httpHeaders+"\n"+
+                            "bodyStream: "+bodyStream+"\n"+
+                            "queryString: "+queryString+"\n"+
+                            "requestLengthLimiters: "+requestLengthLimiters+"\n"
+            );
         }
 
         HttpHeaderField cookie = httpHeaders.findProperty("Cookie");

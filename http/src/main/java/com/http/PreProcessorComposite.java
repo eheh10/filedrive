@@ -44,7 +44,10 @@ public class PreProcessorComposite implements PreProcessor {
     @Override
     public void process(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders) {
         if (httpRequestPath == null || httpHeaders == null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "httpRequestPath: "+httpRequestPath+"\n"+
+                    "httpHeaders: "+httpHeaders+"\n"
+            );
         }
 
         for(PreProcessor preProcessor : values) {

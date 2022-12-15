@@ -15,7 +15,13 @@ public class TokenDto {
     @Builder
     public TokenDto(String accessToken, String scope, String token_type, String id_token, String refresh_token) {
         if (accessToken==null || scope==null || token_type==null || id_token==null || refresh_token==null) {
-            throw new InputNullParameterException();
+            throw new InputNullParameterException(
+                    "accessToken: "+accessToken+"\n"+
+                    "scope: "+scope+"\n"+
+                    "token_type: "+token_type+"\n"+
+                    "id_token: "+id_token+"\n"+
+                    "refresh_token: "+refresh_token+"\n"
+            );
         }
 
         this.accessToken = accessToken;
