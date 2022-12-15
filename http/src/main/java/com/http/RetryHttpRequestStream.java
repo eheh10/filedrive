@@ -30,9 +30,13 @@ public class RetryHttpRequestStream implements Closeable {
 
             retryOption.waitTime();
             count++;
-        }while(retryOption.getMaxRetryCount() >= count);
+        }while(canRetry(count));
 
         return false;
+    }
+
+    private boolean canRetry(int count) {
+        return retryOption.getMaxRetryCount() >= count;
     }
 
     public String generate() {
