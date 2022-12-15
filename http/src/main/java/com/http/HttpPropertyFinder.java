@@ -13,7 +13,7 @@ public class HttpPropertyFinder {
     private static final HttpPropertyFinder INSTANCE = new HttpPropertyFinder(createProperties());
     private final Properties value;
 
-    public HttpPropertyFinder(Properties value) {
+    private HttpPropertyFinder(Properties value) {
         if (value == null) {
             throw new InputNullParameterException();
         }
@@ -32,7 +32,7 @@ public class HttpPropertyFinder {
 
             return value;
         } catch (IOException e) {
-            throw new NotFoundResourceException("Not Found http.properties");
+            throw new NotFoundPropertyException("Not Found http.properties");
         }
     }
 
