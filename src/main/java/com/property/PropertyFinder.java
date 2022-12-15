@@ -1,21 +1,38 @@
 package com.property;
 
+import com.db.exception.NotFoundPropertyException;
 import com.http.exception.InputNullParameterException;
-import com.http.exception.NotFoundResourceException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Properties;
 
 public class PropertyFinder {
-    private final Properties value = new Properties();
+    private static final String PROPERTY_FILE_PATH = Path.of("filedrive.properties").toString();
+    private static final PropertyFinder INSTANCE = new PropertyFinder(createProperties());
+    private final Properties value;
 
-    public PropertyFinder() {
+    private PropertyFinder(Properties value) {
+        if (value == null) {
+            throw new InputNullParameterException();
+        }
+
+        this.value = value;
+    }
+
+    public static PropertyFinder getInstance() {
+        return INSTANCE;
+    }
+
+    private static Properties createProperties() {
         try {
-            value.load(new FileInputStream(Path.of("filedrive.properties").toFile()));
+            Properties value = new Properties();
+            value.load(new FileInputStream(PROPERTY_FILE_PATH));
+
+            return value;
         } catch (IOException e) {
-            throw new NotFoundResourceException("Not Found filedrive.properties");
+            throw new NotFoundPropertyException("filedrive.properties Not Found");
         }
     }
 

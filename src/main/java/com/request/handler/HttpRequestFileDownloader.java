@@ -39,7 +39,7 @@ import java.util.zip.ZipOutputStream;
 public class HttpRequestFileDownloader implements HttpRequestHandler {
     private static final Path DEFAULT_PATH = Paths.get("src","main","resources","uploaded-file");
     private static final Path TEMP_FILE_PATH = Paths.get("src","main","resources","tmp");
-    private static final PropertyFinder PROPERTY_FINDER = new PropertyFinder();
+    private static final PropertyFinder PROPERTY_FINDER = PropertyFinder.getInstance();
     private static final SessionStorage SESSION_STORAGE = new SessionStorage();
     private static final UserFiles USER_FILES = new UserFiles();
     private static final FileDownloads FILE_DOWNLOADS = new FileDownloads();
