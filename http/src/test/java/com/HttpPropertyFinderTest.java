@@ -17,7 +17,7 @@ import java.util.Set;
 @Disabled
 class HttpPropertyFinderTest {
     private static final Properties PROPERTIES = new Properties();
-    private static final HttpPropertyFinder PROPERTY_FINDER = new HttpPropertyFinder();
+    private static final HttpPropertyFinder PROPERTY_FINDER = HttpPropertyFinder.getInstance();
 
     @BeforeAll
     static void loadProperties() throws IOException {

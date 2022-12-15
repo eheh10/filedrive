@@ -23,7 +23,7 @@ public class Bootstrap {
 
     private final PreProcessor preProcessor;
     private final HttpRequestHandlers handlers;
-    private final HttpPropertyFinder finder = new HttpPropertyFinder();
+    private final HttpPropertyFinder finder = HttpPropertyFinder.getInstance();
 
     public Bootstrap(PreProcessor preProcessor, HttpRequestHandlers handlers) {
         if (preProcessor == null || handlers == null) {

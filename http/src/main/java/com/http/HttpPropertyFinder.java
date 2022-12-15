@@ -10,11 +10,27 @@ import java.util.*;
 
 public class HttpPropertyFinder {
     private static final String PROPERTY_FILE_PATH = Path.of("http","http.properties").toString();
-    private final Properties value = new Properties();
+    private static final HttpPropertyFinder INSTANCE = new HttpPropertyFinder(createProperties());
+    private final Properties value;
 
-    public HttpPropertyFinder() {
+    public HttpPropertyFinder(Properties value) {
+        if (value == null) {
+            throw new InputNullParameterException();
+        }
+
+        this.value = value;
+    }
+
+    public static HttpPropertyFinder getInstance() {
+        return INSTANCE;
+    }
+
+    private static Properties createProperties() {
         try {
+            Properties value = new Properties();
             value.load(new FileInputStream(PROPERTY_FILE_PATH));
+
+            return value;
         } catch (IOException e) {
             throw new NotFoundResourceException("Not Found http.properties");
         }
