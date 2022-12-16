@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 public class ApiPropertyFinder {
-    private static final String PROPERTY_FILE_PATH = Path.of("api","api.properties").toString();
+    private static final String PROPERTY_FILE_PATH = Path.of("C:","dev","intellij","filedrive","api","api.properties").toString();
     private static final ApiPropertyFinder INSTANCE = new ApiPropertyFinder(createProperties());
     private final Properties value;
 
