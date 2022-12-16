@@ -35,7 +35,7 @@ public class OauthCodeRequest implements HttpRequestHandler {
             redirectUrl = propertyFinder.googleLoginRedirectURI();
         }
 
-        if (Objects.equals(httpRequestPath.getName(),"singUp")) {
+        if (Objects.equals(httpRequestPath.getName(),"signUp")) {
             redirectUrl = propertyFinder.googleSingUpRedirectURI();
         }
 
