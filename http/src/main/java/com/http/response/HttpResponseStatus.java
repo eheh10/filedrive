@@ -2,6 +2,8 @@ package com.http.response;
 
 import com.http.exception.*;
 
+import java.util.Objects;
+
 public enum HttpResponseStatus {
     CODE_200("OK"),
     CODE_303("See Other"),
@@ -23,30 +25,30 @@ public enum HttpResponseStatus {
     public static HttpResponseStatus httpResponseStatusOf(Exception exception) {
         Class clz = exception.getClass();
 
-        if (clz.isInstance(InvalidHttpRequestInputException.class)) {
+        if (Objects.equals(clz,InvalidHttpRequestInputException.class)) {
             return CODE_400;
         }
 
-        if (clz.isInstance(RequiredLoginException.class)) {
+        if (Objects.equals(clz,RequiredLoginException.class)) {
             return CODE_401;
         }
 
-        if (clz.isInstance(NotFoundHttpPathException.class)) {
+        if (Objects.equals(clz,NotFoundHttpPathException.class)) {
             return CODE_404;
         }
 
-        if (clz.isInstance(NotAllowedHttpMethodException.class)) {
+        if (Objects.equals(clz,NotAllowedHttpMethodException.class)) {
             return CODE_405;
         }
 
-        if (clz.isInstance(ExceedingHttpLengthLimitException.class)) {
+        if (Objects.equals(clz,ExceedingHttpLengthLimitException.class)) {
             return CODE_431;
         }
 
-        if (clz.isInstance(InputNullParameterException.class) ||
-                clz.isInstance(MustBePositiveNumberException.class) ||
-                clz.isInstance(NoMoreHttpContentException.class) ||
-                clz.isInstance(NotFoundHttpHeadersPropertyException.class)) {
+        if (Objects.equals(clz,InputNullParameterException.class) ||
+                Objects.equals(clz,MustBePositiveNumberException.class) ||
+                Objects.equals(clz,NoMoreHttpContentException.class) ||
+                Objects.equals(clz,NotFoundHttpHeadersPropertyException.class)) {
             return CODE_500;
         }
 
