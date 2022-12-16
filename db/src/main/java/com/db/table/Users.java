@@ -1,7 +1,7 @@
 package com.db.table;
 
-import com.db.DbConnector;
-import com.db.ManualCommitDbConnector;
+import com.db.connector.DbConnector;
+import com.db.connector.ManualCommitDbConnector;
 import com.db.Sha256Encryption;
 import com.db.dto.FileDto;
 import com.db.dto.UserDto;

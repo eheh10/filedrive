@@ -1,7 +1,7 @@
 package com.http;
 
 import com.http.exception.InputNullParameterException;
-import com.http.exception.NotFoundResourceException;
+import com.http.exception.NotFoundPropertyException;
 
 import java.io.FileInputStream;
 import java.io.IOException;

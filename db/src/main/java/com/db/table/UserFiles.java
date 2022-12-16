@@ -1,6 +1,6 @@
 package com.db.table;
 
-import com.db.DbConnector;
+import com.db.connector.DbConnector;
 import com.db.dto.FileDto;
 import com.db.dto.UserDto;
 import com.db.exception.InputNullParameterException;

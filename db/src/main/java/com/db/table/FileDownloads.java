@@ -1,7 +1,7 @@
 package com.db.table;
 
-import com.db.DbConnector;
-import com.db.ManualCommitDbConnector;
+import com.db.connector.DbConnector;
+import com.db.connector.ManualCommitDbConnector;
 import com.db.dto.FileDownloadDto;
 import com.db.exception.InputNullParameterException;
 import com.db.exception.VersionUpdatedException;
