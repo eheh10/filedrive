@@ -10,11 +10,28 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 public class ApiPropertyFinder {
-    private final Properties value = new Properties();
+    private static final String PROPERTY_FILE_PATH = Path.of("api","api.properties").toString();
+    private static final ApiPropertyFinder INSTANCE = new ApiPropertyFinder(createProperties());
+    private final Properties value;
 
-    public ApiPropertyFinder() {
+    private ApiPropertyFinder(Properties value) {
+        if (value == null) {
+            throw new InputNullParameterException();
+        }
+
+        this.value = value;
+    }
+
+    public static ApiPropertyFinder getInstance() {
+        return INSTANCE;
+    }
+
+    private static Properties createProperties() {
         try {
-            value.load(new FileInputStream(Path.of("api","api.properties").toFile()));
+            Properties value = new Properties();
+            value.load(new FileInputStream(PROPERTY_FILE_PATH));
+
+            return value;
         } catch (IOException e) {
             throw new NotFoundPropertyException("Not Found api.properties");
         }

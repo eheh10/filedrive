@@ -22,7 +22,7 @@ import java.util.UUID;
 
 public class OauthUserCreator implements HttpRequestHandler {
     private static final Users USERS = new Users();
-    private final ApiPropertyFinder propertyFinder = new ApiPropertyFinder();
+    private final ApiPropertyFinder propertyFinder = ApiPropertyFinder.getInstance();
     private final GoogleApiRequest googleApiRequest = new GoogleApiRequest();
 
     @Override

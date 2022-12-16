@@ -22,7 +22,7 @@ import com.http.response.HttpResponseStream;
 public class OauthUserFinder implements HttpRequestHandler {
     private static final Users USERS = new Users();
     private static final SessionStorage SESSION_STORAGE = new SessionStorage();
-    private final ApiPropertyFinder propertyFinder = new ApiPropertyFinder();
+    private final ApiPropertyFinder propertyFinder = ApiPropertyFinder.getInstance();
     private final GoogleApiRequest googleApiRequest = new GoogleApiRequest();
 
 

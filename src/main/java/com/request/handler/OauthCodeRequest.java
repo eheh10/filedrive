@@ -16,7 +16,7 @@ import java.util.Objects;
 
 
 public class OauthCodeRequest implements HttpRequestHandler {
-    private final ApiPropertyFinder propertyFinder = new ApiPropertyFinder();
+    private final ApiPropertyFinder propertyFinder = ApiPropertyFinder.getInstance();
 
     @Override
     public HttpResponseStream handle(HttpRequestPath httpRequestPath, HttpHeaders httpHeaders, RetryHttpRequestStream bodyStream, HttpRequestQueryString queryString, HttpRequestLengthLimiters requestLengthLimiters) {

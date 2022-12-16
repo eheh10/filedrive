@@ -13,7 +13,7 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 
 public class GoogleApiRequest {
-    private final ApiPropertyFinder propertyFinder = new ApiPropertyFinder();
+    private final ApiPropertyFinder propertyFinder = ApiPropertyFinder.getInstance();
     private final HttpClient client = HttpClient.newBuilder().build();
 
     public TokenDto requestToken(String requiredQueryString) {
